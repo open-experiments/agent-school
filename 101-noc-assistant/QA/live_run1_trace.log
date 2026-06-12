@@ -1,0 +1,67 @@
+[trace] 15:44:09 tool-call    get_kpi_summary({"nf": "all", "window_minutes": 60})
+[trace] 15:44:09 tool-result  {"window_minutes": 60, "summary": {"amf": {"http_connectivity": {"mean": 1.28, "min": 1.01, "max": 1.42}, "cpu_utilization": {"mean": 38.88, "min": 29.35, "max"...
+[trace] 15:44:09 tool-call    get_active_alerts({"component": "all"})
+[trace] 15:44:09 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 15:44:09 tool-call    detect_anomalies({"nf": "all", "contamination": 0.02})
+[trace] 15:44:09 tool-result  {"contamination": 0.02, "anomalies": [{"timestamp": "2025-01-17 11:47:55.775630", "nf": "smf", "deviating_kpis": {"session_success_rate": {"value": 140.77, "zsc...
+[trace] 15:44:20 tool-call    search_runbooks({"query": "registration storm AMF SMF", "top_k": 2})
+[trace] 15:44:20 tool-result  {"query": "registration storm AMF SMF", "results": [{"runbook": "registration-storm.md", "score": 21, "content": "# Runbook: Registration Storm (AMF/SMF)\n\n**A...
+[trace] 15:44:20 tool-call    search_runbooks({"query": "resource exhaustion UPF SMF", "top_k": 2})
+[trace] 15:44:20 tool-result  {"query": "resource exhaustion UPF SMF", "results": [{"runbook": "session-management-failure.md", "score": 15, "content": "# Runbook: Session Management Failure...
+[trace] 15:44:20 tool-call    search_runbooks({"query": "session management failure", "top_k": 2})
+[trace] 15:44:20 tool-result  {"query": "session management failure", "results": [{"runbook": "session-management-failure.md", "score": 17, "content": "# Runbook: Session Management Failure ...
+[trace] 15:44:38 answer       turn 3
+
+=== NOC Assistant ===
+
+
+## Findings
+
+**Active Alerts (7 total in the last 24 hours):**
+- **REGISTRATION_STORM (CRITICAL)** on AMF (Jan 16 16:37–16:42): CPU utilization dropped 8%, authentication success rate dropped 11.7%.
+- **REGISTRATION_STORM (CRITICAL)** on SMF (Jan 17 07:12–07:17): Session establishment rate dropped 17.8%.
+- **RESOURCE_EXHAUSTION (MAJOR)** on UPF (Jan 17 02:42–02:47): Packet processing rate dropped 17.6%, buffer utilization dropped 6%, latency dropped 19.9%.
+- **RESOURCE_EXHAUSTION (MAJOR)** on SMF (Jan 16 12:22–12:27): Session establishment rate dropped 15%, N4 message rate dropped 17.7%.
+- **SESSION_MANAGEMENT_FAILURE (MAJOR)** on SMF (Jan 16 22:29–22:34): Session establishment rate dropped 23.7%, N4 message rate dropped 20.9%.
+- **SESSION_MANAGEMENT_FAILURE (MAJOR)** on AMF (Jan 17 00:47–00:52): Session setup rate dropped 18.2%.
+- **SESSION_MANAGEMENT_FAILURE (MAJOR)** on UPF (Jan 17 06:37–06:42): Tunnel establishment rate dropped 15.5%.
+
+**KPI Summary (last 60 minutes):**
+- **AMF:** CPU mean 38.88% (max 43.26%), Memory mean 51.72% (max 58.15%), Registration rate mean 129.33 (max 145.63), Session setup rate mean 103.06 (max 114.97).
+- **SMF:** CPU mean 45.28% (max 51.6%), Memory mean 58.27% (max 66.54%), Session establishment rate mean 116.15 (max 132.47).
+- **UPF:** CPU mean 51.54% (max 58.23%), Memory mean 64.63% (max 71.16%), Buffer utilization mean 39.04% (max 44.61%), Packet drop rate mean 0.13% (max 0.15%), Latency mean 12.81ms (max 14.23ms).
+
+**Anomalies Detected (Isolation Forest, 2% contamination):**
+- **AMF:** Spikes in registration_rate (z-score up to 2.2), n1n2_message_rate (z-score 2.66), and memory_utilization (z-score 2.13).
+- **SMF:** Spikes in session_success_rate (z-score 2.03), pfcp_message_rate (z-score 1.97), and n4_message_rate (z-score 1.87).
+- **UPF:** Spikes in packet_drop_rate (z-score 2.25), buffer_utilization (z-score 1.85), memory_utilization (z-score up to 2.1), and packet_processing_rate (z-score up to 2.26).
+
+## Probable Cause
+
+The core is experiencing a **cascading failure pattern** driven by:
+
+1. **Registration Storms:** The AMF is flooded with UE registration attempts (likely from a site recovery, misbehaving device fleet, or paging misconfiguration). This surge causes authentication_success_rate and ngap_success_rate to sag, and the load propagates to the SMF, degrading session_establishment_rate.
+
+2. **Resource Exhaustion:** The UPF is under memory and buffer pressure (memory up to 71.16%, buffer utilization elevated, packet drop rate at 0.15%), causing session management failures. The SMF is also showing resource exhaustion, indicating the registration storm load is propagating through the system.
+
+3. **Session Management Failures:** The combination of registration storms and resource exhaustion is causing session establishment and modification failures across SMF and UPF, with session establishment rates dropping significantly (up to 23.7% drop). The anomalies confirm this: AMF registration/message rate spikes, SMF PFCP/N4 message rate spikes, and UPF packet processing/buffer utilization spikes with elevated packet drops.
+
+## Recommended Next Action
+
+**1. Immediate – Registration Storm Mitigation (AMF):**
+- Enable or tighten AMF overload control (N1/N2 back-off timers) to spread out re-attempts.
+- Identify if a specific TAC or device fleet is dominating; apply registration rate limiting for that group.
+- Monitor AMF CPU utilization; if it stays above 80% after back-off is in place, scale AMF replicas.
+
+**2. Immediate – Resource Exhaustion Mitigation (UPF/SMF):**
+- **UPF:** Determine if pressure is load-driven (packet_processing_rate up) or leak-driven (load flat, memory climbing). If load-driven, rebalance sessions across UPF instances or scale out. If leak-driven, plan a restart during a maintenance window and capture a heap/profile snapshot first.
+- **SMF:** Check policy_installation_rate; if there's a backlog, clear it or fail over to the secondary PCF.
+
+**3. Session Management Failure Resolution:**
+- Verify N4 association health between SMF and UPF; restart the PFCP association if heartbeats are missing.
+- After addressing resource exhaustion, retry failed sessions.
+
+**4. Validation:**
+- Registration_rate returns to baseline within two back-off cycles; authentication and NGAP success rates recover above 99%.
+- session_success_rate above 99% and tunnel_establishment_rate back to baseline for 15 consecutive minutes; no new alerts.
+- UPF utilization back under 70%, packet_drop_rate under 0.2%, latency_ms within 20% of baseline for 30 consecutive minutes.

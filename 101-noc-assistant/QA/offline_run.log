@@ -1,0 +1,14 @@
+[trace] 15:42:57 plan         offline episode for: 'What is wrong in the core right now?'
+[trace] 15:42:57 tool-call    get_active_alerts({"component": "all"})
+[trace] 15:42:57 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 15:42:57 tool-call    detect_anomalies({"nf": "amf"})
+[trace] 15:42:57 tool-result  {"contamination": 0.02, "anomalies": [{"timestamp": "2025-01-17 11:45:55.775630", "nf": "amf", "deviating_kpis": {"cpu_utilization": {"value": 42.77, "zscore": ...
+[trace] 15:42:57 tool-call    get_kpi_summary({"nf": "amf", "window_minutes": 60})
+[trace] 15:42:57 tool-result  {"window_minutes": 60, "summary": {"amf": {"http_connectivity": {"mean": 1.28, "min": 1.01, "max": 1.42}, "cpu_utilization": {"mean": 38.88, "min": 29.35, "max"...
+[trace] 15:42:57 tool-call    search_runbooks({"query": "registration storm"})
+[trace] 15:42:57 tool-result  {"query": "registration storm", "results": [{"runbook": "registration-storm.md", "score": 13, "content": "# Runbook: Registration Storm (AMF/SMF)\n\n**Alert typ...
+
+=== NOC Assistant ===
+Findings: 7 alerts in feed; lead incident REGISTRATION_STORM (CRITICAL) on AMF from 2025-01-16 16:37:55.775630 to 2025-01-16 16:42:55.775630; KPI movement: cpu_utilization -8.0%, authentication_success_rate -11.7%. Isolation Forest flags 20 anomalous readings on AMF.
+Probable cause: AMF affected by amf_registration_storm.
+Recommended next action: follow registration-storm.md; validate KPIs against the last-hour summary after remediation.

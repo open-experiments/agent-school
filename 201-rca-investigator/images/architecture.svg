@@ -1,0 +1,72 @@
+<svg viewBox="0 0 960 470" width="960" height="470" xmlns="http://www.w3.org/2000/svg">
+<style>
+text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
+.ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
+.c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
+.c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
+.c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
+.c-teal .th { fill: #084D45; } .c-teal .ts { fill: #0E7569; }
+.c-amber rect { fill: #FCF2DF; stroke: #9A6700; stroke-width: 1.25; }
+.c-amber .th { fill: #6B4A00; } .c-amber .ts { fill: #9A6700; }
+.c-green rect { fill: #E5F4E5; stroke: #1F7A33; stroke-width: 1.25; }
+.c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
+.c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
+.c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
+</style>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
+<rect width="960" height="470" fill="#ffffff"/>
+
+<g class="c-gray">
+<rect x="30" y="60" width="200" height="84" rx="8"/>
+<text class="th" x="130" y="92" text-anchor="middle">Anomaly event</text>
+<text class="ts" x="130" y="114" text-anchor="middle">from 101 telemetry tools</text>
+</g>
+<line x1="230" y1="102" x2="294" y2="102" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="262" y="92" text-anchor="middle">1</text>
+
+<g class="c-teal">
+<rect x="300" y="60" width="300" height="110" rx="8"/>
+<text class="th" x="450" y="92" text-anchor="middle">RCA Investigator agent</text>
+<text class="ts" x="450" y="114" text-anchor="middle">Llama Stack harness · sandboxed pod</text>
+<text class="ts" x="450" y="134" text-anchor="middle">Hermes Agent track planned</text>
+</g>
+
+<g class="c-amber">
+<rect x="300" y="210" width="300" height="64" rx="8"/>
+<text class="th" x="450" y="236" text-anchor="middle">retrieval MCP tool</text>
+<text class="ts" x="450" y="256" text-anchor="middle">query logs/metrics by incident window</text>
+</g>
+<line x1="450" y1="170" x2="450" y2="204" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="462" y="192">2</text>
+
+<g class="c-teal">
+<rect x="300" y="310" width="300" height="92" rx="8"/>
+<text class="th" x="450" y="338" text-anchor="middle">RAG service backend (pattern 2)</text>
+<text class="ts" x="450" y="360" text-anchor="middle">FAISS per-NF vector stores</text>
+<text class="ts" x="450" y="380" text-anchor="middle">from llm-rca preprocess pipeline</text>
+</g>
+<line x1="450" y1="274" x2="450" y2="304" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="462" y="294">3</text>
+
+<g class="c-green">
+<rect x="680" y="60" width="250" height="120" rx="8"/>
+<text class="th" x="805" y="90" text-anchor="middle">Tier-2 routed models</text>
+<text class="ts" x="805" y="112" text-anchor="middle">small model: retrieval summaries</text>
+<text class="ts" x="805" y="132" text-anchor="middle">large model: causal write-up</text>
+<text class="ts" x="805" y="152" text-anchor="middle">vLLM · Semantic Router optional</text>
+</g>
+<line x1="600" y1="112" x2="674" y2="112" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="637" y="102" text-anchor="middle">4</text>
+
+<g class="c-gray">
+<rect x="680" y="240" width="250" height="92" rx="8"/>
+<text class="th" x="805" y="272" text-anchor="middle">RCA report artifact</text>
+<text class="ts" x="805" y="294" text-anchor="middle">every claim cites retrieved records</text>
+<text class="ts" x="805" y="314" text-anchor="middle">written to external store</text>
+</g>
+<path d="M600 150 H640 V286 H674" fill="none" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="652" y="230" text-anchor="middle">5</text>
+
+<text class="ts" x="480" y="442" text-anchor="middle">Flow: 1 anomaly in · 2 agent plans retrieval · 3 RAG backend answers · 4 routed inference · 5 cited RCA report out</text>
+</svg>

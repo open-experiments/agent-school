@@ -1,0 +1,25 @@
+[trace] 15:57:39 phase-1      investigate (offline)
+[trace] 15:57:39 tool-call    get_incident({"component": "all"})
+[trace] 15:57:39 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 15:57:39 tool-call    retrieve_evidence({"query": "registration storm", "nf": "amf", "k": 3})
+[trace] 15:57:39 tool-result  {"query": "registration storm", "nf": "amf", "results": [{"id": "alert-0", "nf": "amf", "score": 0.4263, "text": "ALERT REGISTRATION_STORM severity=CRITICAL com...
+[trace] 15:57:39 tool-call    retrieve_evidence({"query": "amf 2025-01-16 16:37", "nf": "amf", "k": 3})
+[trace] 15:57:39 tool-result  {"query": "amf 2025-01-16 16:37", "nf": "amf", "results": [{"id": "alert-0", "nf": "amf", "score": 0.5748, "text": "ALERT REGISTRATION_STORM severity=CRITICAL c...
+[trace] 15:57:39 phase-2      write report (offline template)
+[trace] 15:57:39 artifact     /sessions/ecstatic-determined-mendel/mnt/agent-school/201-rca-investigator/reports/rca_20260612_155739.md
+
+=== RCA Investigator ===
+# RCA: REGISTRATION_STORM on AMF
+
+## Incident
+AMF affected by amf_registration_storm from 2025-01-16 16:37:55.775630 to 2025-01-16 16:42:55.775630 [alert feed].
+
+## Evidence
+KPI movement during window: cpu_utilization -8.0%, authentication_success_rate -11.7% [alert-0]. Correlated records: [alert-0], [amf-796], [amf-769], [alert-0], [alert-5], [amf-240].
+
+## Root cause
+Registration Storm on AMF per alert feed and correlated telemetry.
+
+## Recommended remediation
+Follow the matching runbook in course 101; validate KPIs post-change.
+

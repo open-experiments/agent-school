@@ -1,0 +1,70 @@
+<svg viewBox="0 0 960 480" width="960" height="480" xmlns="http://www.w3.org/2000/svg">
+<style>
+text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
+.ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
+.c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
+.c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
+.c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
+.c-teal .th { fill: #084D45; } .c-teal .ts { fill: #0E7569; }
+.c-amber rect { fill: #FCF2DF; stroke: #9A6700; stroke-width: 1.25; }
+.c-amber .th { fill: #6B4A00; } .c-amber .ts { fill: #9A6700; }
+.c-green rect { fill: #E5F4E5; stroke: #1F7A33; stroke-width: 1.25; }
+.c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
+.c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
+.c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
+</style>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
+<rect width="960" height="480" fill="#ffffff"/>
+
+<g class="c-teal">
+<rect x="30" y="60" width="280" height="120" rx="8"/>
+<text class="th" x="170" y="92" text-anchor="middle">Energy Optimizer agent</text>
+<text class="ts" x="170" y="114" text-anchor="middle">Llama Stack harness</text>
+<text class="ts" x="170" y="134" text-anchor="middle">proposes cell-sleep windows</text>
+<text class="ts" x="170" y="154" text-anchor="middle">from traffic forecasts</text>
+</g>
+
+<g class="c-blue">
+<rect x="390" y="60" width="270" height="120" rx="8"/>
+<text class="th" x="525" y="92" text-anchor="middle">Simulation batch Job (pattern 3)</text>
+<text class="ts" x="525" y="114" text-anchor="middle">JAX DQN cell-sleep model</text>
+<text class="ts" x="525" y="134" text-anchor="middle">airan-energy · K8s Job API</text>
+<text class="ts" x="525" y="154" text-anchor="middle">scoped RBAC</text>
+</g>
+<line x1="310" y1="100" x2="384" y2="100" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="347" y="90" text-anchor="middle">1 submit</text>
+<line x1="384" y1="140" x2="310" y2="140" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<text class="ts" x="347" y="162" text-anchor="middle">2 poll results</text>
+
+<g class="c-teal">
+<rect x="390" y="240" width="270" height="100" rx="8"/>
+<text class="th" x="525" y="272" text-anchor="middle">Sustainability scorer (pattern 2)</text>
+<text class="ts" x="525" y="294" text-anchor="middle">energy-efficiency model on KServe</text>
+<text class="ts" x="525" y="314" text-anchor="middle">fenar/sustainability (HF)</text>
+</g>
+<path d="M170 180 V290 H384" fill="none" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="278" y="280" text-anchor="middle">3 score simulated plan</text>
+
+<g class="c-green">
+<rect x="740" y="60" width="190" height="120" rx="8"/>
+<text class="th" x="835" y="96" text-anchor="middle">LLM endpoint</text>
+<text class="ts" x="835" y="120" text-anchor="middle">vLLM / llama.cpp</text>
+<text class="ts" x="835" y="140" text-anchor="middle">reasoning over forecasts</text>
+</g>
+<line x1="310" y1="80" x2="310" y2="80" stroke="none"/>
+<path d="M170 60 V36 H835 V54" fill="none" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#a)"/>
+
+<g class="c-gray">
+<rect x="740" y="240" width="190" height="100" rx="8"/>
+<text class="th" x="835" y="272" text-anchor="middle">Change plan artifact</text>
+<text class="ts" x="835" y="294" text-anchor="middle">sleep windows + evidence</text>
+<text class="ts" x="835" y="314" text-anchor="middle">simulation attached</text>
+</g>
+<line x1="660" y1="290" x2="734" y2="290" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="697" y="280" text-anchor="middle">4 score ≥ threshold</text>
+<path d="M525 340 V380 H170 V184" fill="none" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<text class="ts" x="348" y="370" text-anchor="middle">score below threshold: revise proposal</text>
+
+<text class="ts" x="480" y="440" text-anchor="middle">Simulate before act: no change plan leaves the agent without a simulation run and an efficiency score attached.</text>
+</svg>

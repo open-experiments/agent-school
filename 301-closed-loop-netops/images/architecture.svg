@@ -1,0 +1,91 @@
+<svg viewBox="0 0 960 540" width="960" height="540" xmlns="http://www.w3.org/2000/svg">
+<style>
+text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
+.ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
+.c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
+.c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
+.c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
+.c-teal .th { fill: #084D45; } .c-teal .ts { fill: #0E7569; }
+.c-amber rect { fill: #FCF2DF; stroke: #9A6700; stroke-width: 1.25; }
+.c-amber .th { fill: #6B4A00; } .c-amber .ts { fill: #9A6700; }
+.c-green rect { fill: #E5F4E5; stroke: #1F7A33; stroke-width: 1.25; }
+.c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
+.c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
+.c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
+</style>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
+<rect width="960" height="540" fill="#ffffff"/>
+
+<g class="c-blue">
+<rect x="240" y="30" width="480" height="64" rx="8"/>
+<text class="th" x="480" y="56" text-anchor="middle">Externalized workflow state</text>
+<text class="ts" x="480" y="78" text-anchor="middle">agents are ephemeral · any stage restartable (12-Factor Agent)</text>
+</g>
+
+<g class="c-gray">
+<rect x="30" y="150" width="150" height="220" rx="8"/>
+<text class="th" x="105" y="180" text-anchor="middle">5G core</text>
+<text class="ts" x="105" y="204" text-anchor="middle">AMF · SMF · UPF</text>
+<text class="ts" x="105" y="226" text-anchor="middle">real autonet</text>
+<text class="ts" x="105" y="246" text-anchor="middle">telemetry + vector</text>
+<text class="ts" x="105" y="266" text-anchor="middle">stores</text>
+</g>
+
+<g class="c-teal">
+<rect x="220" y="150" width="160" height="96" rx="8"/>
+<text class="th" x="300" y="180" text-anchor="middle">Diagnostic</text>
+<text class="ts" x="300" y="202" text-anchor="middle">anomaly + RCA</text>
+<text class="ts" x="300" y="222" text-anchor="middle">LangGraph pod</text>
+</g>
+<line x1="180" y1="198" x2="214" y2="198" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<g class="c-teal">
+<rect x="420" y="150" width="160" height="96" rx="8"/>
+<text class="th" x="500" y="180" text-anchor="middle">Planning</text>
+<text class="ts" x="500" y="202" text-anchor="middle">remediation plan</text>
+<text class="ts" x="500" y="222" text-anchor="middle">impact + resources</text>
+</g>
+<line x1="380" y1="198" x2="414" y2="198" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="397" y="188" text-anchor="middle">A2A</text>
+<g class="c-teal">
+<rect x="620" y="150" width="160" height="96" rx="8"/>
+<text class="th" x="700" y="180" text-anchor="middle">Execution</text>
+<text class="ts" x="700" y="202" text-anchor="middle">playbooks via MCP</text>
+<text class="ts" x="700" y="222" text-anchor="middle">progress + failures</text>
+</g>
+<line x1="580" y1="198" x2="614" y2="198" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="597" y="188" text-anchor="middle">A2A</text>
+<g class="c-teal">
+<rect x="620" y="290" width="160" height="96" rx="8"/>
+<text class="th" x="700" y="320" text-anchor="middle">Validation</text>
+<text class="ts" x="700" y="342" text-anchor="middle">verify KPIs</text>
+<text class="ts" x="700" y="362" text-anchor="middle">rollback on failure</text>
+</g>
+<line x1="700" y1="246" x2="700" y2="284" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M620 338 H300 V252" fill="none" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<text class="ts" x="460" y="328" text-anchor="middle">next cycle</text>
+<line x1="480" y1="94" x2="480" y2="144" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<text class="ts" x="492" y="124">state in/out</text>
+
+<g class="c-blue">
+<rect x="220" y="420" width="560" height="56" rx="8"/>
+<text class="th" x="500" y="442" text-anchor="middle">MCP Gateway</text>
+<text class="ts" x="500" y="462" text-anchor="middle">tool authorization · scoped RBAC for actuation</text>
+</g>
+<line x1="700" y1="386" x2="700" y2="414" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M620 230 H596 V414" fill="none" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="586" y="330" text-anchor="end">actuate via gateway</text>
+
+<g class="c-teal">
+<rect x="820" y="290" width="120" height="186" rx="8"/>
+<text class="th" x="880" y="320" text-anchor="middle">Ansible</text>
+<text class="ts" x="880" y="342" text-anchor="middle">scale AMF</text>
+<text class="ts" x="880" y="362" text-anchor="middle">restart SMF</text>
+<text class="ts" x="880" y="382" text-anchor="middle">rebalance UPF</text>
+<text class="ts" x="880" y="410" text-anchor="middle">(real autonet</text>
+<text class="ts" x="880" y="430" text-anchor="middle">playbooks)</text>
+</g>
+<line x1="780" y1="448" x2="814" y2="448" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+
+<text class="ts" x="480" y="514" text-anchor="middle">NemoClaw track (planned): the same four agents deployed as a NemoClaw blueprint into OpenShell sandboxes</text>
+</svg>

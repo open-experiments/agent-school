@@ -1,0 +1,25 @@
+# 201 RCA Investigator — one image, two roles (12-factor: one codebase):
+#   role "rag":   uvicorn RAG service (Deployment)
+#   role "agent": one-shot RCA run (Job)
+# Needs the 101 dataset, so build from the REPO ROOT:
+#   podman build -f 201-rca-investigator/deploy/Containerfile \
+#     -t agent-school/201-rca-investigator .
+FROM registry.access.redhat.com/ubi9/python-312:latest
+
+WORKDIR /opt/app-root/src
+
+COPY 201-rca-investigator/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY 201-rca-investigator/backend/ backend/
+COPY 201-rca-investigator/agent/ agent/
+COPY 201-rca-investigator/tools/ tools/
+COPY 101-noc-assistant/data/ data/
+
+ENV PYTHONUNBUFFERED=1 \
+    DATA_DIR=/opt/app-root/src/data \
+    REPORT_DIR=/tmp/reports
+
+# Default role: RAG service. The agent Job overrides the command.
+EXPOSE 8201
+CMD ["python", "-m", "uvicorn", "backend.rag_service:app", "--host", "0.0.0.0", "--port", "8201"]

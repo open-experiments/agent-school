@@ -1,0 +1,7 @@
+telemetry MCP tools: ['get_kpi_summary', 'detect_anomalies', 'get_active_alerts']
+get_kpi_summary({'nf': 'smf', 'window_minutes': 30}) -> {"window_minutes": 30, "summary": {"smf": {"cpu_utilization": {"mean": 45.22, "min": 34.09, "max": 50.12}, "memory_utilization": {"mean": 57.24, "min": 43.49, "max": 62.56}, "session_establishment_rat
+detect_anomalies({'nf': 'upf'}) -> {"contamination": 0.02, "anomalies": [{"timestamp": "2025-01-17 11:37:55.775630", "nf": "upf", "deviating_kpis": {"packet_drop_rate": {"value": 0.15, "zscore": 2.25}, "buffer_utilization": {"value": 4
+get_active_alerts({'component': 'UPF'}) -> {"total": 2, "alerts": [{"type": "RESOURCE_EXHAUSTION", "severity": "MAJOR", "component": "UPF", "description": "UPF affected by upf_resource_exhaustion", "start_time": "2025-01-17 02:42:55.775630", "
+runbook MCP tools: ['search_runbooks']
+search_runbooks -> {"query": "session management failure pfcp", "results": [{"runbook": "session-management-failure.md", "score": 21, "content": "# Runbook: Session Management Failure (SMF/UPF)\n\n**Alert type:** `SESSI
+RESULT: PASS

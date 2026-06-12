@@ -1,0 +1,29 @@
+[trace] 15:45:10 tool-call    get_kpi_summary({"nf": "all", "window_minutes": 60})
+[trace] 15:45:10 tool-result  {"window_minutes": 60, "summary": {"amf": {"http_connectivity": {"mean": 1.28, "min": 1.01, "max": 1.42}, "cpu_utilization": {"mean": 38.88, "min": 29.35, "max"...
+[trace] 15:45:13 tool-call    get_active_alerts({"component": "all"})
+[trace] 15:45:13 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 15:45:13 tool-call    detect_anomalies({"nf": "all", "contamination": 0.02})
+[trace] 15:45:13 tool-result  {"contamination": 0.02, "anomalies": [{"timestamp": "2025-01-17 11:47:55.775630", "nf": "smf", "deviating_kpis": {"session_success_rate": {"value": 140.77, "zsc...
+[trace] 15:45:14 tool-call    search_runbooks({"query": "upf resource exhaustion memory utilization high", "top_k": 2})
+[trace] 15:45:14 tool-result  {"query": "upf resource exhaustion memory utilization high", "results": [{"runbook": "resource-exhaustion.md", "score": 20, "content": "# Runbook: Resource Exha...
+[trace] 15:45:19 answer       turn 4
+
+=== NOC Assistant ===
+
+
+**UPF**
+
+The two KPIs that prove it:
+
+1. **memory_utilization** — mean 64.63%, peak 71.16% (highest of all three NFs; SMF peaks at 66.54%, AMF at 58.15%)
+2. **cpu_utilization** — mean 51.54%, peak 58.23% (highest of all three NFs; SMF peaks at 51.6%, AMF at 43.26%)
+
+UPF also has the most anomaly timestamps (8 vs. 6 for AMF and 3 for SMF) and carries active MAJOR alerts for both `RESOURCE_EXHAUSTION` and `SESSION_MANAGEMENT_FAILURE`.
+
+---
+
+**Findings:** UPF is under the most resource pressure, with both CPU and memory utilization significantly higher than AMF and SMF. The high memory and CPU correlate with the `RESOURCE_EXHAUSTION` alert and degraded tunnel establishment and QoS flow success rates.
+
+**Probable cause:** Load-driven resource exhaustion on the UPF — likely due to high packet processing and throughput volumes pushing CPU and memory toward capacity, which cascades into session management failures.
+
+**Recommended next action:** Follow the `resource-exhaustion.md` runbook: (1) confirm the pressure is load-driven (packet_processing_rate and throughput_mbps are elevated), (2) rebalance sessions across UPF instances, and (3) scale out the UPF if needed. Validate that memory drops below 70%, packet_drop_rate stays under 0.2%, and latency returns to baseline for 30 consecutive minutes.

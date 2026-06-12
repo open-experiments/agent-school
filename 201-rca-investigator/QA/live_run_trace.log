@@ -1,0 +1,38 @@
+[trace] 16:03:32 phase-1      investigate with Qwen3.6-35B-A3B
+[trace] 16:03:33 tool-call    get_incident({"component": "all"})
+[trace] 16:03:33 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 16:03:36 tool-call    retrieve_evidence({"query": "AMF registration storm details and root cause", "nf": "amf", "k": 5})
+[trace] 16:03:36 tool-result  {"query": "AMF registration storm details and root cause", "nf": "amf", "results": [{"id": "alert-0", "nf": "amf", "score": 0.6968, "text": "ALERT REGISTRATION_...
+[trace] 16:03:36 tool-call    retrieve_evidence({"query": "authentication success rate drop AMF 2025-01-16 16:37", "nf": "amf", "k": 5})
+[trace] 16:03:36 tool-result  {"query": "authentication success rate drop AMF 2025-01-16 16:37", "nf": "amf", "results": [{"id": "alert-0", "nf": "amf", "score": 0.5836, "text": "ALERT REGIS...
+[trace] 16:03:36 tool-call    retrieve_evidence({"query": "AMF CPU utilization spike registration request volume", "nf": "amf", "k": 5})
+[trace] 16:03:36 tool-result  {"query": "AMF CPU utilization spike registration request volume", "nf": "amf", "results": [{"id": "alert-0", "nf": "amf", "score": 0.5958, "text": "ALERT REGIS...
+[trace] 16:03:36 tool-call    retrieve_evidence({"query": "UE registration attempts surge 2025-01-16 16:37", "nf": "amf", "k": 5})
+[trace] 16:03:36 tool-result  {"query": "UE registration attempts surge 2025-01-16 16:37", "nf": "amf", "results": [{"id": "alert-0", "nf": "amf", "score": 0.2424, "text": "ALERT REGISTRATIO...
+[trace] 16:03:36 phase-2      write report with Qwen3.6-35B-A3B
+[trace] 16:03:42 artifact     /sessions/ecstatic-determined-mendel/mnt/agent-school/201-rca-investigator/reports/rca_20260612_160342.md
+
+=== RCA Investigator ===
+# Root-Cause Analysis: 5G Core Incident
+
+## Incident
+The most severe current incident is a **CRITICAL REGISTRATION_STORM** affecting the Access and Mobility Management Function (AMF) [alert-0]. This event occurred on **2025-01-16 between 16:37:55 and 16:42:55** [alert-0]. The incident resulted in a significant degradation of service, specifically an **11.7% drop in authentication success rate** and an **8.0% drop in CPU utilization** (indicating potential throttling or processing bottlenecks) [alert-0].
+
+While other incidents occurred (such as SMF resource exhaustion and session management failures), the AMF registration storm is classified as CRITICAL severity, whereas other alerts are MAJOR [alert-0, alert-1, alert-2, alert-3, alert-4, alert-5, alert-6].
+
+## Evidence
+1.  **Alert Confirmation**: A CRITICAL alert `REGISTRATION_STORM` was triggered for the AMF component starting at `2025-01-16 16:37:55` [alert-0].
+2.  **KPI Degradation**: During the storm window, the `authentication_success_rate` dropped by approximately 11.73% [alert-0]. The `cpu_utilization` delta was recorded as -8.0%, suggesting the system may have been unable to process requests efficiently or was throttled [alert-0].
+3.  **Pre-Incident Load**: Telemetry data from `amf-276` (timestamp `2025-01-16 16:37:55`, coinciding with the alert start) shows high baseline activity:
+    *   `registration_rate`: 126.53 [amf-276]
+    *   `n1n2_message_rate`: 256.48 [amf-276]
+    *   `authentication_success_rate`: 135.09 [amf-276]
+    *   `cpu_utilization`: 38.55% [amf-276]
+4.  **Surge in Registration Attempts**: Telemetry from `amf-273` (timestamp `2025-01-16 16:34:55`, just prior to the alert) indicates a surge in registration requests:
+    *   `registration_rate`: 133.51 [amf-273]
+    *   `n1n2_message_rate`: 280.54 [amf-273]
+    *   `authentication_success_rate`: 132.59 [amf-273]
+5.  **Contextual Correlation**: The query results for "UE registration attempts surge" confirm that registration rates were elevated (125-133 range) leading up to the incident [amf-273, amf-276, amf-279].
+
+## Root Cause
+The root cause of the CRITICAL incident is a **UE Registration

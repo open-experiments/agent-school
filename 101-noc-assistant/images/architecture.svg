@@ -1,0 +1,75 @@
+<svg viewBox="0 0 960 440" width="960" height="440" xmlns="http://www.w3.org/2000/svg">
+<style>
+text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
+.ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
+.c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
+.c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
+.c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
+.c-teal .th { fill: #084D45; } .c-teal .ts { fill: #0E7569; }
+.c-amber rect { fill: #FCF2DF; stroke: #9A6700; stroke-width: 1.25; }
+.c-amber .th { fill: #6B4A00; } .c-amber .ts { fill: #9A6700; }
+.c-green rect { fill: #E5F4E5; stroke: #1F7A33; stroke-width: 1.25; }
+.c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
+.c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
+.c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
+</style>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
+<rect width="960" height="440" fill="#ffffff"/>
+
+<rect x="30" y="40" width="240" height="330" rx="8" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<text class="th" x="46" y="66">Skills (MCP servers)</text>
+<g class="c-amber">
+<rect x="50" y="84" width="200" height="92" rx="8"/>
+<text class="th" x="150" y="110" text-anchor="middle">noc-telemetry</text>
+<text class="ts" x="150" y="132" text-anchor="middle">KPI summary · Isolation Forest</text>
+<text class="ts" x="150" y="152" text-anchor="middle">alert feed</text>
+</g>
+<g class="c-amber">
+<rect x="50" y="196" width="200" height="72" rx="8"/>
+<text class="th" x="150" y="222" text-anchor="middle">noc-runbooks</text>
+<text class="ts" x="150" y="244" text-anchor="middle">remediation search</text>
+</g>
+<g class="c-gray">
+<rect x="50" y="288" width="200" height="72" rx="8"/>
+<text class="th" x="150" y="314" text-anchor="middle">5gprod dataset (real)</text>
+<text class="ts" x="150" y="336" text-anchor="middle">amf/smf/upf.csv · alerts.json</text>
+</g>
+<line x1="150" y1="268" x2="150" y2="284" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="120" y1="176" x2="120" y2="284" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+
+<g class="c-gray">
+<rect x="330" y="40" width="320" height="330" rx="8"/>
+<text class="th" x="346" y="66">Agent pod (CPU-only)</text>
+</g>
+<g class="c-teal">
+<rect x="350" y="84" width="280" height="120" rx="8"/>
+<text class="th" x="490" y="112" text-anchor="middle">NOC Assistant harness</text>
+<text class="ts" x="490" y="136" text-anchor="middle">plan → tool call → observe → answer</text>
+<text class="ts" x="490" y="156" text-anchor="middle">custom loop · max 6 turns</text>
+<text class="ts" x="490" y="176" text-anchor="middle">offline mode for classrooms</text>
+</g>
+<g class="c-teal">
+<rect x="350" y="226" width="280" height="64" rx="8"/>
+<text class="th" x="490" y="252" text-anchor="middle">OpenClaw track (config-only)</text>
+<text class="ts" x="490" y="272" text-anchor="middle">same MCP tools, product loop</text>
+</g>
+<g class="c-gray">
+<rect x="350" y="306" width="280" height="50" rx="8"/>
+<text class="ts" x="490" y="336" text-anchor="middle">trace: stdout · MLflow (optional)</text>
+</g>
+<line x1="350" y1="130" x2="274" y2="130" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="312" y="120" text-anchor="middle">MCP</text>
+
+<g class="c-green">
+<rect x="710" y="84" width="220" height="120" rx="8"/>
+<text class="th" x="820" y="116" text-anchor="middle">LLM endpoint</text>
+<text class="ts" x="820" y="140" text-anchor="middle">llama.cpp (local dev)</text>
+<text class="ts" x="820" y="160" text-anchor="middle">vLLM on RHOAI (target)</text>
+<text class="ts" x="820" y="180" text-anchor="middle">OpenAI-compatible API</text>
+</g>
+<line x1="650" y1="130" x2="704" y2="130" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="677" y="120" text-anchor="middle">chat + tools</text>
+
+<text class="ts" x="480" y="410" text-anchor="middle">Blueprint mapping: harness in pod · skills behind MCP · model as stateless service · no GPU in the agent pod</text>
+</svg>

@@ -1,0 +1,22 @@
+# 101 NOC Assistant — agent + MCP servers + real dataset in one image.
+# Build from the COURSE directory:
+#   podman build -f deploy/Containerfile -t agent-school/101-noc-assistant .
+FROM registry.access.redhat.com/ubi9/python-312:latest
+
+WORKDIR /opt/app-root/src
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY agent/ agent/
+COPY tools/ tools/
+COPY data/ data/
+COPY runbooks/ runbooks/
+
+# UBI python images run unprivileged; OpenShift assigns a random UID at
+# runtime. Nothing below writes to the image filesystem.
+ENV PYTHONUNBUFFERED=1
+
+# Default: answer one question (override QUESTION via env or args)
+ENV QUESTION="What is wrong in the 5G core right now?"
+CMD ["sh", "-c", "python agent/noc_agent.py \"$QUESTION\""]

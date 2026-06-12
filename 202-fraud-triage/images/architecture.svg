@@ -1,0 +1,80 @@
+<svg viewBox="0 0 960 500" width="960" height="500" xmlns="http://www.w3.org/2000/svg">
+<style>
+text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
+.ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
+.c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
+.c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
+.c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
+.c-teal .th { fill: #084D45; } .c-teal .ts { fill: #0E7569; }
+.c-amber rect { fill: #FCF2DF; stroke: #9A6700; stroke-width: 1.25; }
+.c-amber .th { fill: #6B4A00; } .c-amber .ts { fill: #9A6700; }
+.c-green rect { fill: #E5F4E5; stroke: #1F7A33; stroke-width: 1.25; }
+.c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
+.c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
+.c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
+</style>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
+<rect width="960" height="500" fill="#ffffff"/>
+
+<rect x="30" y="40" width="620" height="330" rx="8" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<text class="th" x="46" y="66">LangGraph state machine (agent pod)</text>
+
+<g class="c-teal">
+<rect x="50" y="90" width="170" height="84" rx="8"/>
+<text class="th" x="135" y="122" text-anchor="middle">score</text>
+<text class="ts" x="135" y="144" text-anchor="middle">call fraud model tool</text>
+</g>
+<line x1="220" y1="132" x2="254" y2="132" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<g class="c-teal">
+<rect x="260" y="90" width="170" height="84" rx="8"/>
+<text class="th" x="345" y="122" text-anchor="middle">context</text>
+<text class="ts" x="345" y="144" text-anchor="middle">billing records lookup</text>
+</g>
+<line x1="430" y1="132" x2="464" y2="132" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<g class="c-teal">
+<rect x="470" y="90" width="160" height="84" rx="8"/>
+<text class="th" x="550" y="122" text-anchor="middle">decide</text>
+<text class="ts" x="550" y="144" text-anchor="middle">clear · hold · escalate</text>
+</g>
+
+<g class="c-blue">
+<rect x="380" y="230" width="250" height="92" rx="8"/>
+<text class="th" x="505" y="262" text-anchor="middle">human approval gate</text>
+<text class="ts" x="505" y="284" text-anchor="middle">LangGraph interrupt()</text>
+<text class="ts" x="505" y="304" text-anchor="middle">graph pauses · resumes on approval</text>
+</g>
+<line x1="550" y1="174" x2="528" y2="224" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="568" y="204" text-anchor="middle">escalate</text>
+
+<g class="c-gray">
+<rect x="60" y="230" width="250" height="92" rx="8"/>
+<text class="th" x="185" y="262" text-anchor="middle">case note + outcome</text>
+<text class="ts" x="185" y="284" text-anchor="middle">score · context · decision · approver</text>
+<text class="ts" x="185" y="304" text-anchor="middle">externalized audit record</text>
+</g>
+<line x1="470" y1="160" x2="316" y2="252" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="392" y="196" text-anchor="middle">clear / hold</text>
+<line x1="380" y1="276" x2="316" y2="276" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
+<text class="ts" x="348" y="266" text-anchor="middle">approved</text>
+
+<g class="c-teal">
+<rect x="700" y="70" width="230" height="100" rx="8"/>
+<text class="th" x="815" y="100" text-anchor="middle">Fraud model service</text>
+<text class="ts" x="815" y="122" text-anchor="middle">revenueassurance RF / Transformer</text>
+<text class="ts" x="815" y="142" text-anchor="middle">KServe on RHOAI · pattern 2</text>
+</g>
+<path d="M135 90 V78 H694" fill="none" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<text class="ts" x="640" y="70" text-anchor="end">tool call</text>
+
+<g class="c-gray">
+<rect x="700" y="210" width="230" height="84" rx="8"/>
+<text class="th" x="815" y="242" text-anchor="middle">Billing dataset (real)</text>
+<text class="ts" x="815" y="264" text-anchor="middle">revenueassurance data on HF</text>
+</g>
+<line x1="815" y1="170" x2="815" y2="204" stroke="#8a8a8a" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<text class="ts" x="827" y="192">trained on</text>
+
+<text class="ts" x="480" y="420" text-anchor="middle">The model scores; the agent reasons; the human approves. Decisions are never the model's alone on the escalate path.</text>
+<text class="ts" x="480" y="446" text-anchor="middle">Blueprint mapping: classic ML as a pattern-2 skill · approval gate addresses the blueprint's open item · full audit record per case</text>
+</svg>

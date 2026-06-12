@@ -1,0 +1,320 @@
+{
+  "generation_time": "2025-01-16T12:01:56.100077",
+  "total_alerts": 7,
+  "alerts_by_type": {
+    "REGISTRATION_STORM": 2,
+    "RESOURCE_EXHAUSTION": 2,
+    "SESSION_MANAGEMENT_FAILURE": 3
+  },
+  "alerts_by_component": {
+    "AMF": 2,
+    "SMF": 3,
+    "UPF": 2
+  },
+  "alerts": [
+    {
+      "type": "REGISTRATION_STORM",
+      "severity": "CRITICAL",
+      "component": "AMF",
+      "description": "AMF affected by amf_registration_storm",
+      "start_time": "2025-01-16 16:37:55.775630",
+      "end_time": "2025-01-16 16:42:55.775630",
+      "metrics_snapshot": {
+        "before": {
+          "http_connectivity": 1.2332146303688922,
+          "cpu_utilization": 39.05341504818977,
+          "memory_utilization": 52.263694826859684,
+          "registration_rate": 130.01424726529876,
+          "session_setup_rate": 107.46664622676818,
+          "authentication_success_rate": 130.5761325141248,
+          "n1n2_message_rate": 257.7765410728756,
+          "registration_success_rate": 129.06574373500098,
+          "slice_selection_success_rate": 130.42106712129458,
+          "nas_security_success_rate": 130.03816018567505,
+          "ngap_success_rate": 127.55743965250636
+        },
+        "during": {
+          "http_connectivity": 1.2332146303688922,
+          "cpu_utilization": 35.93700089361211,
+          "memory_utilization": 52.263694826859684,
+          "registration_rate": 130.01424726529876,
+          "session_setup_rate": 107.46664622676818,
+          "authentication_success_rate": 115.26242169444738,
+          "n1n2_message_rate": 257.7765410728756,
+          "registration_success_rate": 129.06574373500098,
+          "slice_selection_success_rate": 130.42106712129458,
+          "nas_security_success_rate": 130.03816018567505,
+          "ngap_success_rate": 127.55743965250636
+        },
+        "delta_percent": {
+          "http_connectivity": 0.0,
+          "cpu_utilization": -7.9798761535506575,
+          "memory_utilization": 0.0,
+          "registration_rate": 0.0,
+          "session_setup_rate": 0.0,
+          "authentication_success_rate": -11.727802412911014,
+          "n1n2_message_rate": 0.0,
+          "registration_success_rate": 0.0,
+          "slice_selection_success_rate": 0.0,
+          "nas_security_success_rate": 0.0,
+          "ngap_success_rate": 0.0
+        }
+      }
+    },
+    {
+      "type": "REGISTRATION_STORM",
+      "severity": "CRITICAL",
+      "component": "SMF",
+      "description": "SMF affected by amf_registration_storm",
+      "start_time": "2025-01-17 07:12:55.775630",
+      "end_time": "2025-01-17 07:17:55.775630",
+      "metrics_snapshot": {
+        "before": {
+          "cpu_utilization": 33.62600370986668,
+          "memory_utilization": 43.500845606301155,
+          "session_establishment_rate": 93.29185607699235,
+          "n4_message_rate": 150.93469248232662,
+          "session_modification_rate": 47.81848076568794,
+          "policy_installation_rate": 95.45766688962148,
+          "pfcp_message_rate": 184.3792903018621,
+          "session_success_rate": 101.87665620352476
+        },
+        "during": {
+          "cpu_utilization": 33.62600370986668,
+          "memory_utilization": 43.500845606301155,
+          "session_establishment_rate": 76.68378838643645,
+          "n4_message_rate": 150.93469248232662,
+          "session_modification_rate": 47.81848076568794,
+          "policy_installation_rate": 95.45766688962148,
+          "pfcp_message_rate": 184.3792903018621,
+          "session_success_rate": 101.87665620352476
+        },
+        "delta_percent": {
+          "cpu_utilization": 0.0,
+          "memory_utilization": 0.0,
+          "session_establishment_rate": -17.80226955378561,
+          "n4_message_rate": 0.0,
+          "session_modification_rate": 0.0,
+          "policy_installation_rate": 0.0,
+          "pfcp_message_rate": 0.0,
+          "session_success_rate": 0.0
+        }
+      }
+    },
+    {
+      "type": "RESOURCE_EXHAUSTION",
+      "severity": "MAJOR",
+      "component": "UPF",
+      "description": "UPF affected by upf_resource_exhaustion",
+      "start_time": "2025-01-17 02:42:55.775630",
+      "end_time": "2025-01-17 02:47:55.775630",
+      "metrics_snapshot": {
+        "before": {
+          "cpu_utilization": 27.754373414452107,
+          "memory_utilization": 34.478876119337,
+          "packet_processing_rate": 6789.798655697712,
+          "tunnel_establishment_rate": 60.08089611104812,
+          "buffer_utilization": 21.392090881552956,
+          "qos_flow_success_rate": 72.33481071781303,
+          "throughput_mbps": 696.8086848773667,
+          "packet_drop_rate": 0.0684534891611026,
+          "latency_ms": 7.101272075145593
+        },
+        "during": {
+          "cpu_utilization": 27.754373414452107,
+          "memory_utilization": 34.478876119337,
+          "packet_processing_rate": 5595.960519112227,
+          "tunnel_establishment_rate": 60.08089611104812,
+          "buffer_utilization": 20.116815899209243,
+          "qos_flow_success_rate": 72.33481071781303,
+          "throughput_mbps": 696.8086848773667,
+          "packet_drop_rate": 0.0684534891611026,
+          "latency_ms": 5.690316457435175
+        },
+        "delta_percent": {
+          "cpu_utilization": 0.0,
+          "memory_utilization": 0.0,
+          "packet_processing_rate": -17.582820892393713,
+          "tunnel_establishment_rate": 0.0,
+          "buffer_utilization": -5.96143214520195,
+          "qos_flow_success_rate": 0.0,
+          "throughput_mbps": 0.0,
+          "packet_drop_rate": 0.0,
+          "latency_ms": -19.869054484600767
+        }
+      }
+    },
+    {
+      "type": "RESOURCE_EXHAUSTION",
+      "severity": "MAJOR",
+      "component": "SMF",
+      "description": "SMF affected by upf_resource_exhaustion",
+      "start_time": "2025-01-16 12:22:55.775630",
+      "end_time": "2025-01-16 12:27:55.775630",
+      "metrics_snapshot": {
+        "before": {
+          "cpu_utilization": 34.56565874141229,
+          "memory_utilization": 45.22456588714935,
+          "session_establishment_rate": 91.50267615823836,
+          "n4_message_rate": 150.94377638219345,
+          "session_modification_rate": 49.26073433803391,
+          "policy_installation_rate": 93.7634777384454,
+          "pfcp_message_rate": 180.0868430707732,
+          "session_success_rate": 96.20790067231906
+        },
+        "during": {
+          "cpu_utilization": 34.56565874141229,
+          "memory_utilization": 45.22456588714935,
+          "session_establishment_rate": 77.75559794633287,
+          "n4_message_rate": 124.27332674200443,
+          "session_modification_rate": 49.26073433803391,
+          "policy_installation_rate": 93.7634777384454,
+          "pfcp_message_rate": 180.0868430707732,
+          "session_success_rate": 96.20790067231906
+        },
+        "delta_percent": {
+          "cpu_utilization": 0.0,
+          "memory_utilization": 0.0,
+          "session_establishment_rate": -15.023689786003903,
+          "n4_message_rate": -17.66912838635941,
+          "session_modification_rate": 0.0,
+          "policy_installation_rate": 0.0,
+          "pfcp_message_rate": 0.0,
+          "session_success_rate": 0.0
+        }
+      }
+    },
+    {
+      "type": "SESSION_MANAGEMENT_FAILURE",
+      "severity": "MAJOR",
+      "component": "SMF",
+      "description": "SMF affected by smf_session_management_failure",
+      "start_time": "2025-01-16 22:29:55.775630",
+      "end_time": "2025-01-16 22:34:55.775630",
+      "metrics_snapshot": {
+        "before": {
+          "cpu_utilization": 35.52215982467392,
+          "memory_utilization": 43.60936249743776,
+          "session_establishment_rate": 91.06591276731235,
+          "n4_message_rate": 154.36119858281208,
+          "session_modification_rate": 48.84531877677638,
+          "policy_installation_rate": 96.07675543656174,
+          "pfcp_message_rate": 180.0971679854222,
+          "session_success_rate": 99.25431245197626
+        },
+        "during": {
+          "cpu_utilization": 33.41821624882961,
+          "memory_utilization": 43.60936249743776,
+          "session_establishment_rate": 69.45834828461238,
+          "n4_message_rate": 122.10681432951124,
+          "session_modification_rate": 48.84531877677638,
+          "policy_installation_rate": 96.07675543656174,
+          "pfcp_message_rate": 180.0971679854222,
+          "session_success_rate": 99.25431245197626
+        },
+        "delta_percent": {
+          "cpu_utilization": -5.9229044242487205,
+          "memory_utilization": 0.0,
+          "session_establishment_rate": -23.72739022328879,
+          "n4_message_rate": -20.895396349230168,
+          "session_modification_rate": 0.0,
+          "policy_installation_rate": 0.0,
+          "pfcp_message_rate": 0.0,
+          "session_success_rate": 0.0
+        }
+      }
+    },
+    {
+      "type": "SESSION_MANAGEMENT_FAILURE",
+      "severity": "MAJOR",
+      "component": "AMF",
+      "description": "AMF affected by smf_session_management_failure",
+      "start_time": "2025-01-17 00:47:55.775630",
+      "end_time": "2025-01-17 00:52:55.775630",
+      "metrics_snapshot": {
+        "before": {
+          "http_connectivity": 0.9488922323550508,
+          "cpu_utilization": 30.244951134249163,
+          "memory_utilization": 38.44282711287148,
+          "registration_rate": 101.99022424270855,
+          "session_setup_rate": 78.88253751720364,
+          "authentication_success_rate": 101.16330567071932,
+          "n1n2_message_rate": 205.60145907140313,
+          "registration_success_rate": 97.61207629730649,
+          "slice_selection_success_rate": 96.4061439686553,
+          "nas_security_success_rate": 95.65215242364778,
+          "ngap_success_rate": 103.33683235562572
+        },
+        "during": {
+          "http_connectivity": 0.9488922323550508,
+          "cpu_utilization": 30.244951134249163,
+          "memory_utilization": 38.44282711287148,
+          "registration_rate": 101.99022424270855,
+          "session_setup_rate": 64.52092192960228,
+          "authentication_success_rate": 101.16330567071932,
+          "n1n2_message_rate": 205.60145907140313,
+          "registration_success_rate": 97.61207629730649,
+          "slice_selection_success_rate": 96.4061439686553,
+          "nas_security_success_rate": 95.65215242364778,
+          "ngap_success_rate": 103.33683235562572
+        },
+        "delta_percent": {
+          "http_connectivity": 0.0,
+          "cpu_utilization": 0.0,
+          "memory_utilization": 0.0,
+          "registration_rate": 0.0,
+          "session_setup_rate": -18.2063306273194,
+          "authentication_success_rate": 0.0,
+          "n1n2_message_rate": 0.0,
+          "registration_success_rate": 0.0,
+          "slice_selection_success_rate": 0.0,
+          "nas_security_success_rate": 0.0,
+          "ngap_success_rate": 0.0
+        }
+      }
+    },
+    {
+      "type": "SESSION_MANAGEMENT_FAILURE",
+      "severity": "MAJOR",
+      "component": "UPF",
+      "description": "UPF affected by smf_session_management_failure",
+      "start_time": "2025-01-17 06:37:55.775630",
+      "end_time": "2025-01-17 06:42:55.775630",
+      "metrics_snapshot": {
+        "before": {
+          "cpu_utilization": 40.83992437339822,
+          "memory_utilization": 52.26398505602119,
+          "packet_processing_rate": 10199.83095027114,
+          "tunnel_establishment_rate": 84.88359221124843,
+          "buffer_utilization": 29.925129223164657,
+          "qos_flow_success_rate": 100.49847709063083,
+          "throughput_mbps": 989.2744012246251,
+          "packet_drop_rate": 0.10501906450785589,
+          "latency_ms": 9.665805310771793
+        },
+        "during": {
+          "cpu_utilization": 40.83992437339822,
+          "memory_utilization": 52.26398505602119,
+          "packet_processing_rate": 10199.83095027114,
+          "tunnel_establishment_rate": 71.71286478876736,
+          "buffer_utilization": 29.925129223164657,
+          "qos_flow_success_rate": 100.49847709063083,
+          "throughput_mbps": 989.2744012246251,
+          "packet_drop_rate": 0.10501906450785589,
+          "latency_ms": 9.665805310771793
+        },
+        "delta_percent": {
+          "cpu_utilization": 0.0,
+          "memory_utilization": 0.0,
+          "packet_processing_rate": 0.0,
+          "tunnel_establishment_rate": -15.51622295826417,
+          "buffer_utilization": 0.0,
+          "qos_flow_success_rate": 0.0,
+          "throughput_mbps": 0.0,
+          "packet_drop_rate": 0.0,
+          "latency_ms": 0.0
+        }
+      }
+    }
+  ]
+}

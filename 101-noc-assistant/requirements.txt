@@ -1,0 +1,5 @@
+pandas>=2.0
+scikit-learn>=1.4
+openai>=1.30
+fastmcp>=2.0
+# optional: mlflow>=2.14 for trace mirroring (set MLFLOW_TRACKING_URI)

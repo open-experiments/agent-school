@@ -1,0 +1,32 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: rca-investigator
+  labels:
+    app.kubernetes.io/part-of: agent-school
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: rca-investigator
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  source:
+    type: Git
+    git:
+      # adjust to your fork; context is the repo root (image needs 101 data)
+      uri: https://github.com/open-experiments/agent-school.git
+      ref: main
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: 201-rca-investigator/deploy/Containerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: rca-investigator:latest
+  triggers:
+    - type: ConfigChange
+# No git remote yet? Binary build from the repo root:
+#   oc start-build rca-investigator --from-dir=. --follow

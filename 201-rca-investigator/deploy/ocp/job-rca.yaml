@@ -1,0 +1,52 @@
+# One RCA = one Job. The report prints to logs and lands in REPORT_DIR
+# (emptyDir here; mount a PVC if you want reports to outlive the pod).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: rca-run-
+  labels:
+    app.kubernetes.io/name: rca-investigator
+    app.kubernetes.io/part-of: agent-school
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: rca-investigator
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: reports
+          emptyDir: {}
+      containers:
+        - name: agent
+          image: image-registry.openshift-image-registry.svc:5000/agent-school/rca-investigator:latest
+          command: ["python", "agent/rca_agent.py"]
+          args: ["Produce an RCA for the most severe current incident in the 5G core."]
+          env:
+            - name: RAG_URL
+              value: "http://rca-rag:8201"
+            - name: REPORT_DIR
+              value: "/reports"
+            - name: RCA_MAX_TURNS
+              value: "4"
+            - name: RCA_REPORT_MAX_TOKENS
+              value: "1200"
+          envFrom:
+            - secretRef:
+                name: llm-credentials
+          volumeMounts:
+            - name: reports
+              mountPath: /reports
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: "1", memory: 512Mi }
