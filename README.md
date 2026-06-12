@@ -1,5 +1,9 @@
 # Agent School
 
+<p align="center">
+  <img src="./shared/images/agentschool-logo.png" alt="Agent School logo" width="320"/>
+</p>
+
 Agentic AI solution implementation examples for telco, built to run on Red Hat OpenShift AI (RHOAI).
 
 Each example takes a proven experiment from [Telco-AIX](https://github.com/open-experiments/Telco-AIX) and rebuilds it as a governed agent workload, following the solution architecture from our article *Agentic AI Stack Insideout*: the model is a stateless inference service, the harness owns the loop and the tool calls, and the sandbox runtime decides what the agent may touch.
