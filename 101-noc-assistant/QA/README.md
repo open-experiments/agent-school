@@ -12,6 +12,8 @@ Model-as-a-Service (LiteLLM gateway) with model `Qwen3.6-35B-A3B`.
 | 2 | MCP servers via fastmcp client (4 tools invoked) | `mcp_smoke_test.log` | PASS |
 | 3 | Live agent vs MaaS, broad NOC question | `live_run1_trace.log` + `live_run1_maas_wire.jsonl` | PASS |
 | 4 | Live agent vs MaaS, narrow ranking question | `live_run2_trace.log` + `live_run2_maas_wire.jsonl` | PASS |
+| 5 | Live agent vs Rome sandbox (self-hosted vLLM), broad question | `rome_live_run1_trace.log` + `rome_live_run1_wire.jsonl` | PASS |
+| 6 | Live agent vs Rome sandbox, narrow ranking question | `rome_live_run2_trace.log` + `rome_live_run2_wire.jsonl` | PASS |
 
 A fifth test, the live loop against a deterministic mock endpoint (validates
 tool-call plumbing without model variance), runs in CI fashion via the
@@ -50,6 +52,36 @@ earlier identical question ranked AMF worst on registration KPIs. Both are
 defensible readings of the same data; this variance is exactly why Table-3
 of the article keeps deterministic checks (offline mode, mock loop) in the
 matrix alongside live runs.
+
+## Rome sandbox live runs (tests 5-6)
+
+The Option-E reference platform (see `shared/manifests/vllm-rhoai.md`):
+`Kimi-Linear-48B-A3B-Instruct` (AWQ 8-bit) served by upstream vLLM 0.25.1
+at tensor-parallel 2 on a single-node RHOAI 3.5 EA2 cluster with 2x RTX
+4090D, weights staged from in-cluster MinIO via the RHOAI Model Registry.
+Runs executed in-cluster (namespace `agent-school`) against the headless
+predictor service.
+
+Run 1 (broad): 6 tool calls over 3 turns — parallel
+`get_active_alerts`/`get_kpi_summary`/`detect_anomalies`, then two runbook
+searches; final answer identifies the registration storm (CRITICAL),
+resource exhaustion, and session-management failures with KPI deltas.
+Run 2 (narrow): 2 tool calls; ranked NF degradation with cited values.
+
+**Tool-calling finding (caught by this QA, fixed in the platform):** the
+community AWQ quantization shipped a `tokenizer_config.json` missing the
+five Kimi tool-call token definitions (`<|tool_calls_section_begin|>`,
+`<|tool_call_begin|>`, `<|tool_call_argument_begin|>`, `<|tool_call_end|>`,
+`<|tool_calls_section_end|>`, ids 163595-163599). The model emitted
+well-formed tool calls, but they decoded as anonymous
+`<|reserved_token_*|>` markers, so vLLM's `kimi_k2` parser passed them
+through as plain content and the agent loop saw zero tool calls. Fix:
+restore the five `added_tokens_decoder` entries from the upstream
+`moonshotai/Kimi-Linear-48B-A3B-Instruct` tokenizer config (chat templates
+are identical). The serving runtime also needs
+`--enable-auto-tool-choice --tool-call-parser=kimi_k2`. The before/after
+evidence for this failure mode is archived with the full pack at
+`s3://data/qa-rome/track1-evidence.tgz` on the cluster MinIO.
 
 ## Reproduce
 
