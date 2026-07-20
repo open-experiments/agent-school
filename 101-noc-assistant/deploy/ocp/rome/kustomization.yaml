@@ -1,0 +1,27 @@
+# Rome-sandbox overlay for 101 (see shared/manifests/vllm-rhoai.md, Option E).
+# Points the agent at the in-cluster Kimi-Linear endpoint served by vLLM on
+# RHOAI, and generates the llm-credentials Secret the base manifests expect.
+#
+#   oc apply -k deploy/ocp/rome        # ImageStream/BuildConfig + CronJob + Secret
+#   oc start-build noc-assistant --follow
+#   oc create -f deploy/ocp/job-ask.yaml
+#
+# The predictor Service is headless, so the port (:8080) is explicit; the
+# agent is CPU-only (convention #1) and the model runs on the GPUs.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agent-school
+
+resources:
+  - ../imagestream-buildconfig.yaml
+  - ../cronjob-noc-sweep.yaml
+
+secretGenerator:
+  - name: llm-credentials
+    literals:
+      - LLM_BASE_URL=http://kimi-linear-48b-a3b-predictor.telco-aix.svc.cluster.local:8080/v1
+      - LLM_API_KEY=none
+      - LLM_MODEL=kimi-linear-48b-a3b
+
+generatorOptions:
+  disableNameSuffixHash: true

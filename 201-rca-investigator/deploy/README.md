@@ -50,3 +50,25 @@ The cited RCA report prints to the Job logs and is written to `/reports`
   code (see QA/README finding #2 on Qwen hybrid reasoning).
 - Restricted-PSS compliant: non-root, default seccomp, no capabilities,
   no privilege escalation; probes on `/healthz`.
+
+## Rome sandbox (verified in-cluster)
+
+Deployed on the Option-E reference platform (see
+`shared/manifests/vllm-rhoai.md`). The `ocp/rome/` overlay brings up the RAG
+backend and generates `llm-credentials` for the in-cluster Kimi endpoint:
+
+```bash
+oc apply -k deploy/ocp/rome        # ImageStream/BuildConfig + rca-rag + Secret
+oc start-build rca-investigator --follow
+oc rollout status deploy/rca-rag
+oc create -f deploy/ocp/job-rca.yaml
+```
+
+Live run (evidence: `../QA/rome_incluster_rca_job.log`,
+`../QA/rome_incluster_rca_report.md`): the RCA Job resolved `rca-rag:8201`
+across pods, made 5 tool calls into the backend, and produced an RCA with
+49 record citations. The RAG Deployment and the agent Job are separate pods
+on separate lifecycles — the pattern-2 split from the blueprint, running.
+
+(If the internal registry is disabled on a fresh SNO, enable it first — see
+the 101 deploy README's Rome section.)

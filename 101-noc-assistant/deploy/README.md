@@ -62,3 +62,27 @@ oc patch cronjob noc-sweep -p '{"spec":{"suspend":false}}'
   tolerates OpenShift's random UID.
 - Set `LLM_WIRE_LOG=/tmp/wire.jsonl` in the Job env to capture wire-level
   QA evidence from in-cluster runs.
+
+## Rome sandbox (verified in-cluster)
+
+Deployed and run on the curriculum's Option-E reference platform (RHOAI 3.5
+EA2 SNO; see `shared/manifests/vllm-rhoai.md`). The `ocp/rome/` overlay
+generates `llm-credentials` pointing at the in-cluster Kimi-Linear endpoint,
+so no laptop credentials are needed:
+
+```bash
+oc apply -k deploy/ocp/rome        # ImageStream/BuildConfig + suspended CronJob + Secret
+oc start-build noc-assistant --follow
+oc create -f deploy/ocp/job-ask.yaml
+```
+
+Notes from the live run (evidence: `../QA/rome_incluster_noc_job.log`):
+
+- On a fresh SNO the internal image registry ships `managementState:
+  Removed`; enable it once before the first git/binary build:
+  `oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge
+  -p '{"spec":{"managementState":"Managed","storage":{"pvc":{"claim":"image-registry-storage"}}}}'`
+  (create a 100Gi RWO PVC named `image-registry-storage` in
+  `openshift-image-registry` first, backed by the LVMS StorageClass).
+- The agent pod is CPU-only (100m/256Mi request); the model runs on the GPUs
+  in another namespace — convention #1, made literal.
