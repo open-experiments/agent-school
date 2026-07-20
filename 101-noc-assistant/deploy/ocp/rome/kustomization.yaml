@@ -13,8 +13,8 @@ kind: Kustomization
 namespace: agent-school
 
 resources:
-  - ../imagestream-buildconfig.yaml
-  - ../cronjob-noc-sweep.yaml
+  - ../base   # ServiceAccount + ImageStream/BuildConfig + CronJob
+  - mlflow-rbac.yaml
 
 secretGenerator:
   - name: llm-credentials
@@ -22,6 +22,19 @@ secretGenerator:
       - LLM_BASE_URL=http://kimi-linear-48b-a3b-predictor.telco-aix.svc.cluster.local:8080/v1
       - LLM_API_KEY=none
       - LLM_MODEL=kimi-linear-48b-a3b
+
+# Every agent run lands in the RHOAI Experiments tab: the base manifests
+# import this ConfigMap as optional env, the agent's _enable_mlflow() does
+# the workspace-header + ServiceAccount-token handshake (see agent/ and
+# mlflow-rbac.yaml).
+# The ConfigMap is shared workspace-wide (101 and 201 generate identical
+# content); the experiment name defaults per course in the agent code
+# (override with MLFLOW_EXPERIMENT if needed).
+configMapGenerator:
+  - name: mlflow-tracking
+    literals:
+      - MLFLOW_TRACKING_URI=https://mlflow.redhat-ods-applications.svc:8443/mlflow
+      - MLFLOW_WORKSPACE=agent-school
 
 generatorOptions:
   disableNameSuffixHash: true

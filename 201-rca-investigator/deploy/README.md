@@ -15,9 +15,9 @@ Same namespace and `llm-credentials` secret as 101 (the 201 agent also reads
 The image needs the 101 dataset, so the build context is the **repo root**:
 
 ```bash
-oc apply -k ocp/                                   # ImageStream + BuildConfig + RAG service
+oc apply -k ocp/base                               # ImageStream + BuildConfig + RAG service
 oc start-build rca-investigator --from-dir=../.. --follow   # binary build from repo root
-# or git build: edit uri in ocp/imagestream-buildconfig.yaml, then ConfigChange triggers it
+# or git build: edit uri in ocp/base/imagestream-buildconfig.yaml, then ConfigChange triggers it
 ```
 
 Local podman equivalent (from the repo root):
@@ -58,11 +58,17 @@ Deployed on the Option-E reference platform (see
 backend and generates `llm-credentials` for the in-cluster Kimi endpoint:
 
 ```bash
-oc apply -k deploy/ocp/rome        # ImageStream/BuildConfig + rca-rag + Secret
+oc apply -k deploy/ocp/rome        # base + Secret + mlflow-tracking ConfigMap + RBAC
 oc start-build rca-investigator --follow
 oc rollout status deploy/rca-rag
 oc create -f deploy/ocp/job-rca.yaml
 ```
+
+On Rome the overlay also wires **Experiments tracking**: each RCA Job lands
+in the RHOAI dashboard under **Experiments → 201-rca-investigator**, with
+traces for both phases (the small-model tool loop and the large-model
+write-up). Mechanics — workspace header, ServiceAccount-token auth, RBAC —
+are identical to 101; see the 101 deploy README's Experiments section.
 
 Live run (evidence: `../QA/rome_incluster_rca_job.log`,
 `../QA/rome_incluster_rca_report.md`): the RCA Job resolved `rca-rag:8201`

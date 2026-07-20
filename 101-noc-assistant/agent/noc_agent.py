@@ -157,22 +157,59 @@ def run_offline(question: str) -> str:
     )
 
 
+def _enable_mlflow() -> None:
+    """Optional: mirror agent traces to MLflow (RHOAI 3.x Experiments tab).
+
+    Plain MLflow needs only MLFLOW_TRACKING_URI. RHOAI's managed MLflow is
+    workspace-scoped and RBAC-fronted: every request must carry an
+    X-MLFLOW-WORKSPACE header (the data science project name) and a Bearer
+    token authorized on that namespace. Set MLFLOW_WORKSPACE to enable the
+    header shim; the token comes from MLFLOW_TRACKING_TOKEN or, in-cluster,
+    from the pod's ServiceAccount. Tracing must never break the agent loop.
+    """
+    uri = os.environ.get("MLFLOW_TRACKING_URI")
+    if not uri:
+        return
+    workspace = os.environ.get("MLFLOW_WORKSPACE")
+    try:
+        if workspace:
+            if not os.environ.get("MLFLOW_TRACKING_TOKEN"):
+                sa_token = Path("/var/run/secrets/kubernetes.io/serviceaccount/token")
+                if sa_token.exists():
+                    os.environ["MLFLOW_TRACKING_TOKEN"] = sa_token.read_text().strip()
+            # RHOAI's MLflow serves the cluster-internal service cert
+            os.environ.setdefault("MLFLOW_TRACKING_INSECURE_TLS", "true")
+
+            from mlflow.utils import rest_utils
+
+            _orig_http_request = rest_utils.http_request
+
+            def _with_workspace(host_creds, endpoint, method, *a, **kw):
+                headers = dict(kw.pop("extra_headers", None) or {})
+                headers["X-MLFLOW-WORKSPACE"] = workspace
+                return _orig_http_request(host_creds, endpoint, method, *a,
+                                          extra_headers=headers, **kw)
+
+            rest_utils.http_request = _with_workspace
+
+        import mlflow
+
+        mlflow.set_tracking_uri(uri)
+        mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT", "101-noc-assistant"))
+        mlflow.openai.autolog()
+        suffix = f" (workspace {workspace})" if workspace else ""
+        trace("mlflow", f"autolog enabled -> {uri}{suffix}")
+    except Exception as exc:  # tracing must never break the loop
+        trace("mlflow", f"disabled ({exc})")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NOC Assistant agent")
     parser.add_argument("question", nargs="?", default="Why is UPF throughput degraded?")
     parser.add_argument("--offline", action="store_true", help="run scripted episode without an LLM endpoint")
     args = parser.parse_args()
 
-    mlflow_uri = os.environ.get("MLFLOW_TRACKING_URI")
-    if mlflow_uri:
-        try:
-            import mlflow
-
-            mlflow.set_tracking_uri(mlflow_uri)
-            mlflow.openai.autolog()
-            trace("mlflow", f"autolog enabled -> {mlflow_uri}")
-        except Exception as exc:  # tracing must never break the loop
-            trace("mlflow", f"disabled ({exc})")
+    _enable_mlflow()
 
     answer = run_offline(args.question) if args.offline else run_live(args.question)
     print("\n=== NOC Assistant ===")

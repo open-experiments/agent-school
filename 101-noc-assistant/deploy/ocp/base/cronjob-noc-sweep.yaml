@@ -24,6 +24,7 @@ spec:
             app.kubernetes.io/name: noc-assistant
         spec:
           restartPolicy: Never
+          serviceAccountName: noc-assistant
           securityContext:
             runAsNonRoot: true
             seccompProfile:
@@ -37,6 +38,9 @@ spec:
               envFrom:
                 - secretRef:
                     name: llm-credentials
+                - configMapRef:
+                    name: mlflow-tracking
+                    optional: true
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:

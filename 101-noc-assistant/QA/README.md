@@ -14,6 +14,7 @@ Model-as-a-Service (LiteLLM gateway) with model `Qwen3.6-35B-A3B`.
 | 4 | Live agent vs MaaS, narrow ranking question | `live_run2_trace.log` + `live_run2_maas_wire.jsonl` | PASS |
 | 5 | Live agent vs Rome sandbox (self-hosted vLLM), broad question | `rome_live_run1_trace.log` + `rome_live_run1_wire.jsonl` | PASS |
 | 6 | Live agent vs Rome sandbox, narrow ranking question | `rome_live_run2_trace.log` + `rome_live_run2_wire.jsonl` | PASS |
+| 7 | Rome in-cluster run with MLflow Experiments tracking (workspace-scoped, SA-token auth) | `rome_mlflow_tracked_run.log` | PASS |
 
 A fifth test, the live loop against a deterministic mock endpoint (validates
 tool-call plumbing without model variance), runs in CI fashion via the
@@ -82,6 +83,17 @@ are identical). The serving runtime also needs
 `--enable-auto-tool-choice --tool-call-parser=kimi_k2`. The before/after
 evidence for this failure mode is archived with the full pack at
 `s3://data/qa-rome/track1-evidence.tgz` on the cluster MinIO.
+
+## Experiments tracking run (test 7)
+
+In-cluster Job (`noc-mlflow-1`, ServiceAccount `noc-assistant`) with the
+rome overlay's `mlflow-tracking` ConfigMap in env: `_enable_mlflow()` read
+the pod ServiceAccount token, added the `X-MLFLOW-WORKSPACE: agent-school`
+header, and `mlflow.openai.autolog()` exported one trace per LLM call —
+3 traces (3 turns, 6 tool calls) now visible in the RHOAI dashboard under
+**Experiments → 101-noc-assistant** (GenAI view: trace waterfall, token
+usage, latency percentiles, error rate). Log: `rome_mlflow_tracked_run.log`;
+the trace line `mlflow autolog enabled -> ...` is the hook engaging.
 
 ## Reproduce
 

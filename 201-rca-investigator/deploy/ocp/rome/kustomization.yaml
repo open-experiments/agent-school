@@ -15,8 +15,8 @@ kind: Kustomization
 namespace: agent-school
 
 resources:
-  - ../imagestream-buildconfig.yaml
-  - ../rag-service.yaml
+  - ../base   # ServiceAccount + ImageStream/BuildConfig + rca-rag backend
+  - mlflow-rbac.yaml
 
 secretGenerator:
   - name: llm-credentials
@@ -24,6 +24,17 @@ secretGenerator:
       - LLM_BASE_URL=http://kimi-linear-48b-a3b-predictor.telco-aix.svc.cluster.local:8080/v1
       - LLM_API_KEY=none
       - LLM_MODEL=kimi-linear-48b-a3b
+
+# Every RCA run lands in the RHOAI Experiments tab (traces for both phases:
+# the tool-calling investigation and the report write-up). Imported as
+# optional env by job-rca.yaml; auth handshake in agent/_enable_mlflow().
+# Identical content to the 101 rome overlay's ConfigMap (shared name, shared
+# workspace); the experiment name defaults per course in the agent code.
+configMapGenerator:
+  - name: mlflow-tracking
+    literals:
+      - MLFLOW_TRACKING_URI=https://mlflow.redhat-ods-applications.svc:8443/mlflow
+      - MLFLOW_WORKSPACE=agent-school
 
 generatorOptions:
   disableNameSuffixHash: true
