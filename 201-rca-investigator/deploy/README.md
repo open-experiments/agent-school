@@ -70,6 +70,38 @@ traces for both phases (the small-model tool loop and the large-model
 write-up). Mechanics — workspace header, ServiceAccount-token auth, RBAC —
 are identical to 101; see the 101 deploy README's Experiments section.
 
+### LLM-as-a-Judge (self-hosted judge on the platform's own model)
+
+The `evidence-grounding` judge (Experiments → 201-rca-investigator →
+Judges) scores every RCA trace for citation discipline — the course's core
+contract — using **Kimi-Linear itself** as the judge via LiteLLM's
+`hosted_vllm` provider. No external LLM API is involved: the platform
+audits its own agent with its own served model.
+
+Run it with `eval/judge_evidence_grounding.py` (in-cluster Job or any pod
+with the rome env); verdicts land on the traces as `evidence-grounding`
+feedback, visible in each trace's Assessments panel. Verified run: the
+final RCA report trace judged `yes` (all claims cited), intermediate
+tool-loop traces judged `no` — exactly the discrimination you want.
+
+RHOAI 3.5 EA2 findings the script works around (kept here as EA feedback):
+
+1. **Spans must be in the tracking store** for server-side judges, but the
+   MLflow client derives the OTLP ingest URL as `<tracking-uri>/v1/traces`
+   while RHOAI serves that route at the server root — the resulting 404
+   silently falls back to artifact storage. The agents' `_enable_mlflow()`
+   rewrites the host for `/v1/traces` (and patches `rest_store`'s
+   import-time binding of `http_request`).
+2. The dashboard's **"Run judges" server job** is unusable in EA2: the jobs
+   status API 404s under workspace scoping, and job execution ships
+   disabled (`MLFLOW_SERVER_ENABLE_JOB_EXECUTION=false`, operator-pinned).
+3. The `openai:/` judge adapter **ignores `OPENAI_API_BASE`** and hardcodes
+   api.openai.com; use `hosted_vllm:/<model>` + `HOSTED_VLLM_API_BASE`
+   (LiteLLM path) for self-hosted vLLM judges.
+4. The MLflow operator's NetworkPolicy blocks egress to model endpoints on
+   non-443 ports; `spec.networkPolicyAdditionalEgressRules` on the `MLflow`
+   CR opens TCP 8080 to the serving namespace.
+
 Live run (evidence: `../QA/rome_incluster_rca_job.log`,
 `../QA/rome_incluster_rca_report.md`): the RCA Job resolved `rca-rag:8201`
 across pods, made 5 tool calls into the backend, and produced an RCA with

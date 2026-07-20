@@ -187,10 +187,25 @@ def _enable_mlflow() -> None:
             def _with_workspace(host_creds, endpoint, method, *a, **kw):
                 headers = dict(kw.pop("extra_headers", None) or {})
                 headers["X-MLFLOW-WORKSPACE"] = workspace
+                # RHOAI serves the MLflow API under /mlflow but the OTLP
+                # span-ingest route at the server root. Rewriting the host for
+                # /v1/traces keeps span data in the tracking store (required
+                # by server-side LLM judges), instead of the artifact-store
+                # fallback the 404 would otherwise trigger.
+                if endpoint == "/v1/traces" and host_creds.host.rstrip("/").endswith("/mlflow"):
+                    import copy
+
+                    host_creds = copy.copy(host_creds)
+                    host_creds.host = host_creds.host.rstrip("/")[: -len("/mlflow")]
                 return _orig_http_request(host_creds, endpoint, method, *a,
                                           extra_headers=headers, **kw)
 
             rest_utils.http_request = _with_workspace
+            # rest_store binds http_request by name at import time, so patch
+            # its reference too (it carries the /v1/traces span upload).
+            from mlflow.store.tracking import rest_store as _rest_store
+
+            _rest_store.http_request = _with_workspace
 
         import mlflow
 
