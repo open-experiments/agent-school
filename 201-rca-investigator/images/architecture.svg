@@ -1,8 +1,10 @@
-<svg viewBox="0 0 960 470" width="960" height="470" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1180 790" width="1180" height="790" xmlns="http://www.w3.org/2000/svg">
 <style>
 text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
 .ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
+.tz { font-size: 13px; font-weight: 600; fill: #6b6b6b; letter-spacing: .4px; }
+.tl { font-size: 11.5px; font-weight: 500; fill: #6b6b6b; }
 .c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
 .c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
 .c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
@@ -13,60 +15,151 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
 .c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
 .c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
+.arrow { stroke: #8a8a8a; stroke-width: 1.5; fill: none; }
+.dashed { stroke-dasharray: 5 4; }
 </style>
 <defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
-<rect width="960" height="470" fill="#ffffff"/>
+<rect width="1180" height="790" fill="#ffffff"/>
+
+<!-- Zone: External -->
+<rect x="15" y="30" width="210" height="690" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<text class="tz" x="30" y="56">EXTERNAL</text>
 
 <g class="c-gray">
-<rect x="30" y="60" width="200" height="84" rx="8"/>
-<text class="th" x="130" y="92" text-anchor="middle">Anomaly event</text>
-<text class="ts" x="130" y="114" text-anchor="middle">from 101 telemetry tools</text>
-</g>
-<line x1="230" y1="102" x2="294" y2="102" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
-<text class="ts" x="262" y="92" text-anchor="middle">1</text>
-
-<g class="c-teal">
-<rect x="300" y="60" width="300" height="110" rx="8"/>
-<text class="th" x="450" y="92" text-anchor="middle">RCA Investigator agent</text>
-<text class="ts" x="450" y="114" text-anchor="middle">Llama Stack harness · sandboxed pod</text>
-<text class="ts" x="450" y="134" text-anchor="middle">Hermes Agent track planned</text>
+<rect x="30" y="100" width="175" height="120" rx="8"/>
+<text class="th" x="117" y="130" text-anchor="middle">5gprod dataset (via 101)</text>
+<text class="ts" x="117" y="152" text-anchor="middle">logs · metrics · alert feed</text>
+<text class="ts" x="117" y="170" text-anchor="middle">source: Telco-AIX</text>
+<text class="ts" x="117" y="188" text-anchor="middle">llm-rca experiment</text>
 </g>
 
-<g class="c-amber">
-<rect x="300" y="210" width="300" height="64" rx="8"/>
-<text class="th" x="450" y="236" text-anchor="middle">retrieval MCP tool</text>
-<text class="ts" x="450" y="256" text-anchor="middle">query logs/metrics by incident window</text>
+<g class="c-gray">
+<rect x="30" y="260" width="175" height="110" rx="8"/>
+<text class="th" x="117" y="290" text-anchor="middle">Learner laptop</text>
+<text class="ts" x="117" y="312" text-anchor="middle">offline mode: deterministic</text>
+<text class="ts" x="117" y="330" text-anchor="middle">episode, no LLM needed</text>
 </g>
-<line x1="450" y1="170" x2="450" y2="204" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
-<text class="ts" x="462" y="192">2</text>
-
-<g class="c-teal">
-<rect x="300" y="310" width="300" height="92" rx="8"/>
-<text class="th" x="450" y="338" text-anchor="middle">RAG service backend (pattern 2)</text>
-<text class="ts" x="450" y="360" text-anchor="middle">FAISS per-NF vector stores</text>
-<text class="ts" x="450" y="380" text-anchor="middle">from llm-rca preprocess pipeline</text>
-</g>
-<line x1="450" y1="274" x2="450" y2="304" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
-<text class="ts" x="462" y="294">3</text>
 
 <g class="c-green">
-<rect x="680" y="60" width="250" height="120" rx="8"/>
-<text class="th" x="805" y="90" text-anchor="middle">Tier-2 routed models</text>
-<text class="ts" x="805" y="112" text-anchor="middle">small model: retrieval summaries</text>
-<text class="ts" x="805" y="132" text-anchor="middle">large model: causal write-up</text>
-<text class="ts" x="805" y="152" text-anchor="middle">vLLM · Semantic Router optional</text>
+<rect x="30" y="560" width="175" height="110" rx="8"/>
+<text class="th" x="117" y="590" text-anchor="middle">RHOAI MaaS</text>
+<text class="ts" x="117" y="612" text-anchor="middle">LiteLLM gateway ·</text>
+<text class="ts" x="117" y="630" text-anchor="middle">QA'd live path</text>
+<text class="ts" x="117" y="648" text-anchor="middle">(Qwen3.6-35B-A3B)</text>
 </g>
-<line x1="600" y1="112" x2="674" y2="112" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
-<text class="ts" x="637" y="102" text-anchor="middle">4</text>
 
+<!-- Zone: Cluster -->
+<rect x="250" y="30" width="910" height="690" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<text class="tz" x="266" y="56">OPENSHIFT SNO "ROME" · RED HAT OPENSHIFT AI 3.5</text>
+
+<!-- RAG service -->
+<g class="c-amber">
+<rect x="280" y="90" width="270" height="240" rx="8"/>
+<text class="th" x="415" y="118" text-anchor="middle">RAG service — skill backend</text>
+<text class="th" x="415" y="136" text-anchor="middle">(pattern 2)</text>
+<text class="ts" x="415" y="164" text-anchor="middle">Deployment + Service (DNS)</text>
+<text class="ts" x="415" y="188" text-anchor="middle">TF-IDF retriever over 4,330 real</text>
+<text class="ts" x="415" y="206" text-anchor="middle">log / metric / alert records</text>
+<text class="ts" x="415" y="234" text-anchor="middle">FAISS / embeddings =</text>
+<text class="ts" x="415" y="252" text-anchor="middle">backend-only swap</text>
+<text class="ts" x="415" y="280" text-anchor="middle">the index never lives</text>
+<text class="ts" x="415" y="298" text-anchor="middle">inside the agent pod</text>
+</g>
+
+<!-- vLLM -->
+<g class="c-green">
+<rect x="580" y="90" width="240" height="240" rx="8"/>
+<text class="th" x="700" y="118" text-anchor="middle">vLLM on RHOAI (KServe)</text>
+<text class="ts" x="700" y="146" text-anchor="middle">Kimi-Linear-48B-A3B</text>
+<text class="ts" x="700" y="164" text-anchor="middle">dual RTX 4090D</text>
+<text class="ts" x="700" y="192" text-anchor="middle">OpenAI-compatible /v1</text>
+<text class="ts" x="700" y="220" text-anchor="middle">serves the agent</text>
+<text class="ts" x="700" y="238" text-anchor="middle">AND the judge —</text>
+<text class="ts" x="700" y="256" text-anchor="middle">no external API</text>
+</g>
+
+<!-- MLflow -->
+<g class="c-blue">
+<rect x="850" y="90" width="280" height="240" rx="8"/>
+<text class="th" x="990" y="118" text-anchor="middle">MLflow · workspace agent-school</text>
+<text class="ts" x="990" y="146" text-anchor="middle">experiment 201-rca-investigator</text>
+<text class="ts" x="990" y="174" text-anchor="middle">17 traces · tokens · latency</text>
+<text class="ts" x="990" y="192" text-anchor="middle">· error rate</text>
+<text class="ts" x="990" y="220" text-anchor="middle">Judges: evidence-grounding</text>
+<text class="ts" x="990" y="248" text-anchor="middle">verdicts attached to traces</text>
+<text class="ts" x="990" y="266" text-anchor="middle">as assessments</text>
+<text class="ts" x="990" y="294" text-anchor="middle">Develop &amp; train → Experiments</text>
+<text class="ts" x="990" y="312" text-anchor="middle">(GenAI view)</text>
+</g>
+
+<!-- Agent pod -->
 <g class="c-gray">
-<rect x="680" y="240" width="250" height="92" rx="8"/>
-<text class="th" x="805" y="272" text-anchor="middle">RCA report artifact</text>
-<text class="ts" x="805" y="294" text-anchor="middle">every claim cites retrieved records</text>
-<text class="ts" x="805" y="314" text-anchor="middle">written to external store</text>
+<rect x="280" y="400" width="530" height="300" rx="8"/>
+<text class="th" x="296" y="426">RCA agent Job — ephemeral by design (CPU-only · UBI9 · restricted PSS)</text>
 </g>
-<path d="M600 150 H640 V286 H674" fill="none" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#a)"/>
-<text class="ts" x="652" y="230" text-anchor="middle">5</text>
+<g class="c-teal">
+<rect x="300" y="440" width="230" height="110" rx="8"/>
+<text class="th" x="415" y="466" text-anchor="middle">Phase 1 · investigate</text>
+<text class="ts" x="415" y="488" text-anchor="middle">plan retrievals · gather evidence</text>
+<text class="ts" x="415" y="506" text-anchor="middle">RCA_MAX_TURNS budget</text>
+</g>
+<g class="c-teal">
+<rect x="560" y="440" width="230" height="110" rx="8"/>
+<text class="th" x="675" y="466" text-anchor="middle">Phase 2 · write</text>
+<text class="ts" x="675" y="488" text-anchor="middle">every claim cites [record-id]</text>
+<text class="ts" x="675" y="506" text-anchor="middle">report → reports/ (externalized)</text>
+<text class="ts" x="675" y="524" text-anchor="middle">Job exits clean, no state kept</text>
+</g>
+<g class="c-amber">
+<rect x="300" y="580" width="230" height="100" rx="8"/>
+<text class="th" x="415" y="606" text-anchor="middle">Retrieval skill (MCP)</text>
+<text class="ts" x="415" y="628" text-anchor="middle">thin client → RAG Service DNS</text>
+<text class="ts" x="415" y="646" text-anchor="middle">tools/retrieval_mcp.py</text>
+</g>
+<g class="c-teal">
+<rect x="560" y="580" width="230" height="100" rx="8"/>
+<text class="th" x="675" y="606" text-anchor="middle">Trace emitter</text>
+<text class="ts" x="675" y="628" text-anchor="middle">stdout JSON · MLflow autolog</text>
+<text class="ts" x="675" y="646" text-anchor="middle">workspace-header shim</text>
+</g>
 
-<text class="ts" x="480" y="442" text-anchor="middle">Flow: 1 anomaly in · 2 agent plans retrieval · 3 RAG backend answers · 4 routed inference · 5 cited RCA report out</text>
+<!-- Judge -->
+<g class="c-amber">
+<rect x="850" y="440" width="280" height="150" rx="8"/>
+<text class="th" x="990" y="468" text-anchor="middle">LLM-as-a-Judge (eval run)</text>
+<text class="ts" x="990" y="492" text-anchor="middle">eval/judge_evidence_grounding.py</text>
+<text class="ts" x="990" y="512" text-anchor="middle">make_judge · hosted_vllm:/kimi</text>
+<text class="ts" x="990" y="536" text-anchor="middle">client-side runner — EA2 notes</text>
+<text class="ts" x="990" y="554" text-anchor="middle">in deploy/README</text>
+</g>
+
+<!-- Arrows -->
+<line class="arrow" x1="205" y1="150" x2="274" y2="150" marker-end="url(#a)"/>
+<text class="tl" x="240" y="140" text-anchor="middle">①</text>
+<text class="tl" x="240" y="176" text-anchor="middle">index</text>
+
+<line class="arrow" x1="415" y1="440" x2="415" y2="336" marker-end="url(#a)"/>
+<text class="tl" x="475" y="392" text-anchor="middle">② query → top-k evidence</text>
+
+<polyline class="arrow" points="675,440 675,378 700,378 700,336" marker-end="url(#a)"/>
+<text class="tl" x="762" y="372" text-anchor="middle">③ investigate + write calls</text>
+
+<polyline class="arrow" points="790,630 830,630 830,362 925,362 925,336" marker-end="url(#a)"/>
+<text class="tl" x="878" y="380" text-anchor="middle">④ agent traces</text>
+
+<polyline class="arrow" points="880,440 880,410 780,410 780,336" marker-end="url(#a)"/>
+<text class="tl" x="836" y="404" text-anchor="middle">⑤ judged by Kimi</text>
+
+<line class="arrow" x1="1055" y1="440" x2="1055" y2="336" marker-end="url(#a)"/>
+<text class="tl" x="1057" y="392" text-anchor="middle">⑥ verdicts →</text>
+<text class="tl" x="1057" y="408" text-anchor="middle">assessments</text>
+
+<line class="arrow" x1="530" y1="495" x2="556" y2="495" marker-end="url(#a)"/>
+<text class="tl" x="543" y="485" text-anchor="middle">then</text>
+<line class="arrow" x1="415" y1="550" x2="415" y2="576" marker-end="url(#a)"/>
+
+<polyline class="arrow dashed" points="675,700 675,745 117,745 117,674" marker-end="url(#a)"/>
+<text class="tl" x="400" y="738" text-anchor="middle">alt LLM path — same OpenAI-compatible contract</text>
+
+<text class="ts" x="590" y="778" text-anchor="middle">① dataset indexed by the backend, not the agent · ② evidence over Service DNS · ③ two-phase inference · ④ every step traced · ⑤⑥ the platform's own model judges evidence-grounding</text>
 </svg>
