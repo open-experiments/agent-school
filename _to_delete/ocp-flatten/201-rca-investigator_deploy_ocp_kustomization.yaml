@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agent-school
+resources:
+  - imagestream-buildconfig.yaml
+  - rag-service.yaml
+# job-rca.yaml uses generateName; create with `oc create -f`, not apply.
