@@ -15,6 +15,7 @@ namespace: agent-school
 resources:
   - ../base   # ServiceAccount + ImageStream/BuildConfig + CronJob
   - mlflow-rbac.yaml
+  - featurestore-fivegprod.yaml   # Feast store CR (see file header for first-boot note)
 
 secretGenerator:
   - name: llm-credentials

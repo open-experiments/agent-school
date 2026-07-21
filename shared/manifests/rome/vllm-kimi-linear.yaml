@@ -1,0 +1,87 @@
+# Kimi-Linear-48B-A3B (AWQ 8-bit) on KServe with upstream vLLM — as served
+# on Rome (namespace `telco-aix`). Exported from the live cluster.
+#
+# Prereqs:
+# - Weights staged in the MinIO `models` bucket under
+#   kimi-linear-48b-a3b-instruct-awq-8bit/ and an S3 data connection
+#   (dashboard "Connection") pointing at it; put its name in
+#   spec.predictor.model.storage.key below (Rome reuses an existing
+#   connection secret, hence the unrelated-looking name).
+# - GPU sizing:
+#     Rome   (2x RTX 4090D 24G):   tensor-parallel-size=2, nvidia.com/gpu: 2
+#     Venice (RTX PRO 6000 96G):   tensor-parallel-size=1, nvidia.com/gpu: 1
+#                                  and consider raising --max-model-len.
+# - Rome's live runtime wraps the image entrypoint in a small bash shim that
+#   pre-creates writable cache dirs; the env vars below make the default
+#   entrypoint equivalent. Diff against `export-live.sh` output if in doubt.
+#
+# Operational notes (learned on Rome; see shared/manifests/vllm-rhoai.md):
+# - Route needs haproxy.router.openshift.io/timeout: 600s.
+# - First request after pod restart pays ~60-80s Triton autotune.
+# - Tool calling requires --enable-auto-tool-choice --tool-call-parser=kimi_k2.
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: custom-vllm-tp2
+  namespace: telco-aix
+  annotations:
+    openshift.io/display-name: Custom vLLM TP=2 (upstream latest)
+spec:
+  supportedModelFormats:
+    - {name: vLLM, autoSelect: false}
+    - {name: pytorch, version: "2", autoSelect: false}
+  multiModel: false
+  containers:
+    - name: kserve-container
+      image: docker.io/vllm/vllm-openai:latest
+      args:
+        - --model
+        - /mnt/models
+        - --port
+        - "8080"
+        - --served-model-name
+        - "{{.Name}}"
+        - --trust-remote-code
+        - --tensor-parallel-size=2      # Venice: =1 (single 96G card)
+        - --max-model-len=131072
+        - --gpu-memory-utilization=0.90
+        - --enable-auto-tool-choice
+        - --tool-call-parser=kimi_k2
+      env:
+        - {name: HOME, value: /tmp}
+        - {name: XDG_CACHE_HOME, value: /tmp/.cache}
+        - {name: XDG_CONFIG_HOME, value: /tmp/.config}
+        - {name: TRITON_CACHE_DIR, value: /tmp/.triton}
+        - {name: HF_HOME, value: /tmp/hf}
+        - {name: USER, value: vllm}
+        - {name: LOGNAME, value: vllm}
+        - {name: TORCHINDUCTOR_CACHE_DIR, value: /tmp/torchinductor}
+      ports:
+        - {containerPort: 8080, protocol: TCP}
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: kimi-linear-48b-a3b
+  namespace: telco-aix
+  annotations:
+    openshift.io/display-name: Kimi-Linear 48B-A3B (AWQ-8bit, TP=2)
+    serving.kserve.io/deploymentMode: Standard
+    haproxy.router.openshift.io/timeout: 600s
+    modelFormat: vLLM
+spec:
+  predictor:
+    automountServiceAccountToken: false
+    deploymentStrategy: {type: Recreate}
+    minReplicas: 1
+    maxReplicas: 1
+    model:
+      modelFormat: {name: vLLM}
+      protocolVersion: v2
+      runtime: custom-vllm-tp2
+      storage:
+        key: diffusiongemma-26b-a4b-it-fp8-dynamic  # <- your S3 connection secret
+        path: kimi-linear-48b-a3b-instruct-awq-8bit
+      resources:                       # Venice: gpu: 1 each side
+        requests: {cpu: "8", memory: 32Gi, nvidia.com/gpu: "2"}
+        limits: {cpu: "12", memory: 48Gi, nvidia.com/gpu: "2"}

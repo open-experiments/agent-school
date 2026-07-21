@@ -1,0 +1,104 @@
+# In-cluster MinIO object storage (namespace `minio`) — as deployed on Rome.
+#
+# Prereq secret (never committed):
+#   oc create secret generic minio-root -n minio \
+#     --from-literal=MINIO_ROOT_USER=minio-admin \
+#     --from-literal=MINIO_ROOT_PASSWORD='<generate>'
+#
+# After apply, create buckets `models`, `pipelines`, `data` (mc Job pattern:
+# 202-fraud-triage/deploy/ocp/rome/job-make-bucket.yaml — HOME=/tmp is
+# required under the restricted SCC).
+#
+# Storage: Rome uses LVM Storage (`lvms-vg1`) with a 500Gi PVC — adjust
+# storageClassName/size for the target cluster (Venice).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: minio
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: minio}
+  strategy: {type: Recreate}
+  template:
+    metadata:
+      labels: {app: minio}
+    spec:
+      containers:
+        - name: minio
+          image: quay.io/minio/minio:latest
+          args: [server, /data, --console-address, ":9001"]
+          envFrom:
+            - secretRef: {name: minio-root}
+          ports:
+            - {containerPort: 9000, name: api}
+            - {containerPort: 9001, name: console}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: minio-data}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  selector: {app: minio}
+  ports:
+    - {name: api, port: 9000, targetPort: 9000}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-console
+  namespace: minio
+spec:
+  selector: {app: minio}
+  ports:
+    - {name: console, port: 9001, targetPort: 9001}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: minio-api
+  namespace: minio
+spec:
+  host: null  # <- defaults to minio-api.apps.<cluster-domain>
+  to: {kind: Service, name: minio}
+  port: {targetPort: api}
+  tls: {termination: edge, insecureEdgeTerminationPolicy: Redirect}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: minio-console
+  namespace: minio
+spec:
+  host: null
+  to: {kind: Service, name: minio-console}
+  port: {targetPort: console}
+  tls: {termination: edge, insecureEdgeTerminationPolicy: Redirect}

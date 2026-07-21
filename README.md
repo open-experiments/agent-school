@@ -25,7 +25,7 @@ That replays a scripted agent episode over the real 5G core dataset, printing ev
 |--------|---------|--------|-------------------|-------------------------|--------------------------------|-----------------|
 | [101](./101-noc-assistant/) | NOC Assistant | **working, QA-passed** | 5gprod, telco-sme | custom loop (OpenAI-compatible) | [OpenClaw](./101-noc-assistant/harness-tracks/openclaw.md) | Agent loop, MCP tools, vLLM serving, tracing |
 | [201](./201-rca-investigator/) | RCA Investigator | **working, QA-passed** | llm-rca | custom two-phase loop (OpenAI-compatible) | Hermes Agent (planned) | RAG as a skill backend, small-vs-large model routing |
-| [202](./202-fraud-triage/) | Fraud Triage | planned | revenueassurance | LangGraph | — | Classic ML model as a tool, human-approval gate |
+| [202](./202-fraud-triage/) | Fraud Triage | **in progress** — model pipeline live on Rome | revenueassurance | LangGraph | — | Classic ML model as a tool, human-approval gate |
 | [301](./301-closed-loop-netops/) | Closed-Loop NetOps | planned | autonet, agentic | LangGraph + A2A | NemoClaw + OpenShell | Multi-agent closed loop, ephemeral workers, externalized state |
 | [302](./302-energy-optimizer/) | Energy Optimizer | planned | airan-energy, sustainability | Llama Stack | — | Simulate-before-act, batch job dispatch |
 
@@ -76,7 +76,7 @@ agent-school/
 │   ├── backend/              #   pattern-2 skill backend (FastAPI RAG service)
 │   ├── deploy/  QA/  images/ #   as above (Deployment+Service for the backend)
 │   └── reports/              #   cited RCA artifacts from QA runs
-├── 202-fraud-triage/         # planned: solution README + architecture
+├── 202-fraud-triage/         # in progress: pipeline/ + deploy/ live on Rome, agent next
 ├── 301-closed-loop-netops/   # planned: solution README + architecture
 ├── 302-energy-optimizer/     # planned: solution README + architecture
 └── shared/                   # endpoint options, OCP secret template

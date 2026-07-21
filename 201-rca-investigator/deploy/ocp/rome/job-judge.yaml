@@ -1,0 +1,51 @@
+# One-shot: run the evidence-grounding LLM judge over the latest RCA
+# traces, client-side (the RHOAI 3.5 EA2 dashboard's server-side judge
+# runner 404s/401s under workspace scoping — findings in
+# ../../README.md and eval/judge_evidence_grounding.py).
+#
+# The judge model is the cluster's own Kimi-Linear via LiteLLM's
+# hosted_vllm provider — no external API.
+#
+# Prereq ConfigMap:
+#   oc create configmap rca-eval-src -n agent-school \
+#     --from-file=judge_evidence_grounding.py=../../eval/judge_evidence_grounding.py
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rca-judge
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 900
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: rca-investigator   # passes MLflow's SubjectAccessReview
+      volumes:
+        - name: src
+          configMap: {name: rca-eval-src}
+      containers:
+        - name: judge
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}   # MLFLOW_TRACKING_URI + workspace
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - {name: HOSTED_VLLM_API_BASE,
+               value: "http://kimi-linear-48b-a3b-predictor.telco-aix.svc.cluster.local:8080/v1"}
+            - {name: HOSTED_VLLM_API_KEY, value: none}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q mlflow litellm &&
+              python3 /src/judge_evidence_grounding.py --latest 3
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

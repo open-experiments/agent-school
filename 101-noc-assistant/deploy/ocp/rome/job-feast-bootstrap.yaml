@@ -1,0 +1,82 @@
+# One-shot: bootstrap the fivegprod feature store content — engineer the
+# offline parquet, apply the feature definitions, push the online vectors.
+# This is the Job form of the flow feature_repo/README.md describes; it
+# targets the store files directly on the PVCs (EA2: remote apply does not
+# persist).
+#
+# Prereq ConfigMap (the feature_repo sources):
+#   oc create configmap feast-pipeline-src -n agent-school \
+#     --from-file=features.py=../../../feature_repo/features.py \
+#     --from-file=ingest.py=../../../feature_repo/ingest.py \
+#     --from-file=train_anomaly.py=../../../training/train_anomaly.py
+#
+# Sequence inside the Job: parquet first (feast apply needs it for schema
+# inference), then apply, then engineer+push online.
+#
+# Follow-ups, same template, different command:
+# - train:  python train_anomaly.py    (add the mlflow-tracking envFrom;
+#           needs the noc-assistant-mlflow RBAC; MODEL_OUT on emptyDir)
+# - score:  python ingest.py --score <bundle>   (traced inference; pushes
+#           anomaly_score/flag online — the verdicts 301's Diagnostic reads)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: feast-bootstrap
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 1800
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: feast-pipeline-src}
+        - name: reg
+          persistentVolumeClaim: {claimName: feast-fivegprod-registry}
+        - name: onl
+          persistentVolumeClaim: {claimName: feast-fivegprod-online}
+      containers:
+        - name: feast
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - {name: DATASET_SOURCE, value: hf}   # pull fenar/5gcore-prod
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              pip install -q feast pandas pyarrow "dask[dataframe]" scikit-learn
+              mkdir -p /tmp/repo/data && cp /src/*.py /tmp/repo/
+              REG=$(find /feast-registry -name 'registry*.db' | head -1)
+              ONL=$(find /feast-online -name '*.db' | head -1)
+              cat > /tmp/repo/feature_store.yaml <<EOF
+              project: fivegprod
+              provider: local
+              registry:
+                path: ${REG}
+                cache_ttl_seconds: 0
+              online_store:
+                type: sqlite
+                path: ${ONL}
+              offline_store:
+                type: file
+              entity_key_serialization_version: 3
+              EOF
+              cd /tmp/repo
+              export FEATURE_DATA_DIR=data
+              python ingest.py --no-push      # parquet first (apply needs schema)
+              feast apply
+              python ingest.py                # engineer + push latest online
+          volumeMounts:
+            - {name: src, mountPath: /src}
+            - {name: reg, mountPath: /feast-registry}
+            - {name: onl, mountPath: /feast-online}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

@@ -1,0 +1,41 @@
+# Data Science Pipelines application for the agent-school workspace.
+#
+# Backing object store is the cluster's MinIO (namespace `minio`): create
+# the bucket and the credentials secret first (see job-make-bucket.yaml and
+# pipeline/README.md — the secret copies MINIO_ROOT_USER/PASSWORD from
+# minio-root into `dspa-minio-creds` with keys accesskey/secretkey).
+#
+# Verified on Rome (RHOAI 3.5 EA2): all DSPA conditions Ready; pipeline
+# fraud-brf-training runs green end-to-end (see pipeline/README.md).
+apiVersion: datasciencepipelinesapplications.opendatahub.io/v1
+kind: DataSciencePipelinesApplication
+metadata:
+  name: dspa
+  namespace: agent-school
+spec:
+  dspVersion: v2
+  apiServer:
+    enableSamplePipeline: false
+    # Trust the OpenShift service CA (managed MLflow's serving cert).
+    cABundle:
+      configMapName: openshift-service-ca.crt
+      configMapKey: service-ca.crt
+  # EA2 workaround: the DSP MLflow plugin's task-level handler fails x509
+  # against the managed MLflow (does not honor the CA bundle) and fails
+  # every component with it. Disable until fixed — the pipeline's register
+  # step logs to MLflow directly, so lineage is unaffected. Also set
+  # DSCInitialization spec.trustedCABundle.customCABundle to the service
+  # CA; that fixes the run-level handler and is the right global trust
+  # anchor either way. Details: ../../../pipeline/README.md.
+  mlflow:
+    integrationMode: DISABLED
+  objectStorage:
+    externalStorage:
+      host: minio.minio.svc.cluster.local:9000
+      scheme: http
+      region: minio
+      bucket: dspa-agent-school
+      s3CredentialsSecret:
+        secretName: dspa-minio-creds
+        accessKey: accesskey
+        secretKey: secretkey

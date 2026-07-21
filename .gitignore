@@ -8,3 +8,10 @@ keys/
 __pycache__/
 *.pyc
 .venv/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# session scratch (git-lock/tmp files parked here; safe to delete)
+_to_delete/
