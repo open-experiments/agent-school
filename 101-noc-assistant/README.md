@@ -14,17 +14,76 @@ A single agent that answers NOC questions about a 5G core: it inspects telemetry
 1. The agent loop: plan, call a tool, observe, repeat, answer.
 2. Tools as MCP servers: the agent's capabilities live outside the agent.
 3. The model as a stateless service: any OpenAI-compatible endpoint works, vLLM on RHOAI is the reference path.
-4. Tracing: every step is printed as a structured trace and mirrored to MLflow when configured.
+4. The data pipeline as a platform citizen: features in Feast, training in Experiments, the model versioned in a registry — not buried in a notebook.
+5. Tracing: every step — agent turns *and* classical-model inference — lands in MLflow.
 
 ## Architecture
 
 ![101 NOC Assistant architecture](./images/architecture.png)
 
-The agent pod is a CPU-only loop. Its capabilities live outside it as two MCP
-servers reading the real 5gprod dataset, and the model is whatever
-OpenAI-compatible endpoint you point at: llama.cpp for local dev, vLLM on
-RHOAI as the target. The OpenClaw track swaps the loop without touching the
-tools.
+Read the drawing as three zones, because that is the packaging decision the
+whole blueprint turns on:
+
+- **The agent pod** ships only what the course owns: the harness loop, the
+  two MCP skill servers, the runbooks, and a CSV copy of the dataset as the
+  offline fallback. CPU-only, UBI9, restricted PSS, no secrets baked in.
+  This is Agent-as-a-Workload: the pod is disposable, everything stateful
+  lives behind a service.
+- **Inside the cluster** the pod consumes platform services it does not
+  carry: the Feast online store for live network state (⑤), vLLM for
+  reasoning (⑥), MLflow for traces (⑦). The feature pipeline Jobs in the
+  same zone keep those services truthful (①–④).
+- **Outside the cluster** sit the published dataset the pipeline pulls
+  from, the optional MaaS endpoint (same OpenAI-compatible contract, so
+  swapping is a config change), and the learner laptop that runs the whole
+  course offline with zero cluster access.
+
+## The data pipeline, agentified
+
+The [Telco-AIX](https://github.com/open-experiments/Telco-AIX) experiments
+did this flow by hand in notebooks. Here it is the platform's job, and the
+RHOAI dashboard shows each stage. All snapshots below are live captures
+from the Rome cluster, not mockups.
+
+**1 — Timeseries features in Feast.** `feature_repo/ingest.py` pulls
+[fenar/5gcore-prod](https://huggingface.co/datasets/fenar/5gcore-prod),
+engineers 1-hour rolling mean/min/max per KPI, lands the offline parquet,
+and pushes the latest vector per NF online. One feature view per NF, one
+`noc_telemetry` feature service:
+
+![Feature views on RHOAI](./images/rhoai/feature-views.png)
+
+**2 — Training as an experiment.** `training/train_anomaly.py` retrieves
+the same features point-in-time from the offline store (no
+training/serving skew by construction), trains an IsolationForest per NF,
+and validates against the labeled alert windows in `data/alerts.json`:
+
+![Training runs](./images/rhoai/experiments-runs.png)
+
+**3 — A versioned model, not a pickle in a bucket.** The run logs one
+pyfunc model that routes each row to its NF's forest, and registers it as
+`5gprod-anomaly-isolationforest`. Lineage — dataset, feature source,
+window, split — is all in the params:
+
+![Model overview](./images/rhoai/model-overview.png)
+
+**4 — Traced inference.** `ingest.py --score` runs the pipeline's anomaly
+inference with the registered bundle and pushes `anomaly_score` /
+`anomaly_flag` back online. Every scoring call is traced against the
+logged model — the classical model gets the same observability as the
+GenAI loop:
+
+![Model traces](./images/rhoai/model-traces.png)
+
+**5 — The agent serves the result.** With `FEAST_ONLINE_URL` set,
+`tools/lib.py` answers `get_kpi_summary` from the online 1h aggregates and
+`detect_anomalies` from the pipeline's model verdicts. Without it, the
+bundled CSVs serve the same shapes — laptop learners need no cluster.
+
+Cluster manifests for the pipeline Jobs live in [deploy/](./deploy/);
+RHOAI 3.5 EA2 operational findings (registry persistence, PVC access
+pattern, dashboard labels) are in
+[feature_repo/README.md](./feature_repo/README.md).
 
 ## Blueprint mapping
 
@@ -32,9 +91,11 @@ tools.
 |---------------------|------|
 | Harness | `agent/noc_agent.py` custom tool-calling loop (any OpenAI-compatible endpoint) |
 | Model | your endpoint via `LLM_BASE_URL` (vLLM / RHOAI MaaS) |
-| Skills (thin clients) | `tools/lib.py` functions (Isolation Forest, alert feed, runbooks) |
+| Skills (thin clients) | `tools/lib.py` functions (Feast online client or CSVs, alert feed, runbooks) |
 | Skill exposure | `tools/telemetry_mcp.py`, `tools/runbook_mcp.py` (MCP servers) |
-| Observability | stdout trace + optional MLflow |
+| Feature store | Feast `fivegprod` (`feature_repo/`) — offline training set + online serving |
+| Model lifecycle | MLflow Experiments → logged model → registered versions (`training/`) |
+| Observability | stdout trace + MLflow traces (agent loop and pipeline inference) |
 
 The classic-AI-then-GenAI chaining mirrors the source experiment: Isolation
 Forest finds the anomalies, the alert feed scopes the incident, and the
@@ -87,8 +148,18 @@ bottom. The same skills run unchanged under product harnesses:
 ## Deploy on OpenShift
 
 UBI9 image, restricted-PSS manifests, Job for one-shot questions and a
-suspended CronJob for the continuous sweep: see [deploy/](./deploy/).
+suspended CronJob for the continuous sweep, plus the feature-pipeline Jobs
+and the `rome` overlay wiring (Feast + MLflow endpoints): see
+[deploy/](./deploy/).
 
 ## Where this goes next
 
-In 201 the runbook lookup becomes a real RAG skill backend; in 301 this same diagnostic capability becomes one worker in a closed loop. The agent code barely changes; the platform around it grows. That is the point.
+The 101 agent *detects and explains*. In 201 the runbook lookup becomes a
+real RAG skill backend and an LLM judge scores the agent's evidence
+grounding. In 301 this same diagnostic capability becomes one worker in a
+closed loop: the anomaly verdict this pipeline pushes online is handed to
+an external MCP reasoning step for remediation-flow determination, and a
+second agent executes the fix — the
+[autonet](https://github.com/open-experiments/Telco-AIX/tree/main/autonet)
+pattern. The agent code barely changes; the platform around it grows. That
+is the point.
