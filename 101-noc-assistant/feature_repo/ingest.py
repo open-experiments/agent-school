@@ -61,6 +61,52 @@ def engineer(nf: str, df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def _enable_model_tracing():
+    """Optional: emit an MLflow trace per scoring call, linked to the
+    anomaly-detector LoggedModel — the model's Traces tab in the RHOAI
+    dashboard then shows every pipeline inference run (inputs, score, flag,
+    latency) with model-version lineage. Needs the MLFLOW_* envs of the
+    rome overlay; silently disabled elsewhere. Never breaks the pipeline."""
+    if not os.environ.get("MLFLOW_TRACKING_URI"):
+        return None
+    try:
+        ws = os.environ.get("MLFLOW_WORKSPACE")
+        if ws:
+            if not os.environ.get("MLFLOW_TRACKING_TOKEN"):
+                sa = Path("/var/run/secrets/kubernetes.io/serviceaccount/token")
+                if sa.exists():
+                    os.environ["MLFLOW_TRACKING_TOKEN"] = sa.read_text().strip()
+            os.environ.setdefault("MLFLOW_TRACKING_INSECURE_TLS", "true")
+            from mlflow.utils import rest_utils
+
+            _orig = rest_utils.http_request
+
+            def _shim(host_creds, endpoint, method, *a, **kw):
+                headers = dict(kw.pop("extra_headers", None) or {})
+                headers["X-MLFLOW-WORKSPACE"] = ws
+                if endpoint == "/v1/traces" and host_creds.host.rstrip("/").endswith("/mlflow"):
+                    import copy
+
+                    host_creds = copy.copy(host_creds)
+                    host_creds.host = host_creds.host.rstrip("/")[: -len("/mlflow")]
+                return _orig(host_creds, endpoint, method, *a, extra_headers=headers, **kw)
+
+            rest_utils.http_request = _shim
+            from mlflow.store.tracking import rest_store
+
+            rest_store.http_request = _shim
+        import mlflow
+
+        mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+        mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT", "5gprod-anomaly"))
+        mlflow.set_active_model(name=os.environ.get("LOGGED_MODEL_NAME", "anomaly-detector"))
+        print("[trace] scoring traces -> LoggedModel 'anomaly-detector'")
+        return mlflow
+    except Exception as exc:
+        print(f"[trace] disabled ({exc})")
+        return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--score", metavar="MODEL_BUNDLE",
@@ -79,16 +125,29 @@ def main() -> None:
         print(f"[ingest] {nf}: {len(eng)} rows -> {DATA_DIR}/{nf}_features.parquet")
 
     if args.score:
+        import contextlib
+
         import joblib
 
+        mlf = _enable_model_tracing()
         bundle = joblib.load(args.score)
         for nf, eng in frames.items():
             model, cols, threshold = bundle[nf]
             latest = eng.iloc[[-1]][cols]
-            score = float(model.decision_function(latest)[0])
+            span_cm = (mlf.start_span(name=f"anomaly-inference/{nf}")
+                       if mlf else contextlib.nullcontext())
+            with span_cm as span:
+                score = float(model.decision_function(latest)[0])
+                flag = int(score < threshold)
+                if span is not None:
+                    span.set_inputs({"nf": nf,
+                                     "event_timestamp": str(eng["event_timestamp"].iloc[-1]),
+                                     "features": latest.iloc[0].round(3).to_dict()})
+                    span.set_outputs({"anomaly_score": score, "anomaly_flag": flag,
+                                      "threshold": threshold})
             eng.iloc[-1, eng.columns.get_loc("anomaly_score")] = score
-            eng.iloc[-1, eng.columns.get_loc("anomaly_flag")] = int(score < threshold)
-            print(f"[score] {nf}: anomaly_score={score:.4f} flag={int(score < threshold)}")
+            eng.iloc[-1, eng.columns.get_loc("anomaly_flag")] = flag
+            print(f"[score] {nf}: anomaly_score={score:.4f} flag={flag}")
 
     if args.no_push:
         return
