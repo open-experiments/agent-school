@@ -1,0 +1,54 @@
+# Two grants the fraud pipeline needs on Rome.
+#
+# 1. The KFP API server sits behind kube-rbac-proxy, which authorizes each
+#    request with a SubjectAccessReview on
+#    datasciencepipelinesapplications/api (name `dspa`). Any client that
+#    talks to https://ds-pipeline-dspa...:8443 with a ServiceAccount token
+#    needs this Role — the in-cluster import Job uses the `default` SA.
+#    (Port 8888 is NetworkPolicy-restricted to DSP's own pods; 8443 is the
+#    supported path.)
+#
+# 2. The pipeline's `register` step logs to the RHOAI managed MLflow, which
+#    authorizes with a SubjectAccessReview against the workspace named in
+#    X-MLFLOW-WORKSPACE. Workflow pods run as `pipeline-runner-dspa`, so it
+#    gets the same namespace-scoped `edit` binding 101/201 use.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dspa-api-access
+  namespace: agent-school
+rules:
+  - apiGroups: [datasciencepipelinesapplications.opendatahub.io]
+    resources: [datasciencepipelinesapplications/api]
+    resourceNames: [dspa]
+    verbs: [get, create, update, delete, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default-dspa-api-access
+  namespace: agent-school
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dspa-api-access
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: agent-school
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pipeline-runner-mlflow
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+  - kind: ServiceAccount
+    name: pipeline-runner-dspa
+    namespace: agent-school

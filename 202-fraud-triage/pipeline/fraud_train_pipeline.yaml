@@ -121,10 +121,10 @@ deploymentSpec:
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
-          \ 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib'  &&  python3\
-          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.0' '--no-deps'\
-          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
-          \n"
+          \ 'pyarrow==17.0.0' 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.17.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -149,9 +149,7 @@ deploymentSpec:
           \ pred)),\n        \"fraud_f1\": float(f1_score(y, pred)),\n        \"roc_auc\"\
           : float(roc_auc_score(y, proba)),\n        \"test_rows\": int(len(y)),\n\
           \    }\n    for k, v in result.items():\n        metrics.log_metric(k, v)\n\
-          \    print(\"[evaluate] \" + \" \".join(f\"{k}={v:.4f}\" for k, v in result.items()\n\
-          \                                   if isinstance(v, float)))\n    return\
-          \ result\n\n"
+          \    print(\"[evaluate]\", result)\n    return result\n\n"
         image: registry.access.redhat.com/ubi9/python-311:latest
     exec-load-data:
       container:
@@ -166,9 +164,9 @@ deploymentSpec:
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
-          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.17.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
-          $0\" \"$@\"\n"
+          \ 'pyarrow==17.0.0'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.17.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -200,9 +198,9 @@ deploymentSpec:
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
-          \ 'scikit-learn==1.5.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
-          \ 'kfp==2.17.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
-          3.9\"' && \"$0\" \"$@\"\n"
+          \ 'pyarrow==17.0.0' 'scikit-learn==1.5.2'  &&  python3 -m pip install --quiet\
+          \ --no-warn-script-location 'kfp==2.17.0' '--no-deps' 'typing-extensions>=3.7.4,<5;\
+          \ python_version<\"3.9\"' && \"$0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -223,8 +221,7 @@ deploymentSpec:
           \    train, test = train_test_split(\n        df, test_size=test_fraction,\
           \ stratify=df[\"Fraud\"], random_state=42)\n    train.to_parquet(train_data.path)\n\
           \    test.to_parquet(test_data.path)\n    print(f\"[preprocess] train={len(train)}\
-          \ test={len(test)} \"\n          f\"(fraud {train['Fraud'].mean():.4f}/{test['Fraud'].mean():.4f})\"\
-          )\n\n"
+          \ test={len(test)}\")\n\n"
         image: registry.access.redhat.com/ubi9/python-311:latest
     exec-register:
       container:
@@ -239,10 +236,10 @@ deploymentSpec:
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
-          \ 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib' 'mlflow==3.4.0'\
-          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.17.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
-          $0\" \"$@\"\n"
+          \ 'pyarrow==17.0.0' 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib'\
+          \ 'mlflow==3.4.0'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.17.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)
@@ -258,7 +255,7 @@ deploymentSpec:
           \ dict,\n             dataset_url: str,\n             n_estimators: int,\n\
           \             mlflow_tracking_uri: str,\n             mlflow_workspace:\
           \ str,\n             registered_name: str = \"revassurance-fraud-brf\"):\n\
-          \    \"\"\"Log the run + model to RHOAI managed MLflow and register a version.\n\
+          \    \"\"\"Log run + model to RHOAI managed MLflow and register a version.\n\
           \n    Same workspace-header/ServiceAccount-token handshake the 101/201\n\
           \    workloads use (see 101 agent/_enable_mlflow) \u2014 the pipeline pod's\
           \ SA\n    must pass the server's SubjectAccessReview (pipeline-runner-mlflow\n\
@@ -273,16 +270,23 @@ deploymentSpec:
           ] = mlflow_workspace\n        return _orig(host_creds, endpoint, method,\
           \ *a,\n                     extra_headers=headers, **kw)\n\n    rest_utils.http_request\
           \ = _shim\n    from mlflow.store.tracking import rest_store\n    rest_store.http_request\
-          \ = _shim\n\n    import joblib\n    import mlflow\n    import pandas as\
-          \ pd\n\n    mlflow.set_tracking_uri(mlflow_tracking_uri)\n    mlflow.set_experiment(\"\
-          revassurance-fraud\")\n\n    bundle = joblib.load(model.path)\n\n    class\
-          \ FraudModel(mlflow.pyfunc.PythonModel):\n        def load_context(self,\
-          \ context):\n            import joblib as _joblib\n            b = _joblib.load(context.artifacts[\"\
-          bundle\"])\n            self.model, self.features = b[\"model\"], b[\"features\"\
-          ]\n\n        def predict(self, context, model_input, params=None):\n   \
-          \         proba = self.model.predict_proba(model_input[self.features])[:,\
-          \ 1]\n            return pd.DataFrame({\"fraud_probability\": proba,\n \
-          \                                \"fraud_flag\": (proba >= 0.5).astype(int)})\n\
+          \ = _shim\n\n    # The artifact uploader (http_artifact_repo) bypasses rest_utils,\
+          \ so\n    # inject the workspace header at the requests level too \u2014\
+          \ otherwise\n    # log_model fails 400 \"Workspace context is required\"\
+          \ (EA2 finding).\n    import requests as _rq\n    _orig_req = _rq.Session.request\n\
+          \n    def _req(self, method, url, **kw):\n        if \"mlflow\" in url:\n\
+          \            h = kw.get(\"headers\") or {}\n            h[\"X-MLFLOW-WORKSPACE\"\
+          ] = mlflow_workspace\n            kw[\"headers\"] = h\n        return _orig_req(self,\
+          \ method, url, **kw)\n\n    _rq.Session.request = _req\n\n    import joblib\n\
+          \    import mlflow\n    import pandas as pd\n\n    mlflow.set_tracking_uri(mlflow_tracking_uri)\n\
+          \    mlflow.set_experiment(\"revassurance-fraud\")\n\n    class FraudModel(mlflow.pyfunc.PythonModel):\n\
+          \        def load_context(self, context):\n            import joblib as\
+          \ _joblib\n            b = _joblib.load(context.artifacts[\"bundle\"])\n\
+          \            self.model, self.features = b[\"model\"], b[\"features\"]\n\
+          \n        def predict(self, context, model_input, params=None):\n      \
+          \      proba = self.model.predict_proba(model_input[self.features])[:, 1]\n\
+          \            return pd.DataFrame({\"fraud_probability\": proba,\n      \
+          \                           \"fraud_flag\": (proba >= 0.5).astype(int)})\n\
           \n    with mlflow.start_run(run_name=\"brf-revassurance-dsp\") as run:\n\
           \        mlflow.log_params({\n            \"algorithm\": \"BalancedRandomForestClassifier\"\
           ,\n            \"n_estimators\": n_estimators,\n            \"dataset\"\
@@ -308,10 +312,10 @@ deploymentSpec:
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
-          \ 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib'  &&  python3\
-          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.0' '--no-deps'\
-          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
-          \n"
+          \ 'pyarrow==17.0.0' 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.17.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
         - sh
         - -ec
         - 'program_path=$(mktemp -d)

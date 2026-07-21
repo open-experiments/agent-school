@@ -1,0 +1,40 @@
+# One-shot: create the DSPA bucket in the cluster MinIO.
+# Prereq: secret `dspa-minio-creds` in agent-school with keys
+# accesskey/secretkey (copy of minio-root's MINIO_ROOT_USER/PASSWORD):
+#
+#   oc get secret minio-root -n minio -o json \
+#     | jq '{apiVersion:"v1",kind:"Secret",metadata:{name:"dspa-minio-creds",namespace:"agent-school"},type:"Opaque",data:{accesskey:.data.MINIO_ROOT_USER,secretkey:.data.MINIO_ROOT_PASSWORD}}' \
+#     | oc apply -f -
+#
+# mc needs a writable config dir under restricted PSS -> HOME=/tmp.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: make-dspa-bucket
+  namespace: agent-school
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: mc
+          image: quay.io/minio/mc:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp MC_CONFIG_DIR=/tmp/.mc;
+              mc alias set m http://minio.minio.svc.cluster.local:9000 "$AK" "$SK" &&
+              mc mb --ignore-existing m/dspa-agent-school && echo BUCKET_OK
+          env:
+            - name: AK
+              valueFrom: {secretKeyRef: {name: dspa-minio-creds, key: accesskey}}
+            - name: SK
+              valueFrom: {secretKeyRef: {name: dspa-minio-creds, key: secretkey}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

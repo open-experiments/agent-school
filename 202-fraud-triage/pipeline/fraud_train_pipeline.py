@@ -6,6 +6,10 @@ observable pipeline. v1 scope (per the course README): HF dataset ->
 preprocess -> train Balanced Random Forest -> evaluate -> register in
 MLflow. Feast billing features and KServe serving land in later steps.
 
+Verified on Rome (fraud-brf-run-8, all stages green): fraud-class
+precision 0.996 / recall 0.999 / F1 0.998 / ROC-AUC ~1.0 on the 300,000-row
+held-out split; model registered as `revassurance-fraud-brf` v1.
+
 Stages
 ------
 1. load_data     — pull hf.co/datasets/fenar/revenue_assurance
@@ -19,12 +23,11 @@ Stages
                    (workspace agent-school) and registers a version of
                    `revassurance-fraud-brf`. Runs with the pod's
                    ServiceAccount token; needs the pipeline-runner-mlflow
-                   RoleBinding (deploy/ocp/rome).
+                   RoleBinding (deploy/ocp/rome/rbac.yaml).
 
 Compile:  python fraud_train_pipeline.py   -> fraud_train_pipeline.yaml
-Import the YAML in the RHOAI dashboard (Develop & train -> Pipelines) or
-POST it to the DSPA API. Runs appear per-stage in the dashboard with logs,
-and the register stage links the run to Experiments/Models/Registry.
+Import + first run in-cluster: deploy/ocp/rome/job-import-pipeline.yaml.
+EA2 operational findings: pipeline/README.md.
 """
 
 from kfp import dsl
@@ -33,9 +36,10 @@ from kfp import compiler
 BASE_IMAGE = "registry.access.redhat.com/ubi9/python-311:latest"
 DATASET_URL = ("https://huggingface.co/datasets/fenar/revenue_assurance/"
                "resolve/main/telecom_revass_data.csv.xz")
+PANDAS = ["pandas==2.2.3", "pyarrow==17.0.0"]
 
 
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=["pandas==2.2.3"])
+@dsl.component(base_image=BASE_IMAGE, packages_to_install=PANDAS)
 def load_data(dataset_url: str, raw_data: dsl.Output[dsl.Dataset]):
     """Pull the published billing dataset (CSV.xz) and store it as an artifact."""
     import pandas as pd
@@ -48,7 +52,7 @@ def load_data(dataset_url: str, raw_data: dsl.Output[dsl.Dataset]):
 
 
 @dsl.component(base_image=BASE_IMAGE,
-               packages_to_install=["pandas==2.2.3", "scikit-learn==1.5.2"])
+               packages_to_install=PANDAS + ["scikit-learn==1.5.2"])
 def preprocess(raw_data: dsl.Input[dsl.Dataset],
                train_data: dsl.Output[dsl.Dataset],
                test_data: dsl.Output[dsl.Dataset],
@@ -63,13 +67,13 @@ def preprocess(raw_data: dsl.Input[dsl.Dataset],
         df, test_size=test_fraction, stratify=df["Fraud"], random_state=42)
     train.to_parquet(train_data.path)
     test.to_parquet(test_data.path)
-    print(f"[preprocess] train={len(train)} test={len(test)} "
-          f"(fraud {train['Fraud'].mean():.4f}/{test['Fraud'].mean():.4f})")
+    print(f"[preprocess] train={len(train)} test={len(test)}")
 
 
 @dsl.component(base_image=BASE_IMAGE,
-               packages_to_install=["pandas==2.2.3", "scikit-learn==1.5.2",
-                                    "imbalanced-learn==0.12.4", "joblib"])
+               packages_to_install=PANDAS + ["scikit-learn==1.5.2",
+                                             "imbalanced-learn==0.12.4",
+                                             "joblib"])
 def train(train_data: dsl.Input[dsl.Dataset],
           model: dsl.Output[dsl.Model],
           n_estimators: int = 100):
@@ -91,8 +95,9 @@ def train(train_data: dsl.Input[dsl.Dataset],
 
 
 @dsl.component(base_image=BASE_IMAGE,
-               packages_to_install=["pandas==2.2.3", "scikit-learn==1.5.2",
-                                    "imbalanced-learn==0.12.4", "joblib"])
+               packages_to_install=PANDAS + ["scikit-learn==1.5.2",
+                                             "imbalanced-learn==0.12.4",
+                                             "joblib"])
 def evaluate(model: dsl.Input[dsl.Model],
              test_data: dsl.Input[dsl.Dataset],
              metrics: dsl.Output[dsl.Metrics]) -> dict:
@@ -116,15 +121,14 @@ def evaluate(model: dsl.Input[dsl.Model],
     }
     for k, v in result.items():
         metrics.log_metric(k, v)
-    print("[evaluate] " + " ".join(f"{k}={v:.4f}" for k, v in result.items()
-                                   if isinstance(v, float)))
+    print("[evaluate]", result)
     return result
 
 
 @dsl.component(base_image=BASE_IMAGE,
-               packages_to_install=["pandas==2.2.3", "scikit-learn==1.5.2",
-                                    "imbalanced-learn==0.12.4", "joblib",
-                                    "mlflow==3.4.0"])
+               packages_to_install=PANDAS + ["scikit-learn==1.5.2",
+                                             "imbalanced-learn==0.12.4",
+                                             "joblib", "mlflow==3.4.0"])
 def register(model: dsl.Input[dsl.Model],
              eval_metrics: dict,
              dataset_url: str,
@@ -132,7 +136,7 @@ def register(model: dsl.Input[dsl.Model],
              mlflow_tracking_uri: str,
              mlflow_workspace: str,
              registered_name: str = "revassurance-fraud-brf"):
-    """Log the run + model to RHOAI managed MLflow and register a version.
+    """Log run + model to RHOAI managed MLflow and register a version.
 
     Same workspace-header/ServiceAccount-token handshake the 101/201
     workloads use (see 101 agent/_enable_mlflow) — the pipeline pod's SA
@@ -160,14 +164,27 @@ def register(model: dsl.Input[dsl.Model],
     from mlflow.store.tracking import rest_store
     rest_store.http_request = _shim
 
+    # The artifact uploader (http_artifact_repo) bypasses rest_utils, so
+    # inject the workspace header at the requests level too — otherwise
+    # log_model fails 400 "Workspace context is required" (EA2 finding).
+    import requests as _rq
+    _orig_req = _rq.Session.request
+
+    def _req(self, method, url, **kw):
+        if "mlflow" in url:
+            h = kw.get("headers") or {}
+            h["X-MLFLOW-WORKSPACE"] = mlflow_workspace
+            kw["headers"] = h
+        return _orig_req(self, method, url, **kw)
+
+    _rq.Session.request = _req
+
     import joblib
     import mlflow
     import pandas as pd
 
     mlflow.set_tracking_uri(mlflow_tracking_uri)
     mlflow.set_experiment("revassurance-fraud")
-
-    bundle = joblib.load(model.path)
 
     class FraudModel(mlflow.pyfunc.PythonModel):
         def load_context(self, context):

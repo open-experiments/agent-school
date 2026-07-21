@@ -1,0 +1,41 @@
+# One-shot: compile the 202 fraud pipeline in-cluster, upload it to the
+# pipeline server, and start a run — no laptop tooling required.
+#
+#   oc create configmap fraud-pipeline-src -n agent-school \
+#       --from-file=fraud_train_pipeline.py=../../../pipeline/fraud_train_pipeline.py \
+#       --from-file=import_and_run.py=../../../pipeline/import_and_run.py
+#   oc apply -f job-import-pipeline.yaml
+#
+# Why 8443 and a CA file: the KFP API's plain port (8888) is NetworkPolicy-
+# restricted to DSP's own pods; kube-rbac-proxy on 8443 is the supported
+# path, serving an OpenShift service-CA cert (the pod already mounts that CA
+# at .../serviceaccount/service-ca.crt) and authorizing the caller's SA
+# token via SubjectAccessReview (see rbac.yaml).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: import-fraud-pipeline
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: fraud-pipeline-src}
+      containers:
+        - name: importer
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command: [/bin/sh, -c, python3 /src/import_and_run.py]
+          env:
+            - {name: RUN_NAME, value: fraud-brf-run-1}
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
