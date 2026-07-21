@@ -60,6 +60,14 @@ and validates against the labeled alert windows in `data/alerts.json`:
 
 ![Training runs](./images/rhoai/experiments-runs.png)
 
+**2b — The training set is a named artifact.** `feature_repo/save_training_datasets.py`
+freezes that exact point-in-time retrieval as Feast SavedDatasets
+(`amf/smf/upf_anomaly_training`, tagged with course + consumer model) —
+**Feature store → Datasets** in the dashboard. A model version points
+back to a named dataset, not an ephemeral dataframe:
+
+![Feature datasets](./images/rhoai/feature-datasets.png)
+
 **3 — A versioned model, not a pickle in a bucket.** The run logs one
 pyfunc model that routes each row to its NF's forest, and registers it as
 `5gprod-anomaly-isolationforest`. Lineage — dataset, feature source,

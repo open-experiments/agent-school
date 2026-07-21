@@ -17,6 +17,10 @@ Flow (all real, verified on Rome):
    from the offline store, trains an IsolationForest per NF, validates
    against the labeled alert windows, and logs params/metrics/model to
    MLflow → **Experiments → 5gprod-anomaly** (Model training view).
+2b. `save_training_datasets.py` persists the same point-in-time
+   retrieval as named SavedDatasets in the registry (dashboard:
+   Feature store -> Datasets) - the reproducibility artifact a model
+   version can reference.
 3. `ingest.py --score <bundle>` runs the pipeline's anomaly inference with
    the trained model and pushes `anomaly_score`/`anomaly_flag` online.
 4. The agent (tools/lib.py) consumes the online store when
@@ -43,3 +47,9 @@ Flow (all real, verified on Rome):
   create.
 - `feast apply` needs the offline parquet present (schema/entity
   inference), so run `ingest.py --no-push` before the first apply.
+- SavedDatasets: remote writes do not persist (same EA finding as
+  above), so `save_training_datasets.py` runs as a Job on the store
+  PVCs. Registry FileSources are relative paths and the offline parquet
+  is per-Job, so the script rebuilds the engineered frame from the
+  registered feature schema; saved parquet lands on the registry PVC
+  (`/feast-registry/saved/`).
