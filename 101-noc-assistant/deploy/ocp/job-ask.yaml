@@ -16,6 +16,7 @@ spec:
         app.kubernetes.io/name: noc-assistant
     spec:
       restartPolicy: Never
+      serviceAccountName: noc-assistant
       securityContext:
         runAsNonRoot: true
         seccompProfile:
@@ -29,6 +30,15 @@ spec:
           envFrom:
             - secretRef:
                 name: llm-credentials
+            # Experiments tracking config; supplied by overlays (deploy/ocp/rome),
+            # absent everywhere else, so tracking is opt-in per environment.
+            - configMapRef:
+                name: mlflow-tracking
+                optional: true
+            # Feast online-store client config; same opt-in pattern.
+            - configMapRef:
+                name: feature-store-client
+                optional: true
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

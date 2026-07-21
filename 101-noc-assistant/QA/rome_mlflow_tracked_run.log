@@ -1,0 +1,56 @@
+Cloning into '/tmp/as'...
+PATCHED
+[notice] A new release of pip is available: 24.2 -> 26.1.2
+[notice] To update, run: pip install --upgrade pip
+DEPS_OK
+[trace] 22:24:42 mlflow       autolog enabled -> https://mlflow.redhat-ods-applications.svc:8443/mlflow (workspace agent-school)
+[trace] 22:24:43 tool-call    get_active_alerts({"component": "all"})
+[trace] 22:24:43 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 22:24:43 tool-call    get_kpi_summary({"nf": "all", "window_minutes": 60})
+[trace] 22:24:43 tool-result  {"window_minutes": 60, "summary": {"amf": {"http_connectivity": {"mean": 1.28, "min": 1.01, "max": 1.42}, "cpu_utilization": {"mean": 38.88, "min": 29.35, "max"...
+[trace] 22:24:45 tool-call    search_runbooks({"query": "REGISTRATION_STORM", "top_k": 2})
+[trace] 22:24:45 tool-result  {"query": "REGISTRATION_STORM", "results": [{"runbook": "registration-storm.md", "score": 1, "content": "# Runbook: Registration Storm (AMF/SMF)\n\n**Alert type...
+[trace] 22:24:45 tool-call    search_runbooks({"query": "RESOURCE_EXHAUSTION", "top_k": 2})
+[trace] 22:24:45 tool-result  {"query": "RESOURCE_EXHAUSTION", "results": [{"runbook": "resource-exhaustion.md", "score": 1, "content": "# Runbook: Resource Exhaustion (AMF/SMF/UPF)\n\n**Ale...
+[trace] 22:24:45 tool-call    search_runbooks({"query": "SESSION_MANAGEMENT_FAILURE", "top_k": 2})
+[trace] 22:24:45 tool-result  {"query": "SESSION_MANAGEMENT_FAILURE", "results": [{"runbook": "session-management-failure.md", "score": 1, "content": "# Runbook: Session Management Failure (...
+[trace] 22:24:54 answer       turn 3
+
+=== NOC Assistant ===
+ ## Findings
+Based on the current telemetry and active alerts, I can identify several critical issues in the 5G core:
+**Critical Issues:**
+1. **Registration Storm on AMF** (CRITICAL) - Started 16:37 today, causing CPU utilization drop of 8% and authentication success rate drop of 11.7%
+2. **Registration Storm on SMF** (CRITICAL) - Started 07:12 yesterday, causing session establishment rate drop of 17.8%
+3. **Resource Exhaustion on UPF** (MAJOR) - Started 02:42 yesterday, causing packet processing rate drop of 17.6% and latency increase of 19.9ms
+4. **Multiple Session Management Failures** (MAJOR) - Affecting SMF, AMF, and UPF with session success rates dropping 15-23.7%
+**Current KPI Status:**
+- AMF: Registration rate at 129.33/min (min: 99.77, max: 145.63)
+- SMF: Session establishment rate at 116.15/min (min: 85.33, max: 132.47)
+- UPF: Packet processing rate at 12,848.53/min (min: 9,507.81, max: 14,650.69)
+## Probable Cause
+The Registration Storms on both AMF and SMF suggest a widespread issue affecting UE registration attempts, likely due to:
+- Network congestion or overload conditions
+- Possible misconfiguration in authentication/authorization paths
+- Potential issues with AUSF/UDM connectivity
+The Resource Exhaustion on UPF and cascading Session Management Failures indicate the network is experiencing capacity constraints, with session setup rates dropping significantly across all functions.
+## Recommended Next Actions
+1. **Immediate (0-15 minutes):**
+   - Enable AMF overload control with N1/N2 back-off timers to mitigate the registration storm
+   - Apply registration rate limiting for affected TAC/device groups if identified
+   - Restart UPF pods if resource exhaustion is confirmed (schedule during maintenance window)
+2. **Short-term (15-60 minutes):**
+   - Scale AMF replicas if CPU utilization remains above 80% after back-off implementation
+   - Verify N4 association health and restart PFCP associations if heartbeats are missing
+   - Clear any policy installation backlog on SMF
+3. **Medium-term (1-4 hours):**
+   - Rebalance sessions across UPF instances to distribute load
+   - Review and adjust QoS admission thresholds
+   - Capture diagnostic data (heap dumps, profiles) during any restarts for root cause analysis
+4. **Validation:**
+   - Monitor that registration rates return to baseline within two back-off cycles
+   - Ensure authentication and NGAP success rates recover above 99%
+   - Verify session success rates return above 99% for 15+ minutes
+   - Confirm CPU utilization stays under 70% across all functions
+The network appears to be in a cascading failure state requiring coordinated remediation across multiple functions.
+2026/07/20 22:24:54 INFO mlflow.tracing.export.async_export_queue: Flushing the async trace logging queue before program exit. This may take a while...

@@ -16,6 +16,16 @@ and [sustainability](https://github.com/open-experiments/Telco-AIX/tree/main/sus
 
 ![302 Energy Optimizer architecture](./images/architecture.png)
 
+The zones make the safety argument visible. The agent pod holds only the
+Llama Stack loop — propose, dispatch, score, threshold gate. The two
+heavy skills live in the cluster under different patterns: the JAX DQN
+simulation as a batch Job the agent may only submit and poll (pattern 3,
+the RBAC lesson), and the sustainability scorer served on KServe
+(pattern 2). Everything the loop produces — proposals, simulations,
+scores, rejections — lands in MLflow. And the RAN itself is firmly in the
+external zone: the agent's only output is a change-plan artifact with the
+simulation and score attached; it never touches the network.
+
 ## Solution flow
 
 1. The agent reasons over traffic forecasts and proposes candidate
@@ -37,7 +47,7 @@ and [sustainability](https://github.com/open-experiments/Telco-AIX/tree/main/sus
 | Skill backend (pattern 3) | JAX DQN simulation as batch Job |
 | Skill backend (pattern 2) | sustainability scorer on KServe |
 | Decision discipline | no plan without simulation + score attached |
-| Audit | proposal, simulation, score, decision all recorded |
+| Audit | proposal, simulation, score, decision all recorded in MLflow — rejected proposals included |
 
 ## What it teaches
 
@@ -51,4 +61,6 @@ and [sustainability](https://github.com/open-experiments/Telco-AIX/tree/main/sus
 
 Planned. Requires the airan-energy JAX environment packaged as a Job image
 and the sustainability model served (KServe, or a local wrapper for laptop
-dev).
+dev). The MLflow evidence trail follows the tracing pattern 101/201
+verified live on Rome. RHOAI snapshots will be added as stages go live —
+no mockups.

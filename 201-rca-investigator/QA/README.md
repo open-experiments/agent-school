@@ -11,6 +11,33 @@ Hat OpenShift AI Model-as-a-Service (LiteLLM gateway, `Qwen3.6-35B-A3B`).
 | 1 | RAG service: corpus build + retrieval relevance | `rag_service_smoke.log` | PASS (4330 docs; "registration storm" → `alert-0` top hit, score 0.43+) |
 | 2 | Offline two-phase episode (no LLM) | `offline_run.log` + `../reports/rca_20260612_155739.md` | PASS |
 | 3 | Live two-phase run vs MaaS | `live_run_trace.log` + `live_run_maas_wire.jsonl` + `../reports/rca_20260612_160342.md` | PASS |
+| 4 | Live two-phase run vs Rome sandbox (self-hosted vLLM) | `rome_rca_trace.log` + `rome_rca_wire.jsonl` + `../reports/rome_rca_report.md` | PASS |
+| 5 | Rome in-cluster run with MLflow Experiments tracking (workspace-scoped, SA-token auth) | `rome_mlflow_tracked_run.log` | PASS |
+
+## Rome sandbox live run (test 4)
+
+Same two-phase loop against the curriculum's Option-E reference platform
+(`shared/manifests/vllm-rhoai.md`): `Kimi-Linear-48B-A3B-Instruct` AWQ
+8-bit on upstream vLLM 0.25.1, TP=2, RHOAI 3.5 EA2 SNO. Single-model
+configuration (`LLM_MODEL_SMALL` = `LLM_MODEL_LARGE` = the Kimi endpoint);
+the small-vs-large routing story stays testable by pointing the two envs at
+different registry deployments. 4 tool calls in phase 1 (incident fetch +
+parallel evidence retrievals against the RAG backend), phase 2 produced a
+structured RCA where every evidence entry carries its record id
+(`alert-0`..`alert-6`) with KPI deltas — see
+`../reports/rome_rca_report.md`. Prerequisite for tool calling on this
+stack: the tokenizer fix documented in
+`../../101-noc-assistant/QA/README.md` (Rome section).
+
+## Experiments tracking run (test 5)
+
+In-cluster Job (`rca-mlflow-1`, ServiceAccount `rca-investigator`) with the
+rome overlay's `mlflow-tracking` ConfigMap: both phases exported as traces —
+2 phase-1 investigation calls (4 tool calls against the RAG backend) and
+1 phase-2 report write — visible in the RHOAI dashboard under
+**Experiments → 201-rca-investigator** (3 traces, ~15K tokens, 0 errors,
+per-trace latency). The report cited all seven alert records. Log:
+`rome_mlflow_tracked_run.log`. Mechanics documented in the deploy README.
 
 ## Wire evidence (live run)
 

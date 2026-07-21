@@ -1,0 +1,40 @@
+# Rome-sandbox overlay for 201 (see shared/manifests/vllm-rhoai.md, Option E).
+# Base resources bring up the pattern-2 RAG backend (Deployment+Service) and
+# the build; this overlay supplies the in-cluster model endpoint. The RCA Job
+# reaches the backend at http://rca-rag:8201 (set in job-rca.yaml).
+#
+#   oc apply -k deploy/ocp/rome        # ImageStream/BuildConfig + rca-rag + Secret
+#   oc start-build rca-investigator --follow
+#   oc create -f deploy/ocp/job-rca.yaml
+#
+# LLM_MODEL_SMALL / LLM_MODEL_LARGE are omitted here, so both phases use the
+# single Kimi deployment; point them at two registry deployments to exercise
+# the small-vs-large routing story on real endpoints.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agent-school
+
+resources:
+  - ../base   # ServiceAccount + ImageStream/BuildConfig + rca-rag backend
+  - mlflow-rbac.yaml
+
+secretGenerator:
+  - name: llm-credentials
+    literals:
+      - LLM_BASE_URL=http://kimi-linear-48b-a3b-predictor.telco-aix.svc.cluster.local:8080/v1
+      - LLM_API_KEY=none
+      - LLM_MODEL=kimi-linear-48b-a3b
+
+# Every RCA run lands in the RHOAI Experiments tab (traces for both phases:
+# the tool-calling investigation and the report write-up). Imported as
+# optional env by job-rca.yaml; auth handshake in agent/_enable_mlflow().
+# Identical content to the 101 rome overlay's ConfigMap (shared name, shared
+# workspace); the experiment name defaults per course in the agent code.
+configMapGenerator:
+  - name: mlflow-tracking
+    literals:
+      - MLFLOW_TRACKING_URI=https://mlflow.redhat-ods-applications.svc:8443/mlflow
+      - MLFLOW_WORKSPACE=agent-school
+
+generatorOptions:
+  disableNameSuffixHash: true

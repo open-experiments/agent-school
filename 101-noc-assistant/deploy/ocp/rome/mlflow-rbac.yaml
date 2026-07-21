@@ -1,0 +1,20 @@
+# RHOAI's managed MLflow authorizes each request with a SubjectAccessReview
+# against the workspace (data science project) named in X-MLFLOW-WORKSPACE.
+# This binds the agent's ServiceAccount to `edit` in the agent-school
+# namespace so its token passes that check. Namespace-scoped binding only —
+# the agent gains nothing outside its own workspace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: noc-assistant-mlflow
+  labels:
+    app.kubernetes.io/name: noc-assistant
+    app.kubernetes.io/part-of: agent-school
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+  - kind: ServiceAccount
+    name: noc-assistant
+    namespace: agent-school

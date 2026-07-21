@@ -1,0 +1,47 @@
+# Rome-sandbox overlay for 101 (see shared/manifests/vllm-rhoai.md, Option E).
+# Points the agent at the in-cluster Kimi-Linear endpoint served by vLLM on
+# RHOAI, and generates the llm-credentials Secret the base manifests expect.
+#
+#   oc apply -k deploy/ocp/rome        # ImageStream/BuildConfig + CronJob + Secret
+#   oc start-build noc-assistant --follow
+#   oc create -f deploy/ocp/job-ask.yaml
+#
+# The predictor Service is headless, so the port (:8080) is explicit; the
+# agent is CPU-only (convention #1) and the model runs on the GPUs.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agent-school
+
+resources:
+  - ../base   # ServiceAccount + ImageStream/BuildConfig + CronJob
+  - mlflow-rbac.yaml
+
+secretGenerator:
+  - name: llm-credentials
+    literals:
+      - LLM_BASE_URL=http://kimi-linear-48b-a3b-predictor.telco-aix.svc.cluster.local:8080/v1
+      - LLM_API_KEY=none
+      - LLM_MODEL=kimi-linear-48b-a3b
+
+# Every agent run lands in the RHOAI Experiments tab: the base manifests
+# import this ConfigMap as optional env, the agent's _enable_mlflow() does
+# the workspace-header + ServiceAccount-token handshake (see agent/ and
+# mlflow-rbac.yaml).
+# The ConfigMap is shared workspace-wide (101 and 201 generate identical
+# content); the experiment name defaults per course in the agent code
+# (override with MLFLOW_EXPERIMENT if needed).
+configMapGenerator:
+  - name: mlflow-tracking
+    literals:
+      - MLFLOW_TRACKING_URI=https://mlflow.redhat-ods-applications.svc:8443/mlflow
+      - MLFLOW_WORKSPACE=agent-school
+  # Feature-store mode: with this env present the agent's telemetry tools
+  # read the Feast online store (feature_repo/) instead of the bundled CSVs
+  # — 1h aggregates for get_kpi_summary, pipeline-scored anomaly features
+  # for detect_anomalies. Absent on non-Rome clusters -> CSV mode.
+  - name: feature-store-client
+    literals:
+      - FEAST_ONLINE_URL=https://feast-fivegprod-online.agent-school.svc.cluster.local:443
+
+generatorOptions:
+  disableNameSuffixHash: true

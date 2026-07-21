@@ -20,10 +20,10 @@ oc create secret generic llm-credentials \
 ## 2. Build the image
 
 In-cluster, from your git fork (edit the `uri` in
-`ocp/imagestream-buildconfig.yaml` first):
+`ocp/base/imagestream-buildconfig.yaml` first):
 
 ```bash
-oc apply -k ocp/
+oc apply -k ocp/base
 oc start-build noc-assistant --follow      # or binary build:
 # oc start-build noc-assistant --from-dir=.. --follow
 ```
@@ -62,3 +62,45 @@ oc patch cronjob noc-sweep -p '{"spec":{"suspend":false}}'
   tolerates OpenShift's random UID.
 - Set `LLM_WIRE_LOG=/tmp/wire.jsonl` in the Job env to capture wire-level
   QA evidence from in-cluster runs.
+- The agent runs under its own ServiceAccount (`noc-assistant`, in
+  `ocp/base/serviceaccount.yaml`) — agent identity is plain Kubernetes
+  identity, which is what RBAC-scoped platform services (like workspace
+  MLflow, below) and NetworkPolicies hang off.
+
+## Rome sandbox (verified in-cluster)
+
+Deployed and run on the curriculum's Option-E reference platform (RHOAI 3.5
+EA2 SNO; see `shared/manifests/vllm-rhoai.md`). The `ocp/rome/` overlay
+generates `llm-credentials` pointing at the in-cluster Kimi-Linear endpoint,
+so no laptop credentials are needed:
+
+```bash
+oc apply -k deploy/ocp/rome        # base + Secret + mlflow-tracking ConfigMap + RBAC
+oc start-build noc-assistant --follow
+oc create -f deploy/ocp/job-ask.yaml
+```
+
+### Experiments tracking (RHOAI MLflow)
+
+The rome overlay also generates a `mlflow-tracking` ConfigMap
+(`MLFLOW_TRACKING_URI` + `MLFLOW_WORKSPACE`), which the Job/CronJob import
+as optional env — so on Rome every agent run automatically lands in the
+RHOAI dashboard under **Experiments → 101-noc-assistant**, with full
+LLM-call traces from `mlflow.openai.autolog()`. RHOAI's managed MLflow is
+workspace-scoped: `agent/_enable_mlflow()` adds the `X-MLFLOW-WORKSPACE`
+header and authenticates with the pod's ServiceAccount token;
+`ocp/rome/mlflow-rbac.yaml` grants that ServiceAccount the workspace RBAC
+the server's SubjectAccessReview expects. On clusters without MLflow the
+ConfigMap is simply absent and the agent runs untracked — same image, same
+manifests.
+
+Notes from the live run (evidence: `../QA/rome_incluster_noc_job.log`):
+
+- On a fresh SNO the internal image registry ships `managementState:
+  Removed`; enable it once before the first git/binary build:
+  `oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge
+  -p '{"spec":{"managementState":"Managed","storage":{"pvc":{"claim":"image-registry-storage"}}}}'`
+  (create a 100Gi RWO PVC named `image-registry-storage` in
+  `openshift-image-registry` first, backed by the LVMS StorageClass).
+- The agent pod is CPU-only (100m/256Mi request); the model runs on the GPUs
+  in another namespace — convention #1, made literal.

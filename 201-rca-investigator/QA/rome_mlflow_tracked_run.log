@@ -1,0 +1,86 @@
+Cloning into '/tmp/as'...
+PATCHED
+[notice] A new release of pip is available: 24.2 -> 26.1.2
+[notice] To update, run: pip install --upgrade pip
+DEPS_OK
+2026/07/20 22:24:42 INFO mlflow.tracking.fluent: Experiment with name '201-rca-investigator' does not exist. Creating a new experiment.
+[trace] 22:24:43 mlflow       autolog enabled -> https://mlflow.redhat-ods-applications.svc:8443/mlflow (workspace agent-school)
+[trace] 22:24:43 phase-1      investigate with kimi-linear-48b-a3b
+[trace] 22:24:47 tool-call    get_incident({"component": "all"})
+[trace] 22:24:47 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 22:24:47 tool-call    retrieve_evidence({"query": "severity:CRITICAL OR severity:SEVERE", "nf": "all", "k": 10})
+[trace] 22:24:47 tool-result  {"query": "severity:CRITICAL OR severity:SEVERE", "nf": "all", "results": [{"id": "alert-1", "nf": "smf", "score": 0.2812, "text": "ALERT REGISTRATION_STORM sev...
+[trace] 22:24:47 tool-call    retrieve_evidence({"query": "alert_type:FATAL OR alert_type:PANIC OR alert_type:DOWN", "nf": "all", "k": 10})
+[trace] 22:24:47 tool-result  {"query": "alert_type:FATAL OR alert_type:PANIC OR alert_type:DOWN", "nf": "all", "results": [{"id": "alert-1", "nf": "smf", "score": 0.1967, "text": "ALERT REG...
+[trace] 22:24:47 tool-call    retrieve_evidence({"query": "time_window:LAST_1_HOUR AND (amf OR smf OR upf)", "nf": "all", "k": 10})
+[trace] 22:24:47 tool-result  {"query": "time_window:LAST_1_HOUR AND (amf OR smf OR upf)", "nf": "all", "results": [{"id": "alert-1", "nf": "smf", "score": 0.4053, "text": "ALERT REGISTRATIO...
+[trace] 22:24:51 phase-2      write report with kimi-linear-48b-a3b
+[trace] 22:24:58 artifact     /tmp/reports/rca_20260720_222458.md
+
+=== RCA Investigator ===
+{
+  "Incident": "A cascading failure across the 5G core network, beginning with an AMF registration storm on 2025-01-16 16:37:55 and culminating in UPF resource exhaustion and session-management failures across multiple nodes.",
+  "Evidence": [
+    {
+      "timestamp": "2025-01-16 16:37:55",
+      "alert": "REGISTRATION_STORM",
+      "component": "AMF",
+      "severity": "CRITICAL",
+      "kpi_delta": {"cpu_utilization": -8.0, "authentication_success_rate": -11.7}
+    },
+    {
+      "timestamp": "2025-01-17 07:12:55",
+      "alert": "REGISTRATION_STORM",
+      "component": "SMF",
+      "severity": "CRITICAL",
+      "kpi_delta": {"session_establishment_rate": -17.8}
+    },
+    {
+      "timestamp": "2025-01-17 02:42:55",
+      "alert": "RESOURCE_EXHAUSTION",
+      "component": "UPF",
+      "severity": "MAJOR",
+      "kpi_delta": {"packet_processing_rate": -17.6, "buffer_utilization": -6.0, "latency_ms": -19.9}
+    },
+    {
+      "timestamp": "2025-01-16 12:22:55",
+      "alert": "RESOURCE_EXHAUSTION",
+      "component": "SMF",
+      "severity": "MAJOR",
+      "kpi_delta": {"session_establishment_rate": -15.0, "n4_message_rate": -17.7}
+    },
+    {
+      "timestamp": "2025-01-16 22:29:55",
+      "alert": "SESSION_MANAGEMENT_FAILURE",
+      "component": "SMF",
+      "severity": "MAJOR",
+      "kpi_delta": {"cpu_utilization": -5.9, "session_establishment_rate": -23.7, "n4_message_rate": -20.9}
+    },
+    {
+      "timestamp": "2025-01-17 00:47:55",
+      "alert": "SESSION_MANAGEMENT_FAILURE",
+      "component": "AMF",
+      "severity": "MAJOR",
+      "kpi_delta": {"session_setup_rate": -18.2}
+    },
+    {
+      "timestamp": "2025-01-17 06:37:55",
+      "alert": "SESSION_MANAGEMENT_FAILURE",
+      "component": "UPF",
+      "severity": "MAJOR",
+      "kpi_delta": {"tunnel_establishment_rate": -15.5}
+    }
+  ],
+  "Root cause": "A registration storm in the AMF triggered a cascade of downstream effects: UPF resource exhaustion and SMF session-management failures, each compounding the others' impact and overwhelming the control plane.",
+  "Contributing factors": [
+    "AMF registration storm on 2025-01-16 16:37:55 [alert-0]",
+    "SMF registration storm on 2025-01-17 07:12:55 [alert-1]",
+    "UPF resource exhaustion on 2025-01-17 02:42:55 [alert-2]",
+    "SMF resource exhaustion on 2025-01-16 12:22:55 [alert-3]",
+    "SMF session-management failure on 2025-01-16 22:29:55 [alert-4]",
+    "AMF session-management failure on 2025-01-17 00:47:55 [alert-5]",
+    "UPF session-management failure on 2025-01-17 06:37:55 [alert-6]"
+  ],
+  "Recommended remediation": "1) Implement registration-rate limiting and storm-control mechanisms in the AMF to prevent unbounded registration attempts [alert-0]. 2) Add back-pressure or flow-control at the N4 interface between SMF and UPF to avoid overwhelming UPF resources [alert-2]. 3) Introduce session-setup throttling in SMF to reduce load during registration storms [alert-4]. 4) Enhance monitoring to detect early indicators of registration storms and resource exhaustion across all NFs. 5) Conduct load-testing to validate the effectiveness of the above mitigations."
+}
+2026/07/20 22:24:58 INFO mlflow.tracing.export.async_export_queue: Flushing the async trace logging queue before program exit. This may take a while...

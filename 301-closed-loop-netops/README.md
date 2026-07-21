@@ -22,12 +22,28 @@ Figure-1.
 
 ![301 Closed-Loop NetOps architecture](./images/architecture.png)
 
+The zones tell the loop's story. The four workers are ephemeral pods in a
+strict hierarchy — everything they know lives in the external workflow
+state store, everything they say crosses A2A. The cluster provides the
+loop's sensor (course 101's Feast online store, already serving live
+`anomaly_score`/`anomaly_flag` verdicts on Rome), one shared vLLM
+endpoint, MLflow for full-cycle traces, and the governed actuation path:
+Execution can only reach the 5G core through the MCP Gateway and the
+audited autonet playbooks. The one deliberately external dependency is
+the MCP think-tank — a reasoning server outside the cluster that turns a
+detected anomaly into a remediation-flow determination, keeping
+"what should we do" separable from "who is allowed to do it".
+
 ## Solution flow
 
-1. **Diagnostic** consumes real autonet AMF/SMF/UPF telemetry and the
-   vector stores, detects the incident, and publishes findings over A2A.
+1. **Diagnostic** consumes the anomaly verdicts 101's pipeline pushes to
+   the Feast online store, plus the real autonet AMF/SMF/UPF telemetry
+   and vector stores, detects the incident, and publishes findings over
+   A2A.
 2. **Planning** turns findings into a remediation plan with impact and
-   resource estimates.
+   resource estimates, consulting the external MCP think-tank for the
+   remediation-flow determination (the anomaly's meaning, the candidate
+   fix, its ordering).
 3. **Execution** actuates the plan: the real autonet playbooks (scale AMF,
    restart SMF, rebalance UPF) run behind the MCP Gateway under scoped
    RBAC; an agent that can run playbooks is the most dangerous component
@@ -45,8 +61,11 @@ Figure-1.
 |---------------------|------|
 | Harness | LangGraph per agent, one sandboxed pod each |
 | Orchestration | A2A messaging + AgentCards |
+| Sensing | 101's Feast online anomaly verdicts (live on Rome today) |
+| External reasoning | MCP think-tank: anomaly meaning → remediation-flow determination |
 | Tool governance | playbooks behind MCP Gateway, scoped RBAC |
 | Externalized state | workflow store outside all agents |
+| Observability | MLflow traces per agent, per loop iteration |
 | Product-harness track | NemoClaw blueprint + OpenShell (planned) |
 
 ## What it teaches
@@ -59,6 +78,9 @@ Figure-1.
 
 ## Status
 
-Planned. Reuses 101 telemetry tools, the autonet playbook set, and the
-autonet per-NF vector stores. Build order: state store and A2A skeleton,
-then agents one by one, Validation last.
+Planned — but the sensor half is not: 101's Feast pipeline, anomaly
+model, and online verdicts are live on Rome, so Diagnostic's input
+already exists. Reuses 101 telemetry tools, the autonet playbook set, and
+the autonet per-NF vector stores. Build order: state store and A2A
+skeleton, then agents one by one, Validation last. RHOAI snapshots will
+be added stage by stage as the loop goes live — no mockups.

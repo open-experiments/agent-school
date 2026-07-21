@@ -1,0 +1,66 @@
+[trace] 21:05:36 tool-call    get_active_alerts({"component": "all"})
+[trace] 21:05:36 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 21:05:36 tool-call    get_kpi_summary({"nf": "all", "window_minutes": 60})
+[trace] 21:05:36 tool-result  {"window_minutes": 60, "summary": {"amf": {"http_connectivity": {"mean": 1.28, "min": 1.01, "max": 1.42}, "cpu_utilization": {"mean": 38.88, "min": 29.35, "max"...
+[trace] 21:05:37 tool-call    search_runbooks({"query": "registration storm", "top_k": 2})
+[trace] 21:05:37 tool-result  {"query": "registration storm", "results": [{"runbook": "registration-storm.md", "score": 13, "content": "# Runbook: Registration Storm (AMF/SMF)\n\n**Alert typ...
+[trace] 21:05:37 tool-call    search_runbooks({"query": "resource exhaustion", "top_k": 2})
+[trace] 21:05:37 tool-result  {"query": "resource exhaustion", "results": [{"runbook": "resource-exhaustion.md", "score": 5, "content": "# Runbook: Resource Exhaustion (AMF/SMF/UPF)\n\n**Ale...
+[trace] 21:05:37 tool-call    search_runbooks({"query": "session management failure", "top_k": 2})
+[trace] 21:05:37 tool-result  {"query": "session management failure", "results": [{"runbook": "session-management-failure.md", "score": 17, "content": "# Runbook: Session Management Failure ...
+[trace] 21:05:40 answer       turn 3
+
+=== NOC Assistant ===
+ # 5G Core Network Status Report
+
+## Current Issues Identified
+
+Based on the telemetry analysis, the 5G core is experiencing **multiple concurrent issues**:
+
+### 1. **CRITICAL: Registration Storm (AMF)**
+- **Time**: Started 2025-01-16 16:37
+- **Impact**: CPU utilization dropped 8%, authentication success rate dropped 11.7%
+- **Cause**: Surge of UE registration attempts overwhelming the AMF
+
+### 2. **CRITICAL: Registration Storm (SMF)**
+- **Time**: Started 2025-01-17 07:12  
+- **Impact**: Session establishment rate dropped 17.8%
+- **Cause**: Registration storm propagating to session management
+
+### 3. **MAJOR: Resource Exhaustion (UPF)**
+- **Time**: Started 2025-01-17 02:42
+- **Impact**: Packet processing rate dropped 17.6%, latency increased 19.9ms
+- **Cause**: UPF resource exhaustion affecting packet handling
+
+### 4. **MAJOR: Session Management Failures (Multiple Components)**
+- **Times**: Multiple incidents across AMF, SMF, and UPF
+- **Impact**: Session establishment rates dropped 15-23%
+- **Cause**: Session management failures propagating through the core
+
+## Probable Cause
+
+The **root cause appears to be a network-wide registration storm** that started around 16:37 yesterday. This surge of UE registration attempts is:
+- Overwhelming AMF capacity (causing CPU spikes and authentication failures)
+- Propagating to SMF (causing session establishment failures)
+- Triggering resource exhaustion on UPF (causing packet processing degradation)
+- Creating a cascade effect across all network functions
+
+## Recommended NOC Actions
+
+### Immediate Actions (Next 15 minutes):
+1. **Enable AMF overload control** - Implement N1/N2 back-off timers to spread registration attempts
+2. **Apply registration rate limiting** - If specific TACs or device fleets are dominant, limit registration rates for those groups
+3. **Monitor authentication success rates** - Ensure they recover above 99%
+
+### Short-term Actions (Next 30 minutes):
+1. **Scale AMF replicas** - Add additional AMF instances if CPU utilization remains above 80% after back-off is applied
+2. **Verify UPF resource status** - Check if resource exhaustion is load-driven or leak-driven
+3. **Monitor session establishment rates** - Ensure SMF session KPIs recover as AMF load decreases
+
+### Validation Metrics:
+- Registration rate should return to baseline within 2 back-off cycles
+- Authentication and NGAP success rates should recover above 99%
+- CPU utilization should drop below 70% across all functions
+- Session establishment rates should return to normal levels
+
+The network should begin recovering once the registration storm subsides and overload control measures take effect.

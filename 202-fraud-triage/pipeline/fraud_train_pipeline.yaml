@@ -1,0 +1,465 @@
+# PIPELINE DEFINITION
+# Name: fraud-brf-training
+# Description: 202 fraud-triage: revenue_assurance -> preprocess -> Balanced Random Forest -> evaluate -> register (MLflow, workspace agent-school)
+# Inputs:
+#    dataset_url: str [Default: 'https://huggingface.co/datasets/fenar/revenue_assurance/resolve/main/telecom_revass_data.csv.xz']
+#    mlflow_tracking_uri: str [Default: 'https://mlflow.redhat-ods-applications.svc:8443/mlflow']
+#    mlflow_workspace: str [Default: 'agent-school']
+#    n_estimators: int [Default: 100.0]
+#    test_fraction: float [Default: 0.3]
+components:
+  comp-evaluate:
+    executorLabel: exec-evaluate
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        test_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        metrics:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+      parameters:
+        Output:
+          parameterType: STRUCT
+  comp-load-data:
+    executorLabel: exec-load-data
+    inputDefinitions:
+      parameters:
+        dataset_url:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        raw_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-preprocess:
+    executorLabel: exec-preprocess
+    inputDefinitions:
+      artifacts:
+        raw_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        test_fraction:
+          defaultValue: 0.3
+          isOptional: true
+          parameterType: NUMBER_DOUBLE
+    outputDefinitions:
+      artifacts:
+        test_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        train_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-register:
+    executorLabel: exec-register
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        dataset_url:
+          parameterType: STRING
+        eval_metrics:
+          parameterType: STRUCT
+        mlflow_tracking_uri:
+          parameterType: STRING
+        mlflow_workspace:
+          parameterType: STRING
+        n_estimators:
+          parameterType: NUMBER_INTEGER
+        registered_name:
+          defaultValue: revassurance-fraud-brf
+          isOptional: true
+          parameterType: STRING
+  comp-train:
+    executorLabel: exec-train
+    inputDefinitions:
+      artifacts:
+        train_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        n_estimators:
+          defaultValue: 100.0
+          isOptional: true
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-evaluate:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - evaluate
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
+          \ 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.0' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef evaluate(model: dsl.Input[dsl.Model],\n             test_data:\
+          \ dsl.Input[dsl.Dataset],\n             metrics: dsl.Output[dsl.Metrics])\
+          \ -> dict:\n    \"\"\"Fraud-class metrics on the held-out split.\"\"\"\n\
+          \    import joblib\n    import pandas as pd\n    from sklearn.metrics import\
+          \ (f1_score, precision_score, recall_score,\n                          \
+          \       roc_auc_score)\n\n    bundle = joblib.load(model.path)\n    df =\
+          \ pd.read_parquet(test_data.path)\n    X, y = df[bundle[\"features\"]],\
+          \ df[\"Fraud\"]\n    pred = bundle[\"model\"].predict(X)\n    proba = bundle[\"\
+          model\"].predict_proba(X)[:, 1]\n    result = {\n        \"fraud_precision\"\
+          : float(precision_score(y, pred)),\n        \"fraud_recall\": float(recall_score(y,\
+          \ pred)),\n        \"fraud_f1\": float(f1_score(y, pred)),\n        \"roc_auc\"\
+          : float(roc_auc_score(y, proba)),\n        \"test_rows\": int(len(y)),\n\
+          \    }\n    for k, v in result.items():\n        metrics.log_metric(k, v)\n\
+          \    print(\"[evaluate] \" + \" \".join(f\"{k}={v:.4f}\" for k, v in result.items()\n\
+          \                                   if isinstance(v, float)))\n    return\
+          \ result\n\n"
+        image: registry.access.redhat.com/ubi9/python-311:latest
+    exec-load-data:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_data
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.17.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_data(dataset_url: str, raw_data: dsl.Output[dsl.Dataset]):\n\
+          \    \"\"\"Pull the published billing dataset (CSV.xz) and store it as an\
+          \ artifact.\"\"\"\n    import pandas as pd\n\n    df = pd.read_csv(dataset_url)\n\
+          \    df.to_parquet(raw_data.path)\n    raw_data.metadata[\"rows\"] = len(df)\n\
+          \    raw_data.metadata[\"source\"] = dataset_url\n    print(f\"[load] {len(df)}\
+          \ rows, fraud rate {df['Fraud'].mean():.4f}\")\n\n"
+        image: registry.access.redhat.com/ubi9/python-311:latest
+    exec-preprocess:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - preprocess
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
+          \ 'scikit-learn==1.5.2'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.17.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef preprocess(raw_data: dsl.Input[dsl.Dataset],\n              \
+          \ train_data: dsl.Output[dsl.Dataset],\n               test_data: dsl.Output[dsl.Dataset],\n\
+          \               test_fraction: float = 0.3):\n    \"\"\"Encode categoricals\
+          \ and split stratified on the fraud label.\"\"\"\n    import pandas as pd\n\
+          \    from sklearn.model_selection import train_test_split\n\n    df = pd.read_parquet(raw_data.path)\n\
+          \    df[\"Plan_Type\"] = (df[\"Plan_Type\"] == \"prepaid\").astype(int)\n\
+          \    train, test = train_test_split(\n        df, test_size=test_fraction,\
+          \ stratify=df[\"Fraud\"], random_state=42)\n    train.to_parquet(train_data.path)\n\
+          \    test.to_parquet(test_data.path)\n    print(f\"[preprocess] train={len(train)}\
+          \ test={len(test)} \"\n          f\"(fraud {train['Fraud'].mean():.4f}/{test['Fraud'].mean():.4f})\"\
+          )\n\n"
+        image: registry.access.redhat.com/ubi9/python-311:latest
+    exec-register:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - register
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
+          \ 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib' 'mlflow==3.4.0'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.17.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef register(model: dsl.Input[dsl.Model],\n             eval_metrics:\
+          \ dict,\n             dataset_url: str,\n             n_estimators: int,\n\
+          \             mlflow_tracking_uri: str,\n             mlflow_workspace:\
+          \ str,\n             registered_name: str = \"revassurance-fraud-brf\"):\n\
+          \    \"\"\"Log the run + model to RHOAI managed MLflow and register a version.\n\
+          \n    Same workspace-header/ServiceAccount-token handshake the 101/201\n\
+          \    workloads use (see 101 agent/_enable_mlflow) \u2014 the pipeline pod's\
+          \ SA\n    must pass the server's SubjectAccessReview (pipeline-runner-mlflow\n\
+          \    RoleBinding).\n    \"\"\"\n    import os\n    from pathlib import Path\n\
+          \n    os.environ.setdefault(\"MLFLOW_TRACKING_INSECURE_TLS\", \"true\")\n\
+          \    sa = Path(\"/var/run/secrets/kubernetes.io/serviceaccount/token\")\n\
+          \    if sa.exists() and not os.environ.get(\"MLFLOW_TRACKING_TOKEN\"):\n\
+          \        os.environ[\"MLFLOW_TRACKING_TOKEN\"] = sa.read_text().strip()\n\
+          \n    from mlflow.utils import rest_utils\n    _orig = rest_utils.http_request\n\
+          \n    def _shim(host_creds, endpoint, method, *a, **kw):\n        headers\
+          \ = dict(kw.pop(\"extra_headers\", None) or {})\n        headers[\"X-MLFLOW-WORKSPACE\"\
+          ] = mlflow_workspace\n        return _orig(host_creds, endpoint, method,\
+          \ *a,\n                     extra_headers=headers, **kw)\n\n    rest_utils.http_request\
+          \ = _shim\n    from mlflow.store.tracking import rest_store\n    rest_store.http_request\
+          \ = _shim\n\n    import joblib\n    import mlflow\n    import pandas as\
+          \ pd\n\n    mlflow.set_tracking_uri(mlflow_tracking_uri)\n    mlflow.set_experiment(\"\
+          revassurance-fraud\")\n\n    bundle = joblib.load(model.path)\n\n    class\
+          \ FraudModel(mlflow.pyfunc.PythonModel):\n        def load_context(self,\
+          \ context):\n            import joblib as _joblib\n            b = _joblib.load(context.artifacts[\"\
+          bundle\"])\n            self.model, self.features = b[\"model\"], b[\"features\"\
+          ]\n\n        def predict(self, context, model_input, params=None):\n   \
+          \         proba = self.model.predict_proba(model_input[self.features])[:,\
+          \ 1]\n            return pd.DataFrame({\"fraud_probability\": proba,\n \
+          \                                \"fraud_flag\": (proba >= 0.5).astype(int)})\n\
+          \n    with mlflow.start_run(run_name=\"brf-revassurance-dsp\") as run:\n\
+          \        mlflow.log_params({\n            \"algorithm\": \"BalancedRandomForestClassifier\"\
+          ,\n            \"n_estimators\": n_estimators,\n            \"dataset\"\
+          : dataset_url,\n            \"pipeline\": \"data-science-pipelines (kfp\
+          \ v2, dspa)\",\n        })\n        mlflow.log_metrics({k: v for k, v in\
+          \ eval_metrics.items()\n                            if isinstance(v, (int,\
+          \ float))})\n        mlflow.pyfunc.log_model(\n            name=\"fraud-detector\"\
+          ,\n            python_model=FraudModel(),\n            artifacts={\"bundle\"\
+          : model.path},\n            registered_model_name=registered_name,\n   \
+          \     )\n        print(f\"[register] run={run.info.run_id} -> {registered_name}\"\
+          )\n\n"
+        image: registry.access.redhat.com/ubi9/python-311:latest
+    exec-train:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pandas==2.2.3'\
+          \ 'scikit-learn==1.5.2' 'imbalanced-learn==0.12.4' 'joblib'  &&  python3\
+          \ -m pip install --quiet --no-warn-script-location 'kfp==2.17.0' '--no-deps'\
+          \ 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\
+          \n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train(train_data: dsl.Input[dsl.Dataset],\n          model: dsl.Output[dsl.Model],\n\
+          \          n_estimators: int = 100):\n    \"\"\"Balanced Random Forest \u2014\
+          \ the revenueassurance model, pipeline-run.\"\"\"\n    import joblib\n \
+          \   import pandas as pd\n    from imblearn.ensemble import BalancedRandomForestClassifier\n\
+          \n    df = pd.read_parquet(train_data.path)\n    X, y = df.drop(columns=[\"\
+          Fraud\"]), df[\"Fraud\"]\n    clf = BalancedRandomForestClassifier(\n  \
+          \      n_estimators=n_estimators, random_state=42, n_jobs=-1,\n        sampling_strategy=\"\
+          all\", replacement=True, bootstrap=False)\n    clf.fit(X, y)\n    joblib.dump({\"\
+          model\": clf, \"features\": list(X.columns)}, model.path)\n    model.metadata[\"\
+          algorithm\"] = \"BalancedRandomForestClassifier\"\n    model.metadata[\"\
+          n_estimators\"] = n_estimators\n    print(f\"[train] fitted on {len(df)}\
+          \ rows, {len(X.columns)} features\")\n\n"
+        image: registry.access.redhat.com/ubi9/python-311:latest
+pipelineInfo:
+  description: '202 fraud-triage: revenue_assurance -> preprocess -> Balanced Random
+    Forest -> evaluate -> register (MLflow, workspace agent-school)'
+  name: fraud-brf-training
+root:
+  dag:
+    tasks:
+      evaluate:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-evaluate
+        dependentTasks:
+        - preprocess
+        - train
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train
+            test_data:
+              taskOutputArtifact:
+                outputArtifactKey: test_data
+                producerTask: preprocess
+        taskInfo:
+          name: evaluate
+      load-data:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-data
+        inputs:
+          parameters:
+            dataset_url:
+              componentInputParameter: dataset_url
+        taskInfo:
+          name: load-data
+      preprocess:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-preprocess
+        dependentTasks:
+        - load-data
+        inputs:
+          artifacts:
+            raw_data:
+              taskOutputArtifact:
+                outputArtifactKey: raw_data
+                producerTask: load-data
+          parameters:
+            test_fraction:
+              componentInputParameter: test_fraction
+        taskInfo:
+          name: preprocess
+      register:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-register
+        dependentTasks:
+        - evaluate
+        - train
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: model
+                producerTask: train
+          parameters:
+            dataset_url:
+              componentInputParameter: dataset_url
+            eval_metrics:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: evaluate
+            mlflow_tracking_uri:
+              componentInputParameter: mlflow_tracking_uri
+            mlflow_workspace:
+              componentInputParameter: mlflow_workspace
+            n_estimators:
+              componentInputParameter: n_estimators
+        taskInfo:
+          name: register
+      train:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train
+        dependentTasks:
+        - preprocess
+        inputs:
+          artifacts:
+            train_data:
+              taskOutputArtifact:
+                outputArtifactKey: train_data
+                producerTask: preprocess
+          parameters:
+            n_estimators:
+              componentInputParameter: n_estimators
+        taskInfo:
+          name: train
+  inputDefinitions:
+    parameters:
+      dataset_url:
+        defaultValue: https://huggingface.co/datasets/fenar/revenue_assurance/resolve/main/telecom_revass_data.csv.xz
+        isOptional: true
+        parameterType: STRING
+      mlflow_tracking_uri:
+        defaultValue: https://mlflow.redhat-ods-applications.svc:8443/mlflow
+        isOptional: true
+        parameterType: STRING
+      mlflow_workspace:
+        defaultValue: agent-school
+        isOptional: true
+        parameterType: STRING
+      n_estimators:
+        defaultValue: 100.0
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      test_fraction:
+        defaultValue: 0.3
+        isOptional: true
+        parameterType: NUMBER_DOUBLE
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.17.0

@@ -193,12 +193,70 @@ def run_offline(question: str) -> str:
     return report
 
 
+def _enable_mlflow() -> None:
+    """Optional: mirror agent traces to MLflow (RHOAI 3.x Experiments tab).
+
+    Same shim as course 101 (see noc_agent.py:_enable_mlflow): RHOAI's
+    managed MLflow is workspace-scoped, so with MLFLOW_WORKSPACE set every
+    request carries the X-MLFLOW-WORKSPACE header plus a Bearer token from
+    MLFLOW_TRACKING_TOKEN or the pod ServiceAccount. Never breaks the loop.
+    """
+    uri = os.environ.get("MLFLOW_TRACKING_URI")
+    if not uri:
+        return
+    workspace = os.environ.get("MLFLOW_WORKSPACE")
+    try:
+        if workspace:
+            if not os.environ.get("MLFLOW_TRACKING_TOKEN"):
+                sa_token = Path("/var/run/secrets/kubernetes.io/serviceaccount/token")
+                if sa_token.exists():
+                    os.environ["MLFLOW_TRACKING_TOKEN"] = sa_token.read_text().strip()
+            os.environ.setdefault("MLFLOW_TRACKING_INSECURE_TLS", "true")
+
+            from mlflow.utils import rest_utils
+
+            _orig_http_request = rest_utils.http_request
+
+            def _with_workspace(host_creds, endpoint, method, *a, **kw):
+                headers = dict(kw.pop("extra_headers", None) or {})
+                headers["X-MLFLOW-WORKSPACE"] = workspace
+                # RHOAI serves the MLflow API under /mlflow but the OTLP
+                # span-ingest route at the server root; rewrite the host for
+                # /v1/traces so spans land in the tracking store (required by
+                # server-side LLM judges). See 101 counterpart.
+                if endpoint == "/v1/traces" and host_creds.host.rstrip("/").endswith("/mlflow"):
+                    import copy
+
+                    host_creds = copy.copy(host_creds)
+                    host_creds.host = host_creds.host.rstrip("/")[: -len("/mlflow")]
+                return _orig_http_request(host_creds, endpoint, method, *a,
+                                          extra_headers=headers, **kw)
+
+            rest_utils.http_request = _with_workspace
+            # rest_store binds http_request by name at import time, so patch
+            # its reference too (it carries the /v1/traces span upload).
+            from mlflow.store.tracking import rest_store as _rest_store
+
+            _rest_store.http_request = _with_workspace
+
+        import mlflow
+
+        mlflow.set_tracking_uri(uri)
+        mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT", "201-rca-investigator"))
+        mlflow.openai.autolog()
+        suffix = f" (workspace {workspace})" if workspace else ""
+        trace("mlflow", f"autolog enabled -> {uri}{suffix}")
+    except Exception as exc:  # tracing must never break the loop
+        trace("mlflow", f"disabled ({exc})")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="RCA Investigator agent")
     parser.add_argument("question", nargs="?",
                         default="Produce an RCA for the most severe current incident in the 5G core.")
     parser.add_argument("--offline", action="store_true")
     args = parser.parse_args()
+    _enable_mlflow()
     answer = run_offline(args.question) if args.offline else run_live(args.question)
     print("\n=== RCA Investigator ===")
     print(answer)

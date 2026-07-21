@@ -1,0 +1,55 @@
+[trace] 20:20:32 tool-call    get_active_alerts({"component": "all"})
+[trace] 20:20:32 tool-result  {"total": 7, "alerts": [{"type": "REGISTRATION_STORM", "severity": "CRITICAL", "component": "AMF", "description": "AMF affected by amf_registration_storm", "sta...
+[trace] 20:20:32 tool-call    get_kpi_summary({"nf": "all", "window_minutes": 60})
+[trace] 20:20:32 tool-result  {"window_minutes": 60, "summary": {"amf": {"http_connectivity": {"mean": 1.28, "min": 1.01, "max": 1.42}, "cpu_utilization": {"mean": 38.88, "min": 29.35, "max"...
+[trace] 20:20:32 tool-call    detect_anomalies({"nf": "all", "contamination": 0.02})
+[trace] 20:20:33 tool-result  {"contamination": 0.02, "anomalies": [{"timestamp": "2025-01-17 11:47:55.775630", "nf": "smf", "deviating_kpis": {"session_success_rate": {"value": 140.77, "zsc...
+[trace] 20:20:35 tool-call    search_runbooks({"query": "REGISTRATION_STORM", "top_k": 2})
+[trace] 20:20:35 tool-result  {"query": "REGISTRATION_STORM", "results": [{"runbook": "registration-storm.md", "score": 1, "content": "# Runbook: Registration Storm (AMF/SMF)\n\n**Alert type...
+[trace] 20:20:35 tool-call    search_runbooks({"query": "RESOURCE_EXHAUSTION", "top_k": 2})
+[trace] 20:20:35 tool-result  {"query": "RESOURCE_EXHAUSTION", "results": [{"runbook": "resource-exhaustion.md", "score": 1, "content": "# Runbook: Resource Exhaustion (AMF/SMF/UPF)\n\n**Ale...
+[trace] 20:20:35 tool-call    search_runbooks({"query": "SESSION_MANAGEMENT_FAILURE", "top_k": 2})
+[trace] 20:20:35 tool-result  {"query": "SESSION_MANAGEMENT_FAILURE", "results": [{"runbook": "session-management-failure.md", "score": 1, "content": "# Runbook: Session Management Failure (...
+[trace] 20:20:38 answer       turn 3
+
+=== NOC Assistant ===
+ ## Findings
+
+Based on the telemetry data, your 5G core is experiencing several concurrent issues:
+
+**Critical Issues:**
+1. **Registration Storm** affecting both AMF and SMF (CRITICAL severity)
+2. **Resource Exhaustion** on UPF and SMF (MAJOR severity) 
+3. **Session Management Failures** across AMF, SMF, and UPF (MAJOR severity)
+
+**Key Performance Degradations:**
+- Authentication success rate dropped 11.7% during the registration storm
+- Session establishment rate decreased 17.8% on SMF during storm
+- Packet processing rate dropped 17.6% on UPF during resource exhaustion
+- Multiple KPIs showing z-scores >2.0 indicating significant anomalies
+
+**Probable Cause:**
+The registration storm is the primary root cause. This surge of UE registration attempts is overwhelming the core network functions, causing:
+- AMF overload leading to authentication failures
+- SMF session establishment rate degradation 
+- UPF resource exhaustion cascading into session management failures
+
+**Recommended Next Actions:**
+
+1. **Immediate (0-15 minutes):**
+   - Enable AMF overload control with N1/N2 back-off timers to spread registration attempts
+   - Apply registration rate limiting for the dominant TAC/device fleet causing the storm
+   - Restart SMF and UPF pods if resource exhaustion is confirmed
+
+2. **Short-term (15-60 minutes):**
+   - Scale AMF replicas if CPU utilization remains above 80% after back-off implementation
+   - Rebalance sessions across UPF instances to alleviate resource pressure
+   - Clear any policy installation backlog on SMF
+
+3. **Validation:**
+   - Monitor for registration rate recovery within two back-off cycles
+   - Ensure authentication and NGAP success rates return above 99%
+   - Verify resource utilization drops below 70% for all functions
+   - Confirm session success rates recover to baseline
+
+The registration storm appears to be the cascading event causing the downstream resource exhaustion and session management failures.

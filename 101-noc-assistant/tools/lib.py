@@ -13,6 +13,7 @@ tool-call handlers) and as MCP servers (telemetry_mcp.py, runbook_mcp.py).
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -28,6 +29,34 @@ NF_FILES = {
     "smf": DATA_DIR / "smf_metrics.csv",
     "upf": DATA_DIR / "upf_metrics.csv",
 }
+
+# Feature-store mode (RHOAI): when FEAST_ONLINE_URL is set, telemetry tools
+# read the engineered feature vectors served by the Feast online store
+# (feature_repo/: raw KPIs + 1h aggregates + anomaly model outputs pushed by
+# the ingest/scoring pipeline) instead of the bundled CSVs. The CSV path
+# stays the default for laptop learners — same code, env-switched, like the
+# MLflow hook.
+FEAST_ONLINE_URL = os.environ.get("FEAST_ONLINE_URL")
+FEAST_CA = os.environ.get(
+    "FEAST_CA", "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
+
+
+def _feast_online(nf: str, feature_refs: list[str]) -> dict[str, float]:
+    """Fetch features for one NF from the Feast feature server (REST)."""
+    import ssl
+    import urllib.request
+
+    ctx = ssl.create_default_context(
+        cafile=FEAST_CA if Path(FEAST_CA).exists() else None)
+    body = json.dumps({"features": feature_refs, "entities": {"nf": [nf]}}).encode()
+    req = urllib.request.Request(
+        f"{FEAST_ONLINE_URL.rstrip('/')}/get-online-features",
+        data=body, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
+        payload = json.loads(resp.read())
+    names = payload["metadata"]["feature_names"]
+    values = [r["values"][0] for r in payload["results"]]
+    return {n: v for n, v in zip(names, values) if n != "nf"}
 
 
 def _load(nf: str) -> pd.DataFrame:
@@ -47,6 +76,20 @@ def get_kpi_summary(nf: str = "all", window_minutes: int = 60) -> str:
     nfs = list(NF_FILES) if nf.lower() == "all" else [nf.lower()]
     if any(n not in NF_FILES for n in nfs):
         return json.dumps({"error": f"unknown nf '{nf}', use amf|smf|upf|all"})
+    if FEAST_ONLINE_URL:
+        out = {}
+        for n in nfs:
+            cols = _numeric_cols(_load(n))
+            refs = [f"{n}_kpis:{c}_1h_{a}" for c in cols for a in ("mean", "min", "max")]
+            feats = _feast_online(n, refs)
+            out[n] = {
+                c: {a: round(float(feats[f"{c}_1h_{a}"]), 2)
+                    for a in ("mean", "min", "max")
+                    if feats.get(f"{c}_1h_{a}") is not None}
+                for c in cols
+            }
+        return json.dumps({"window_minutes": 60, "summary": out,
+                           "source": "feast-online (1h rolling aggregates)"})
     out = {}
     for n in nfs:
         df = _load(n)
@@ -72,6 +115,34 @@ def detect_anomalies(nf: str = "all", contamination: float = 0.02) -> str:
     nfs = list(NF_FILES) if nf.lower() == "all" else [nf.lower()]
     if any(n not in NF_FILES for n in nfs):
         return json.dumps({"error": f"unknown nf '{nf}', use amf|smf|upf|all"})
+    if FEAST_ONLINE_URL:
+        # Consume the pipeline's inference results: the IsolationForest
+        # trained in training/train_anomaly.py (tracked in Experiments)
+        # scores the latest engineered vector during ingest --score, and the
+        # online store serves score + flag alongside the raw KPIs.
+        findings = []
+        for n in nfs:
+            cols = _numeric_cols(_load(n))
+            refs = [f"{n}_kpis:anomaly_score", f"{n}_kpis:anomaly_flag"] + \
+                   [f"{n}_kpis:{c}" for c in cols]
+            feats = _feast_online(n, refs)
+            df = _load(n)
+            means, stds = df[cols].mean(), df[cols].std().replace(0, 1.0)
+            z = {c: (float(feats[c]) - means[c]) / stds[c]
+                 for c in cols if feats.get(c) is not None}
+            top = sorted(z, key=lambda c: abs(z[c]), reverse=True)[:3]
+            findings.append({
+                "nf": n,
+                "anomaly_score": round(float(feats.get("anomaly_score", 0.0)), 4),
+                "anomalous": bool(int(feats.get("anomaly_flag", 0))),
+                "deviating_kpis": {
+                    c: {"value": round(float(feats[c]), 2), "zscore": round(z[c], 2)}
+                    for c in top
+                },
+            })
+        return json.dumps({
+            "source": "feast-online (IsolationForest scored in the feature pipeline)",
+            "anomalies": findings})
     findings = []
     for n in nfs:
         df = _load(n)
