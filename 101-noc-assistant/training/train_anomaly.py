@@ -148,6 +148,34 @@ def main() -> None:
         out = Path(os.environ.get("MODEL_OUT", "/tmp/anomaly_bundle.joblib"))
         joblib.dump(bundle, out)
         mlflow.log_artifact(str(out), artifact_path="model")
+
+        # Log a real MLflow model (Models tab) and register a version:
+        # one pyfunc that routes each row to its NF's IsolationForest.
+        class AnomalyBundleModel(mlflow.pyfunc.PythonModel):
+            def load_context(self, context):
+                import joblib as _joblib
+
+                self.bundle = _joblib.load(context.artifacts["bundle"])
+
+            def predict(self, context, model_input, params=None):
+                frames = []
+                for nf_key, grp in model_input.groupby("nf"):
+                    model, cols, thr = self.bundle[nf_key]
+                    scores = model.decision_function(grp[cols])
+                    frames.append(pd.DataFrame({
+                        "nf": nf_key,
+                        "anomaly_score": scores,
+                        "anomaly_flag": (scores < thr).astype(int),
+                    }, index=grp.index))
+                return pd.concat(frames).sort_index()
+
+        mlflow.pyfunc.log_model(
+            name="anomaly-detector",
+            python_model=AnomalyBundleModel(),
+            artifacts={"bundle": str(out)},
+            registered_model_name=os.environ.get(
+                "REGISTERED_MODEL_NAME", "5gprod-anomaly-isolationforest"),
+        )
         print(f"[train] bundle -> {out}; run_id={run.info.run_id}")
         print(f"MLFLOW_RUN_ID={run.info.run_id}")
 
