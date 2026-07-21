@@ -1,0 +1,47 @@
+# One-shot: persist the point-in-time training datasets as named Feast
+# SavedDatasets (dashboard: Feature store -> Datasets). Runs
+# feature_repo/save_training_datasets.py against the store PVCs — the
+# script handles the Rome specifics (relative FileSource paths, per-Job
+# offline parquet, saved parquet persisted on the registry PVC).
+#
+# Prereq ConfigMap:
+#   oc create configmap feast-saveds-src -n agent-school \
+#     --from-file=save_datasets.py=../../../feature_repo/save_training_datasets.py
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: feast-save-datasets
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 900
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: feast-saveds-src}
+        - name: reg
+          persistentVolumeClaim: {claimName: feast-fivegprod-registry}
+        - name: onl
+          persistentVolumeClaim: {claimName: feast-fivegprod-online}
+      containers:
+        - name: feast
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp PIP_NO_CACHE_DIR=1;
+              pip install -q feast pandas pyarrow "dask[dataframe]" &&
+              python3 /src/save_datasets.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+            - {name: reg, mountPath: /feast-registry}
+            - {name: onl, mountPath: /feast-online}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

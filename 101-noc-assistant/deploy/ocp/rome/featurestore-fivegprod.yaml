@@ -1,0 +1,55 @@
+# Feast feature store `fivegprod` (feast.dev operator CR) — exported from
+# the live Rome cluster. Backs the 101 data pipeline: offline parquet for
+# point-in-time training, online store for the agent's live network state.
+#
+# RHOAI 3.5 EA2 findings baked in (details: ../../../feature_repo/README.md):
+# - label `feature-store-ui: enabled` + `registry.local.server.restAPI: true`
+#   are BOTH required before the dashboard lists the store (it reads the
+#   *-registry-rest service).
+# - `runFeastApplyOnInit: false` — on first boot leave it true so the
+#   operator scaffolds the stores, then set false: every restart otherwise
+#   re-applies the operator's demo project, which PRUNES your objects
+#   (feast apply is destructive per project). Keep init containers enabled.
+# - The EA registry server does not persist remote `feast apply`; run
+#   apply/push/save as Jobs that mount the two PVCs this CR creates
+#   (job-feast-bootstrap.yaml, job-feast-save-datasets.yaml).
+apiVersion: feast.dev/v1alpha1
+kind: FeatureStore
+metadata:
+  name: fivegprod
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+    feature-store-ui: enabled
+    opendatahub.io/dashboard: "true"
+spec:
+  feastProject: fivegprod
+  runFeastApplyOnInit: false   # true only for the very first boot
+  ui: {}
+  services:
+    disableInitContainers: false
+    onlineStore:
+      server: {}
+      persistence:
+        file:
+          path: online_store.db
+          pvc:
+            mountPath: /feast-online
+            create:
+              accessModes: [ReadWriteOnce]
+              resources:
+                requests: {storage: 2Gi}
+    registry:
+      local:
+        server:
+          grpc: true
+          restAPI: true        # dashboard reads through *-registry-rest
+        persistence:
+          file:
+            path: registry.db
+            pvc:
+              mountPath: /feast-registry
+              create:
+                accessModes: [ReadWriteOnce]
+                resources:
+                  requests: {storage: 1Gi}
