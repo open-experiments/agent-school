@@ -1,7 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-namespace: agent-school
-resources:
-  - imagestream-buildconfig.yaml
-  - cronjob-noc-sweep.yaml
-# job-ask.yaml uses generateName; create it with `oc create -f`, not apply.
