@@ -35,6 +35,10 @@ spec:
             - configMapRef:
                 name: mlflow-tracking
                 optional: true
+            # Feast online-store client config; same opt-in pattern.
+            - configMapRef:
+                name: feature-store-client
+                optional: true
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

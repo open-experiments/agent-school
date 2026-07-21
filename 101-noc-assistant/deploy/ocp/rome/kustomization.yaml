@@ -35,6 +35,13 @@ configMapGenerator:
     literals:
       - MLFLOW_TRACKING_URI=https://mlflow.redhat-ods-applications.svc:8443/mlflow
       - MLFLOW_WORKSPACE=agent-school
+  # Feature-store mode: with this env present the agent's telemetry tools
+  # read the Feast online store (feature_repo/) instead of the bundled CSVs
+  # — 1h aggregates for get_kpi_summary, pipeline-scored anomaly features
+  # for detect_anomalies. Absent on non-Rome clusters -> CSV mode.
+  - name: feature-store-client
+    literals:
+      - FEAST_ONLINE_URL=https://feast-fivegprod-online.agent-school.svc.cluster.local:443
 
 generatorOptions:
   disableNameSuffixHash: true

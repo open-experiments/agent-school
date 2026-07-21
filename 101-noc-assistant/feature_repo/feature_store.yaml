@@ -1,0 +1,17 @@
+# Client config for the Rome sandbox FeatureStore CR (feast.dev/v1,
+# name: fivegprod, namespace: agent-school). Matches the operator-generated
+# feast-fivegprod-client ConfigMap; `cert` is the OpenShift service CA that
+# every pod carries.
+project: fivegprod
+provider: local
+registry:
+    registry_type: remote
+    path: feast-fivegprod-registry.agent-school.svc.cluster.local:443
+    cert: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+online_store:
+    type: remote
+    path: https://feast-fivegprod-online.agent-school.svc.cluster.local:443
+    cert: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+auth:
+    type: no_auth
+entity_key_serialization_version: 3

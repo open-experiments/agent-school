@@ -41,6 +41,9 @@ spec:
                 - configMapRef:
                     name: mlflow-tracking
                     optional: true
+                - configMapRef:
+                    name: feature-store-client
+                    optional: true
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
