@@ -1,0 +1,92 @@
+# Planning agent — second worker of the 301 closed loop.
+# Same pattern as diagnostic.yaml (LangGraph + A2A, stock UBI9 python,
+# pip-at-startup), plus the external-reasoning boundary: the agent
+# consults the MCP think-tank across the namespace boundary before
+# writing a plan (THINKTANK_MCP_URL below is the only coupling).
+#
+# Prereqs: everything diagnostic.yaml lists, plus think-tank.yaml
+# applied, plus the source ConfigMap:
+#   oc create configmap planning-agent-src -n agent-school \
+#     --from-file=agent.py=../../../agents/planning/agent.py
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: planning-agent
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planning-agent
+  namespace: agent-school
+  labels:
+    app: planning-agent
+    app.kubernetes.io/part-of: agent-school
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: planning-agent}
+  template:
+    metadata:
+      labels: {app: planning-agent}
+    spec:
+      serviceAccountName: planning-agent
+      volumes:
+        - name: src
+          configMap: {name: planning-agent-src}
+      containers:
+        - name: agent
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp PIP_NO_CACHE_DIR=1;
+              pip install -q "a2a-sdk[http-server]==0.3.22" mcp==1.28.1
+              uvicorn httpx langgraph langchain langchain-openai
+              mlflow==3.4.0 redis &&
+              exec python3 /src/agent.py
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+            - secretRef: {name: llm-credentials}
+          env:
+            - {name: MLFLOW_EXPERIMENT, value: 301-closed-loop}
+            - {name: THINKTANK_MCP_URL,
+               value: "http://think-tank.think-tank.svc.cluster.local:8080/mcp"}
+            - name: STATE_PASSWORD
+              valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
+            - name: STATE_STORE_URL
+              value: redis://:$(STATE_PASSWORD)@loop-state.agent-school.svc.cluster.local:6379/0
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          ports:
+            - {containerPort: 8080, name: a2a}
+          startupProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 500m, memory: 1Gi}
+            limits: {cpu: "1", memory: 2Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: planning-agent
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  selector: {app: planning-agent}
+  ports:
+    - {name: a2a, port: 8080, targetPort: 8080}

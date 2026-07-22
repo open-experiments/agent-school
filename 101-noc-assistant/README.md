@@ -97,6 +97,15 @@ window, split — is all in the params:
 
 ![Model overview](./images/rhoai/model-overview.png)
 
+**3b — Promoted to the shared registry.** The MLflow version is then
+promoted into the cluster-wide `rome-registry` (**AI hub → Models →
+Registry**) with custom properties carrying the lineage — source
+MLflow run, Feast SavedDatasets, alert-window validation — so the
+classical anomaly model sits in the same catalog as the platform's
+LLMs, one governance surface for both:
+
+![Registry promotion](./images/rhoai/registry-promotion.png)
+
 **4 — Traced inference.** `ingest.py --score` runs the pipeline's anomaly
 inference with the registered bundle and pushes `anomaly_score` /
 `anomaly_flag` back online. Every scoring call is traced against the

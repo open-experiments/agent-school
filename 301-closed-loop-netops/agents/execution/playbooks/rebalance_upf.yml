@@ -1,0 +1,45 @@
+# Governed action: rebalance UPF load. On a real core this drains and
+# redistributes user-plane tunnels; the stand-in rendition keeps the
+# real mechanics — ensure a minimum spread of two replicas, then a
+# rolling restart so traffic re-homes across fresh pods.
+- name: rebalance upf
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: read current upf deployment
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: fiveg-core
+        name: upf
+      register: dep
+
+    - name: ensure minimum spread (>= 2 replicas)
+      kubernetes.core.k8s_scale:
+        kind: Deployment
+        namespace: fiveg-core
+        name: upf
+        replicas: "{{ [ (dep.resources[0].spec.replicas | int), 2 ] | max }}"
+        wait: true
+        wait_timeout: 120
+
+    - name: rolling restart to re-home load
+      kubernetes.core.k8s:
+        state: patched
+        kind: Deployment
+        namespace: fiveg-core
+        name: upf
+        definition:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  loop.agent-school/rebalancedAt: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+
+    - name: wait for rollout to become Available
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: fiveg-core
+        name: upf
+        wait: true
+        wait_condition: {type: Available, status: "True"}
+        wait_timeout: 120
