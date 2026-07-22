@@ -1,0 +1,85 @@
+# Distributed contamination sweep for the anomaly model — RayJob admitted
+# through Kueue. Two RHOAI capabilities in one artifact:
+# - Ray (KubeRay via the RHOAI ray component) runs the 9-task sweep on a
+#   head+worker cluster that exists only for the job's lifetime.
+# - Kueue (RHBOK) admits it via the queue-name label against the shared
+#   ClusterQueue (see kueue.yaml), so it shows in Workload metrics.
+#
+# Prereq ConfigMap (the sweep source):
+#   oc create configmap ray-sweep-src -n agent-school \
+#     --from-file=sweep.py=../../../training/ray_contamination_sweep.py
+#
+# SA caveat (EA2 finding): the manifests below name the noc-assistant
+# SA, but RHOAI's KubeRay silently replaces it with a generated
+# `<rayjob>-oauth-proxy-sa` on the actual pods. MLflow's workspace
+# SubjectAccessReview then fails with PERMISSION_DENIED unless the
+# namespace's SA *group* has edit — apply mlflow-workspace-rbac.yaml
+# (in this directory) before running. Results land in Experiments ->
+# 5gprod-anomaly-sweep. Venice note: same manifest; on the 96G card you
+# can add nvidia.com/gpu to a worker group for GPU-accelerated sweeps.
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: anomaly-contamination-sweep
+  namespace: agent-school
+  labels:
+    kueue.x-k8s.io/queue-name: agent-school-queue
+    app.kubernetes.io/part-of: agent-school
+spec:
+  entrypoint: python /sweep/sweep.py
+  shutdownAfterJobFinishes: true
+  ttlSecondsAfterFinished: 86400
+  runtimeEnvYAML: |
+    pip: ["mlflow==3.4.0","scikit-learn==1.5.2","pandas==2.2.3","pyarrow==17.0.0"]
+    env_vars:
+      MLFLOW_TRACKING_URI: "https://mlflow.redhat-ods-applications.svc:8443/mlflow"
+      MLFLOW_WORKSPACE: "agent-school"
+  rayClusterSpec:
+    rayVersion: "2.35.0"
+    headGroupSpec:
+      rayStartParams:
+        dashboard-host: "0.0.0.0"
+      template:
+        spec:
+          serviceAccountName: noc-assistant
+          volumes:
+            - name: sweep
+              configMap: {name: ray-sweep-src}
+          containers:
+            - name: ray-head
+              image: quay.io/modh/ray:2.35.0-py311-cu121
+              resources:
+                requests: {cpu: "3", memory: 6Gi}
+                limits: {cpu: "4", memory: 10Gi}
+              volumeMounts:
+                - {name: sweep, mountPath: /sweep}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: {drop: [ALL]}
+                runAsNonRoot: true
+                seccompProfile: {type: RuntimeDefault}
+    workerGroupSpecs:
+      - groupName: small
+        replicas: 1
+        minReplicas: 1
+        maxReplicas: 1
+        rayStartParams: {}
+        template:
+          spec:
+            serviceAccountName: noc-assistant
+            volumes:
+              - name: sweep
+                configMap: {name: ray-sweep-src}
+            containers:
+              - name: ray-worker
+                image: quay.io/modh/ray:2.35.0-py311-cu121
+                resources:
+                  requests: {cpu: "3", memory: 6Gi}
+                  limits: {cpu: "4", memory: 10Gi}
+                volumeMounts:
+                  - {name: sweep, mountPath: /sweep}
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities: {drop: [ALL]}
+                  runAsNonRoot: true
+                  seccompProfile: {type: RuntimeDefault}

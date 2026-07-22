@@ -68,12 +68,43 @@ back to a named dataset, not an ephemeral dataframe:
 
 ![Feature datasets](./images/rhoai/feature-datasets.png)
 
+**2c — Calibration as a queued, distributed sweep.** Training itself
+stays a plain Job — an IsolationForest does not need a Ray cluster. What
+*is* embarrassingly parallel is calibrating it:
+`training/ray_contamination_sweep.py` fans nine configurations (3 NFs ×
+3 contamination values) across an ephemeral Ray cluster (head + worker,
+alive only for the job), scores each against the labeled alert windows
+and the labeled incident rate, and logs the sweep to MLflow
+(`5gprod-anomaly-sweep`, with the best pick per NF). The RayJob carries
+the `kueue.x-k8s.io/queue-name` label, so RHBOK admits it against the
+shared ClusterQueue before KubeRay spins up a single pod — the same
+quota gate the Feast dataset Job goes through, visible in
+**Observe & monitor → Workload metrics**:
+
+![Workload metrics](./images/rhoai/workload-metrics.png)
+
+The pattern — not the payload — is the point: 302's fine-tuning runs
+ride this exact RayJob-on-Kueue rail, with GPUs in the worker group.
+Wiring and EA2 findings (Kueue frameworks list, namespace opt-in label,
+KubeRay's silent `oauth-proxy-sa` swap) are in
+[deploy/ocp/rome/](./deploy/ocp/rome/): `kueue.yaml`,
+`rayjob-anomaly-sweep.yaml`, `mlflow-workspace-rbac.yaml`.
+
 **3 — A versioned model, not a pickle in a bucket.** The run logs one
 pyfunc model that routes each row to its NF's forest, and registers it as
 `5gprod-anomaly-isolationforest`. Lineage — dataset, feature source,
 window, split — is all in the params:
 
 ![Model overview](./images/rhoai/model-overview.png)
+
+**3b — Promoted to the shared registry.** The MLflow version is then
+promoted into the cluster-wide `rome-registry` (**AI hub → Models →
+Registry**) with custom properties carrying the lineage — source
+MLflow run, Feast SavedDatasets, alert-window validation — so the
+classical anomaly model sits in the same catalog as the platform's
+LLMs, one governance surface for both:
+
+![Registry promotion](./images/rhoai/registry-promotion.png)
 
 **4 — Traced inference.** `ingest.py --score` runs the pipeline's anomaly
 inference with the registered bundle and pushes `anomaly_score` /

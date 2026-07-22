@@ -53,3 +53,10 @@ Flow (all real, verified on Rome):
   is per-Job, so the script rebuilds the engineered frame from the
   registered feature schema; saved parquet lands on the registry PVC
   (`/feast-registry/saved/`).
+- The Entities tab shows a `__dummy` entity: that is Feast's own reserved
+  placeholder (`DUMMY_ENTITY_NAME`, hardcoded in the library), auto-created
+  in every project as the join target for entity-less feature views. Our
+  views all join on the real `nf` entity, so it is inert here. Upstream
+  Feast's UI filters it out of listings; the RHOAI 3.5 EA2 dashboard does
+  not yet (cosmetic dashboard gap, worth reporting). Do not delete or
+  rename it - `feast apply` recreates it.
