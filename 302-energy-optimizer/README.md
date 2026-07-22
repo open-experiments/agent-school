@@ -75,6 +75,47 @@ the pattern-3 RBAC lesson). First live run through the queue:
 night windows on 2 of 6 cells → 4.27% energy saved, 0.0% QoS drop,
 logged to MLflow experiment `302-energy-optimizer` as `sim-manual`.
 
+## The agent loop, live on Rome
+
+Build stage 2 is live: the Llama Stack loop runs the full
+simulate-before-act cycle on the cluster.
+
+The harness is a **Llama Stack** server
+([agent/run.yaml](./agent/run.yaml),
+[deploy/ocp/rome/llama-stack.yaml](./deploy/ocp/rome/llama-stack.yaml))
+with the `remote::vllm` inference provider pointing at the cluster's
+own Kimi endpoint. (EA2 honesty: the DataScienceCluster runs
+`llamastackoperator` Removed, so the stack runs as a plain Deployment
+rather than a `LlamaStackDistribution` CR — swap when it graduates.)
+
+The optimizer episode ([agent/energy_optimizer.py](./agent/energy_optimizer.py))
+runs the loop: the agent **proposes** cell-sleep windows through the
+Llama Stack Agents API (session memory carries rejections into revision
+turns); each proposal is **dispatched** as a Kueue-admitted simulation
+Job under the submit/poll-only Role (pattern 3 — the compute never runs
+in the agent pod); the simulated network condition is **scored** on the
+served sustainability model (pattern 2, KServe V2); and a **threshold
+gate in code** (not the prompt) accepts only if savings and QoS and
+efficiency all clear their bars. The agent's only output is a
+change-plan artifact — it never touches the RAN.
+
+Every attempt is an MLflow run, and the discipline shows in the record:
+one episode's proposals were all **rejected** (they slept too many
+cells, collapsing QoS) and closed `NO_PLAN` with no plan emitted; the
+next episode's proposal **cleared the gate** (3 cells asleep 00:00–06:00
+→ 7.67% energy saved, **0% QoS drop**, efficiency 68.3) and the
+change-plan artifact was written — emitted *only* because the simulated
+outcome passed:
+
+![Optimizer runs](./images/rhoai/optimizer-runs.png)
+
+EA2 findings from getting the loop live: the `llama-stack` Service's
+injected `LLAMA_STACK_PORT` env collides with the server's own config
+(`enableServiceLinks: false` is the fix); the client needs
+`fire`/`termcolor`; and reading a completed sim Job's result off pod
+stdout was unreliable (huge jax-install logs), so the loop reads the
+sim's result back from its MLflow run — a deterministic channel.
+
 ## Blueprint mapping
 
 | Blueprint component | Here |
@@ -95,16 +136,16 @@ logged to MLflow experiment `302-energy-optimizer` as `sim-manual`.
 
 ## Status
 
-In progress — build stage 1 of 2 complete.
+Complete — both stages live on Rome.
 
-1. **Skill backends (done, live on Rome):** the sustainability scorer
-   trained from the published dataset, registered, promoted to
-   `rome-registry`, and serving on KServe (pattern 2, verified with a
-   live V2 call); the JAX cell-sleep simulation running as
-   Kueue-admitted Jobs under submit/poll-only RBAC (pattern 3,
-   verified through the queue with MLflow evidence).
-2. **Agent:** the Llama Stack loop — propose, dispatch the sim Job,
-   score via the served model, threshold-gate, emit the change-plan
-   artifact (rejections logged too).
+1. **Skill backends (done):** the sustainability scorer trained from
+   the published dataset, registered, promoted to `rome-registry`, and
+   serving on KServe (pattern 2, live V2 call verified); the JAX
+   cell-sleep simulation running as Kueue-admitted Jobs under
+   submit/poll-only RBAC (pattern 3, verified through the queue).
+2. **Agent (done):** the Llama Stack loop — propose (Agents API →
+   Kimi), dispatch the sim Job, score on the served model, threshold
+   gate in code, emit the change-plan artifact; both accept and
+   reject/NO_PLAN paths proven live, every attempt in MLflow.
 
-RHOAI snapshots land as each stage goes live — no mockups.
+All RHOAI snapshots are live captures — no mockups.
