@@ -30,7 +30,11 @@ from pathlib import Path
 SA_DIR = "/var/run/secrets/kubernetes.io/serviceaccount"
 KUBECONFIG = "/tmp/kubeconfig"
 PLAYBOOK_DIR = os.environ.get("PLAYBOOK_DIR", "/playbooks")
-CATALOG = {"scale_amf", "restart_smf", "rebalance_upf"}
+# The governed catalog. `rollback` is the safety action — only the
+# Validation agent requests it (over A2A, through this single
+# actuation path), and it needs no approval gate: undoing is the safe
+# direction.
+CATALOG = {"scale_amf", "restart_smf", "rebalance_upf", "rollback"}
 
 
 def write_kubeconfig():
@@ -180,6 +184,24 @@ def execute_plan(loop_id, approved):
     return rec
 
 
+def rollback_plan(loop_id):
+    """Safety path: Validation breached the rollback trigger. No
+    approval gate — undoing is the safe direction; still audited."""
+    status = STATE.get("loop:" + loop_id + ":status")
+    if not STATE.get("loop:" + loop_id + ":execution"):
+        return {"error": "nothing executed for loop " + loop_id,
+                "status": status}
+    result = run_playbook("rollback")
+    snapshot = nf_snapshot()
+    ok = result.get("rc") == 0
+    rec = {"loop_id": loop_id, "stage": "rollback",
+           "results": [result], "nf_state_after": snapshot, "all_ok": ok}
+    STATE.set("loop:" + loop_id + ":rollback", json.dumps(rec))
+    STATE.set("loop:" + loop_id + ":status",
+              "rolled_back" if ok else "rollback_failed")
+    return rec
+
+
 # ------------------------------------------------------------------- a2a
 from a2a.server.agent_execution import AgentExecutor, RequestContext  # noqa: E402
 from a2a.server.apps import A2AStarletteApplication  # noqa: E402
@@ -199,14 +221,17 @@ class ExecutionExecutor(AgentExecutor):
             if tok.startswith("loop_id="):
                 loop_id = tok.split("=", 1)[1]
         approved = "approve" in toks
+        rollback = "rollback" in toks
         if not loop_id:
             await event_queue.enqueue_event(new_agent_text_message(
                 json.dumps({"error": "message must carry loop_id=<id>"})))
             return
-        run_ctx = mlflow.start_run(run_name="execution-" + loop_id) \
+        prefix = "rollback-" if rollback else "execution-"
+        run_ctx = mlflow.start_run(run_name=prefix + loop_id) \
             if mlflow else None
         try:
-            rec = execute_plan(loop_id, approved)
+            rec = rollback_plan(loop_id) if rollback \
+                else execute_plan(loop_id, approved)
             if mlflow:
                 try:
                     mlflow.log_param("loop_id", loop_id)
@@ -223,7 +248,8 @@ class ExecutionExecutor(AgentExecutor):
         finally:
             if run_ctx:
                 run_ctx.__exit__(None, None, None)
-        rec["state_key"] = "loop:" + loop_id + ":execution"
+        rec["state_key"] = "loop:" + loop_id + \
+            (":rollback" if rollback else ":execution")
         await event_queue.enqueue_event(
             new_agent_text_message(json.dumps(rec)))
 

@@ -1,0 +1,90 @@
+# Validation agent — fourth worker; closes the 301 loop.
+# Deterministic (no LLM): pre/post anomaly-score deltas with fixed
+# thresholds; rollback requested THROUGH Execution over A2A (single
+# actuation path — Validation's SA has no RBAC in fiveg-core at all).
+#
+# Prereqs: the rest of the loop (state store, diagnostic, planning,
+# execution with the rollback playbook), plus:
+#   oc create configmap validation-agent-src -n agent-school \
+#     --from-file=agent.py=../../../agents/validation/agent.py
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: validation-agent
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: validation-agent
+  namespace: agent-school
+  labels:
+    app: validation-agent
+    app.kubernetes.io/part-of: agent-school
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: validation-agent}
+  template:
+    metadata:
+      labels: {app: validation-agent}
+    spec:
+      serviceAccountName: validation-agent
+      volumes:
+        - name: src
+          configMap: {name: validation-agent-src}
+      containers:
+        - name: agent
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp PIP_NO_CACHE_DIR=1;
+              pip install -q "a2a-sdk[http-server]==0.3.22" uvicorn httpx
+              mlflow==3.4.0 redis &&
+              exec python3 /src/agent.py
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+            - configMapRef: {name: feature-store-client}
+          env:
+            - {name: MLFLOW_EXPERIMENT, value: 301-closed-loop}
+            - {name: EXECUTION_URL,
+               value: "http://execution-agent.agent-school.svc.cluster.local:8080"}
+            - name: STATE_PASSWORD
+              valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
+            - name: STATE_STORE_URL
+              value: redis://:$(STATE_PASSWORD)@loop-state.agent-school.svc.cluster.local:6379/0
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          ports:
+            - {containerPort: 8080, name: a2a}
+          startupProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: validation-agent
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  selector: {app: validation-agent}
+  ports:
+    - {name: a2a, port: 8080, targetPort: 8080}

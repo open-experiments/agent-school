@@ -55,7 +55,7 @@ detected anomaly into a remediation-flow determination, keeping
    (the 12-Factor Agent discipline: strict hierarchy, no peer chatter,
    externalized state).
 
-## Stages 1-3, live on Rome
+## The loop, live on Rome
 
 The state store, the A2A skeleton, and the Diagnostic worker are live —
 captures from the cluster, not mockups.
@@ -149,6 +149,29 @@ for audit:
 
 ![fiveg-core after](./images/rhoai/fiveg-core-after.png)
 
+**Stage 4 — Validation closes the cycle.** Also deterministic — no
+LLM. Validation ([agents/validation/](./agents/validation/)) re-reads
+the live anomaly verdicts after actuation, compares them against the
+pre-action baseline Diagnostic recorded, and decides with fixed
+thresholds: `improved` closes the loop as resolved, `stable` closes
+it as monitor, `deteriorated` triggers ROLLBACK — requested over A2A
+*through Execution*, because the loop has exactly one actuation path
+and Validation's ServiceAccount has no RBAC in `fiveg-core` at all.
+Intelligence lives in the middle of the loop (Diagnostic, Planning);
+both safety-critical ends are code.
+
+The validation smoke proved both dispositions. The natural path
+validated the executed loop: verdict `stable`, deltas 0.0 —
+honest, because the published telemetry is a fixed dataset, so the
+online verdicts cannot react to the stand-in NFs being scaled (on a
+live core they would). And the rollback drill — a clearly-labeled
+synthetic healthy baseline against the real post-action verdicts —
+tripped `deteriorated` and drove a REAL rollback: the playbook ran
+through Execution and amf returned to its baseline 2 replicas on the
+actual cluster. Every step of both paths is an MLflow run:
+
+![Closed loop runs](./images/rhoai/loop-closed-runs.png)
+
 ## Blueprint mapping
 
 | Blueprint component | Here |
@@ -172,18 +195,21 @@ for audit:
 
 ## Status
 
-In progress — stages 1-3 of the build order are live on Rome:
+**Complete — all four agents live on Rome.** Stages 1-3:
 the state store (`loop-state`), the A2A skeleton, the Diagnostic
 agent (Feast verdicts → LangGraph → findings → externalized state →
 MLflow), the external MCP think-tank in its own namespace, and the
 Planning agent (state → MCP consult → governed plan with approval
 gate and rollback trigger) — chained end-to-end on one loop id by an
-in-cluster smoke client ([deploy/ocp/rome](./deploy/ocp/rome)). Stage 3 is
-also live: Execution actuates the governed plan with real Ansible
-playbooks against the stand-in `fiveg-core` NFs under a single
-namespace-scoped Role, with the approval gate enforced in code and
-proven by a negative test (amf really scaled 2 → 3 on the last loop).
-Next: Validation to close the cycle — verify KPIs against the live
-series, trigger rollback on failure. Reuses 101 telemetry tools, the autonet playbook
+in-cluster smoke client ([deploy/ocp/rome](./deploy/ocp/rome)). Stage 3:
+Execution actuates the governed plan with real Ansible playbooks
+against the stand-in `fiveg-core` NFs under a single namespace-scoped
+Role, approval gate enforced in code and proven by a negative test.
+Stage 4: Validation closes the cycle deterministically — verdict from
+pre/post KPI deltas, loop closed as monitor on the live iteration,
+and the rollback arm proven by a drill that really returned amf to
+baseline through Execution. Remaining for a later pass: the NemoClaw
+product-harness track and MCP-Gateway-fronted playbook access (Track
+4 scope). Reuses 101 telemetry tools, the autonet playbook
 set, and the autonet per-NF vector stores. Snapshots land stage by
 stage — no mockups.

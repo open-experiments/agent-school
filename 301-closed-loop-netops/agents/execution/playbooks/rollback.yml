@@ -1,0 +1,26 @@
+# Governed safety action: return the core to its baseline shape.
+# Triggered by the Validation agent (over A2A, through Execution — the
+# loop has exactly one actuation path) when the post-action KPIs breach
+# the plan's rollback trigger. Undoes the capacity change; the rolling
+# restarts need no undo.
+- name: rollback to baseline
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: return amf to baseline replicas
+      kubernetes.core.k8s_scale:
+        kind: Deployment
+        namespace: fiveg-core
+        name: amf
+        replicas: 2
+        wait: true
+        wait_timeout: 120
+
+    - name: wait for amf to settle
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: fiveg-core
+        name: amf
+        wait: true
+        wait_condition: {type: Available, status: "True"}
+        wait_timeout: 120
