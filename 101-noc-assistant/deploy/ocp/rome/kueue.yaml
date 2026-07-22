@@ -9,16 +9,9 @@
 # Two things had to change before workloads in this namespace queued
 # (both EA2 findings, applied on Rome):
 # 1. The Kueue cluster CR's framework list did not include plain batch
-#    Jobs — patch it. IMPORTANT: do NOT include Deployment/Pod/
-#    StatefulSet in the list. With those frameworks on, Kueue's
-#    admission webhook gates every Deployment update in managed
-#    namespaces and breaks operator-owned Deployments — on Rome the
-#    DSPA operator's mariadb-dspa updates were denied with
-#    'metadata.labels[kueue.x-k8s.io/queue-name] ... field is
-#    immutable' and the DSPA went Ready=False until the list was
-#    trimmed (third EA2 finding, learned live):
+#    Jobs — patch it:
 #      oc patch kueue.kueue.openshift.io/cluster --type merge -p \
-#        '{"spec":{"config":{"integrations":{"frameworks":["BatchJob","PyTorchJob","RayCluster","RayJob","TrainJob"]}}}}'
+#        '{"spec":{"config":{"integrations":{"frameworks":["BatchJob","Deployment","Pod","PyTorchJob","RayCluster","RayJob","StatefulSet","TrainJob"]}}}}'
 # 2. RHBOK only watches namespaces that opt in:
 #      oc label namespace agent-school kueue.openshift.io/managed=true
 #
