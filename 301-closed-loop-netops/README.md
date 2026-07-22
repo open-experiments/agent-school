@@ -55,6 +55,70 @@ detected anomaly into a remediation-flow determination, keeping
    (the 12-Factor Agent discipline: strict hierarchy, no peer chatter,
    externalized state).
 
+## Stages 1-2, live on Rome
+
+The state store, the A2A skeleton, and the Diagnostic worker are live —
+captures from the cluster, not mockups.
+
+The externalized workflow state store runs as a Redis 7 deployment
+(`loop-state`); every loop iteration's record lands there under
+`loop:<id>:*` keys, so any worker can die and be replaced mid-loop
+([deploy/ocp/rome/state-store.yaml](./deploy/ocp/rome/state-store.yaml)).
+
+The Diagnostic agent ([agents/diagnostic/](./agents/diagnostic/)) is a
+LangGraph graph behind a real A2A surface — agent card at
+`/.well-known/agent.json`, JSON-RPC `message/send` (a2a-sdk 0.3.22,
+pinned: the 1.x line reshuffles the server API). Its three nodes:
+**sense** pulls the live anomaly verdicts and 1h KPI means from 101's
+Feast online store; **analyze** reasons over them with the cluster's
+own Kimi-Linear endpoint; **publish** externalizes the findings. The
+in-cluster A2A smoke client drove a real iteration end-to-end:
+incident=true across amf/smf/upf with evidence citing the live scores,
+and the state read back by a *different* pod (`status=diagnosed`) —
+the 12-Factor proof that the answer and the state are separate things:
+
+![Diagnostic run](./images/rhoai/diagnostic-run.png)
+
+Every iteration is one MLflow run in experiment `301-closed-loop` with
+the LangGraph trace attached — token-accounted observability for an
+A2A worker, in the same Experiments tab as every other course:
+
+![Diagnostic trace](./images/rhoai/diagnostic-trace.png)
+
+EA2 findings along the way: `mlflow.langchain.autolog()` needs base
+`langchain` installed (langchain-openai alone leaves tracing silently
+dark), and artifact logging (`log_dict`) needs the requests-level
+workspace-header shim — the same finding the 202 pipeline hit, now
+confirmed from a second call path.
+
+**Stage 2 — Planning and the external think-tank.** The MCP
+think-tank runs in its own namespace (`think-tank`): no shared
+ServiceAccounts, secrets, or state with the agents — they know only
+its URL. That is the article's separation of "what should we do" from
+"who is allowed to do it", modeled honestly on one cluster
+(off-cluster in a real deployment; the MCP-over-streamable-HTTP wire
+contract is identical either way). Its single tool,
+`determine_remediation_flow`, reasons over the findings with the
+cluster's Kimi endpoint and answers only in terms of the governed
+autonet playbook catalog ([agents/thinktank/](./agents/thinktank/)).
+
+The Planning agent ([agents/planning/](./agents/planning/)) reads the
+diagnostic record from the state store, consults the think-tank over
+MCP, and merges determination + findings into a governed plan — the
+think-tank's raw determination is preserved in the plan record, so
+the external black box stays auditable from the loop's side. The
+chain smoke Job drove both stages on one loop id:
+
+![Loop runs](./images/rhoai/loop-runs.png)
+
+The resulting plan is the governance artifact the article asks for:
+ordered steps restricted to the playbook catalog (on the live
+incident: rebalance_upf → restart_smf → scale_amf), risk=medium,
+**approval_required=true**, and a KPI rollback trigger — the human
+gate and the abort condition decided before anything runs:
+
+![Planning run](./images/rhoai/planning-run.png)
+
 ## Blueprint mapping
 
 | Blueprint component | Here |
@@ -78,9 +142,15 @@ detected anomaly into a remediation-flow determination, keeping
 
 ## Status
 
-Planned — but the sensor half is not: 101's Feast pipeline, anomaly
-model, and online verdicts are live on Rome, so Diagnostic's input
-already exists. Reuses 101 telemetry tools, the autonet playbook set, and
-the autonet per-NF vector stores. Build order: state store and A2A
-skeleton, then agents one by one, Validation last. RHOAI snapshots will
-be added stage by stage as the loop goes live — no mockups.
+In progress — stages 1 and 2 of the build order are live on Rome:
+the state store (`loop-state`), the A2A skeleton, the Diagnostic
+agent (Feast verdicts → LangGraph → findings → externalized state →
+MLflow), the external MCP think-tank in its own namespace, and the
+Planning agent (state → MCP consult → governed plan with approval
+gate and rollback trigger) — chained end-to-end on one loop id by an
+in-cluster smoke client ([deploy/ocp/rome](./deploy/ocp/rome)). Next
+per the build order: Execution against stand-in `fiveg-core` NFs
+behind governed RBAC (real Ansible scale/restart), then Validation to
+close the cycle. Reuses 101 telemetry tools, the autonet playbook
+set, and the autonet per-NF vector stores. Snapshots land stage by
+stage — no mockups.
