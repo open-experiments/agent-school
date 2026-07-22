@@ -71,11 +71,6 @@ runner are documented in [deploy/](./deploy/):
 
 ![Trace assessments](./images/rhoai/trace-assessments.png)
 
-201 deliberately adds no new data infrastructure: the judge runs as a
-one-shot in-cluster Job and everything lands in the same workspace
-MLflow that 101 set up — the platform investment amortizes across
-courses instead of each one growing its own stack.
-
 ## Blueprint mapping
 
 | Blueprint component | Here |
