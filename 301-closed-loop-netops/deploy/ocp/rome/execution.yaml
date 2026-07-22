@@ -1,0 +1,87 @@
+# Execution agent — governed actuation arm of the 301 loop.
+# No LLM in this pod (deliberate: the most dangerous component gets no
+# creativity). ansible-core + kubernetes.core at startup; playbooks
+# mounted read-only from a ConfigMap; the SA's reach is exactly
+# execution-rbac.yaml.
+#
+# Prereqs: fiveg-core.yaml, execution-rbac.yaml, state store, plus:
+#   oc create configmap execution-agent-src -n agent-school \
+#     --from-file=agent.py=../../../agents/execution/agent.py
+#   oc create configmap nf-playbooks -n agent-school \
+#     --from-file=../../../agents/execution/playbooks/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: execution-agent
+  namespace: agent-school
+  labels:
+    app: execution-agent
+    app.kubernetes.io/part-of: agent-school
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: execution-agent}
+  template:
+    metadata:
+      labels: {app: execution-agent}
+    spec:
+      serviceAccountName: execution-agent
+      volumes:
+        - name: src
+          configMap: {name: execution-agent-src}
+        - name: playbooks
+          configMap: {name: nf-playbooks}
+      containers:
+        - name: agent
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp PIP_NO_CACHE_DIR=1;
+              pip install -q "a2a-sdk[http-server]==0.3.22" uvicorn httpx
+              mlflow==3.4.0 redis ansible-core kubernetes &&
+              ansible-galaxy collection install kubernetes.core -p /tmp/.ansible/collections &&
+              export ANSIBLE_COLLECTIONS_PATH=/tmp/.ansible/collections &&
+              exec python3 /src/agent.py
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+          env:
+            - {name: MLFLOW_EXPERIMENT, value: 301-closed-loop}
+            - {name: PLAYBOOK_DIR, value: /playbooks}
+            - name: STATE_PASSWORD
+              valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
+            - name: STATE_STORE_URL
+              value: redis://:$(STATE_PASSWORD)@loop-state.agent-school.svc.cluster.local:6379/0
+          volumeMounts:
+            - {name: src, mountPath: /src}
+            - {name: playbooks, mountPath: /playbooks}
+          ports:
+            - {containerPort: 8080, name: a2a}
+          startupProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 500m, memory: 1Gi}
+            limits: {cpu: "1", memory: 2Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: execution-agent
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  selector: {app: execution-agent}
+  ports:
+    - {name: a2a, port: 8080, targetPort: 8080}

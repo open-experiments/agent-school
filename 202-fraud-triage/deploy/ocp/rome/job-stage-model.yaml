@@ -1,0 +1,53 @@
+# One-shot: stage the registered fraud model from managed MLflow into
+# the cluster MinIO (s3://models/revassurance-fraud-brf/1/) so KServe's
+# storage initializer can pull it. See ../../../serving/stage_model.py.
+#
+# Prereqs:
+# - dspa-minio-creds secret (accesskey/secretkey) — already created for
+#   the DSPA (see job-make-bucket.yaml header).
+# - ConfigMap with the script:
+#     oc create configmap fraud-stage-src -n agent-school \
+#       --from-file=stage_model.py=../../../serving/stage_model.py
+#
+# Runs as the namespace default SA — MLflow's SubjectAccessReview passes
+# via the SA-group binding (101's mlflow-workspace-rbac.yaml).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stage-fraud-model
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 900
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: fraud-stage-src}
+      containers:
+        - name: stage
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - name: AK
+              valueFrom: {secretKeyRef: {name: dspa-minio-creds, key: accesskey}}
+            - name: SK
+              valueFrom: {secretKeyRef: {name: dspa-minio-creds, key: secretkey}}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q mlflow==3.4.0 boto3 &&
+              python3 /src/stage_model.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

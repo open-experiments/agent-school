@@ -1,0 +1,28 @@
+# Governed action: rolling restart of the SMF (clears stuck PFCP/N4
+# sessions and leaked state in the real core; real rollout-restart
+# mechanics on the stand-in).
+- name: rolling restart smf
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: annotate pod template (rollout restart)
+      kubernetes.core.k8s:
+        state: patched
+        kind: Deployment
+        namespace: fiveg-core
+        name: smf
+        definition:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  loop.agent-school/restartedAt: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+
+    - name: wait for rollout to become Available
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: fiveg-core
+        name: smf
+        wait: true
+        wait_condition: {type: Available, status: "True"}
+        wait_timeout: 120

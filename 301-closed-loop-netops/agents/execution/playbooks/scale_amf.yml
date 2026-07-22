@@ -1,0 +1,22 @@
+# Governed action: add AMF capacity (registration / session-setup
+# headroom). Real kubernetes.core scale on the fiveg-core stand-in,
+# capped at 5 replicas — the cap is part of the governance.
+- name: scale amf
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: read current amf deployment
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: fiveg-core
+        name: amf
+      register: dep
+
+    - name: scale up by one (governed cap 5)
+      kubernetes.core.k8s_scale:
+        kind: Deployment
+        namespace: fiveg-core
+        name: amf
+        replicas: "{{ [ (dep.resources[0].spec.replicas | int) + 1, 5 ] | min }}"
+        wait: true
+        wait_timeout: 120

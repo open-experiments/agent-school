@@ -44,10 +44,20 @@ here cover what was built *on top* of that base install.
    Kimi-Linear-48B AWQ-8bit; a single RTX PRO 6000 (96G) fits it on one
    card — set `tensor-parallel-size=1`, `nvidia.com/gpu: 1`, and consider
    raising `--max-model-len` / running bf16 variants with the freed cards.
-6. **Courses** — per-course `deploy/ocp/rome` overlays: 101 (agent +
-   Feast feature store + feast Jobs), 201 (RAG backend + judge Job), 202
-   (DSPA + fraud pipeline). Apply each course's kustomization, then the
-   one-shot Jobs in the order their comments state.
+6. **Kueue for the workspace** — trim the Kueue cluster CR frameworks
+   to `["BatchJob","PyTorchJob","RayCluster","RayJob","TrainJob"]` and
+   label the namespace managed (exact commands and the LocalQueue in
+   101's `deploy/ocp/rome/kueue.yaml`). WARNING: do not add
+   Deployment/Pod/StatefulSet to the frameworks — Kueue's webhook then
+   gates operator-owned Deployments and broke the DSPA's mariadb on
+   Rome (details in that file's header). This lights up
+   Observe & monitor → Workload metrics for the project.
+7. **Courses** — per-course `deploy/ocp/rome` overlays: 101 (agent +
+   Feast feature store + feast Jobs + RayJob calibration sweep), 201
+   (RAG backend + judge Job), 202 (DSPA + fraud pipeline, then serving:
+   stage-model Job → data connection → `serving.yaml` → infer-smoke
+   Job). Apply each course's kustomization, then the one-shot Jobs in
+   the order their comments state.
 
 ## What is intentionally *not* a manifest
 

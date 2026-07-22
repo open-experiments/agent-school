@@ -1,9 +1,11 @@
 # 202 · Fraud Triage
 
-> **Build status:** the model pipeline is live on Rome. `fraud-brf-training`
-> runs green end-to-end on RHOAI Data Science Pipelines and registers
-> `revassurance-fraud-brf` in the workspace MLflow (evidence below). The
-> LangGraph agent that consumes it is the next stage.
+> **Build status:** pipeline and serving are live on Rome.
+> `fraud-brf-training` runs green end-to-end on RHOAI Data Science
+> Pipelines, registers `revassurance-fraud-brf`, and the registered
+> version now serves on KServe as `fraud-detector` — live V2 inference
+> verified (evidence below). The LangGraph agent that consumes it is
+> the next stage.
 
 A decision agent that consumes a trained fraud model as a tool, gathers
 billing context, and routes each case to clear, hold, or escalate, with a
@@ -55,6 +57,47 @@ the version the agent's score node will consume from KServe:
 
 ![Pipeline MLflow run](./images/rhoai/pipeline-mlflow-run.png)
 
+The registered version is promoted into the shared cluster registry
+(**AI hub → Models → Registry**, `rome-registry`) with lineage
+properties pointing back at the MLflow run and the pipeline that made
+it — one catalog for every model on Rome, GenAI and classic ML alike:
+
+![Registry promotion](./images/rhoai/registry-promotion.png)
+
+## The registered model, served
+
+Stage 2 is live: `revassurance-fraud-brf` v1 serves on KServe as
+`fraud-detector` — **AI hub → Models → Deployments**. KServe pulls from
+object storage, not MLflow, so a one-shot Job
+([deploy/ocp/rome/job-stage-model.yaml](./deploy/ocp/rome/job-stage-model.yaml))
+bridges the two: it downloads the registered version through the
+workspace-scoped tracking server (same header/token shims as every
+other Rome workload) and lands the artifact tree in the cluster MinIO.
+A custom MLServer ServingRuntime — stock UBI9 Python, pip-at-startup,
+so Venice has no custom image to mirror — loads the MLflow pyfunc and
+speaks the V2 inference protocol
+([deploy/ocp/rome/serving.yaml](./deploy/ocp/rome/serving.yaml)):
+
+![Model deployment](./images/rhoai/model-deployment.png)
+
+Proof over promise — the smoke Job
+([job-infer-smoke.yaml](./deploy/ocp/rome/job-infer-smoke.yaml)) POSTs
+five real dataset rows to the live endpoint and prints the served
+verdicts next to the truth:
+
+```text
+true_fraud_labels: [0, 0, 0, 0, 0]
+fraud_probability: [0.0, 0.0, 0.0, 0.0, 0.01]
+fraud_flag:        [0, 0, 0, 0, 0]
+```
+
+EA2 findings from getting here — MLServer's parallel-worker event-loop
+crash (`MLSERVER_PARALLEL_WORKERS=0` is the fix), the headless
+predictor Service needing an explicit `:8080`, the
+`opendatahub.io/template-*` annotations the Deployments tab wants —
+are documented in [serving.yaml](./deploy/ocp/rome/serving.yaml)'s
+header.
+
 Pipeline source, compiled IR, the in-cluster import Job, and the RHOAI
 3.5 EA2 operational findings (kube-rbac-proxy access path, the task-level
 MLflow plugin defect and its supported opt-out, workspace-scoped artifact
@@ -81,7 +124,7 @@ uploads) are documented in [pipeline/](./pipeline/) and
 | Blueprint component | Here |
 |---------------------|------|
 | Harness | LangGraph state machine in the pod |
-| Skill backend (pattern 2) | fraud model on KServe (RHOAI) |
+| Skill backend (pattern 2) | fraud model on KServe (live: `fraud-detector` InferenceService) |
 | Data/model pipeline | RHOAI Data Science Pipelines: dataset → BRF → registered version (live) |
 | Feature store | Feast billing features — training offline, case context online (planned) |
 | Model lifecycle | MLflow Experiments → registered fraud-model versions → KServe |
@@ -100,12 +143,14 @@ uploads) are documented in [pipeline/](./pipeline/) and
 
 ## Status
 
-In progress — build stage 1 of 3 complete.
+In progress — build stages 1 and 2 of 3 complete.
 
 1. **Model pipeline (done, live on Rome):** `fraud-brf-training` on Data
-   Science Pipelines, model registered as `revassurance-fraud-brf`.
-2. **Serving:** promote the registered version to KServe (or a local
-   FastAPI wrapper for laptop dev).
+   Science Pipelines, model registered as `revassurance-fraud-brf` and
+   promoted to `rome-registry`.
+2. **Serving (done, live on Rome):** the registered version deployed on
+   KServe as `fraud-detector` — custom MLServer runtime, model staged
+   MLflow → MinIO, verified with a live V2 inference smoke test.
 3. **Agent:** the LangGraph graph with the approval gate, consuming the
    served model; Feast billing features for online case context.
 
