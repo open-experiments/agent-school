@@ -39,6 +39,42 @@ simulation and score attached; it never touches the network.
    with the simulation evidence attached. Below threshold: it revises the
    proposal and loops.
 
+## The skill backends, live on Rome
+
+Build stage 1 is live — both heavy skills exist for real before any
+agent code, because simulate-before-act starts with having something
+real to simulate against and score with.
+
+**Pattern 2 — the sustainability scorer on KServe.** Trained
+in-cluster ([training/train_sustainability.py](./training/train_sustainability.py))
+as a faithful reproduction of the source notebook's recipe:
+StandardScaler + LinearRegression over 11 network KPIs from the
+experiment's published 100K-row 5G netops dataset, energy efficiency
+= 100 − predicted fault rate (the source's own definition). r² 0.878
+on the 20% holdout. Registered as `sustainability-energy-efficiency`
+in MLflow and promoted to `rome-registry`, staged to MinIO, served by
+the same MLServer-on-stock-UBI9 pattern 202 proved out — live V2
+scoring verified against real dataset rows (served fault-rate
+predictions track ground truth):
+
+![Scorer deployment](./images/rhoai/scorer-deployment.png)
+
+**Pattern 3 — the cell-sleep simulation as a queued Job.** The
+simulation ([sim/cell_sleep_sim.py](./sim/cell_sleep_sim.py)) vendors
+the airan-energy experiment's power and cost model (1000/700/500 W
+active by load, 100 W light sleep, 200 W × 2 min wake transitions,
+$0.12/kWh, 0.5 kg CO₂/kWh) with its diurnal traffic shape, vectorized
+in JAX for a 24h sweep at 15-minute steps. QoS is physics, not
+prompting: sleeping cells' traffic re-homes to awake neighbors' spare
+capacity and the unservable remainder is reported as dropped. Each
+proposal is one Kueue-admitted Job (queue label → shared ClusterQueue
+→ Workload metrics), and the agent's ServiceAccount can do exactly
+one thing: submit and poll these Jobs
+([deploy/ocp/rome/sim-rbac.yaml](./deploy/ocp/rome/sim-rbac.yaml) —
+the pattern-3 RBAC lesson). First live run through the queue:
+night windows on 2 of 6 cells → 4.27% energy saved, 0.0% QoS drop,
+logged to MLflow experiment `302-energy-optimizer` as `sim-manual`.
+
 ## Blueprint mapping
 
 | Blueprint component | Here |
@@ -59,8 +95,16 @@ simulation and score attached; it never touches the network.
 
 ## Status
 
-Planned. Requires the airan-energy JAX environment packaged as a Job image
-and the sustainability model served (KServe, or a local wrapper for laptop
-dev). The MLflow evidence trail follows the tracing pattern 101/201
-verified live on Rome. RHOAI snapshots will be added as stages go live —
-no mockups.
+In progress — build stage 1 of 2 complete.
+
+1. **Skill backends (done, live on Rome):** the sustainability scorer
+   trained from the published dataset, registered, promoted to
+   `rome-registry`, and serving on KServe (pattern 2, verified with a
+   live V2 call); the JAX cell-sleep simulation running as
+   Kueue-admitted Jobs under submit/poll-only RBAC (pattern 3,
+   verified through the queue with MLflow evidence).
+2. **Agent:** the Llama Stack loop — propose, dispatch the sim Job,
+   score via the served model, threshold-gate, emit the change-plan
+   artifact (rejections logged too).
+
+RHOAI snapshots land as each stage goes live — no mockups.

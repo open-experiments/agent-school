@@ -1,0 +1,82 @@
+# Serving for the sustainability scorer — 302's pattern-2 skill
+# backend, same MLServer-on-stock-UBI9 approach 202 proved out (all
+# the EA2 findings from 202-fraud-triage/deploy/ocp/rome/serving.yaml
+# apply: MLSERVER_PARALLEL_WORKERS=0, headless predictor Service needs
+# :8080, template annotations for the Deployments tab).
+#
+# Reuses the aws-connection-minio-models data connection and the
+# fraud-serving SA from 202 (same bucket, same creds — one storage
+# surface for every served model on Rome).
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: sustainability-mlserver
+  namespace: agent-school
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: "MLServer (MLflow pyfunc, pip-at-startup)"
+    opendatahub.io/template-name: sustainability-mlserver
+    opendatahub.io/template-display-name: "MLServer (MLflow pyfunc, pip-at-startup)"
+    opendatahub.io/apiProtocol: REST
+spec:
+  supportedModelFormats:
+    - name: mlflow
+      version: "2"
+      autoSelect: false
+  protocolVersions: [v2]
+  multiModel: false
+  containers:
+    - name: kserve-container
+      image: registry.access.redhat.com/ubi9/python-311:latest
+      command: [/bin/sh, -c]
+      args:
+        - >
+          export HOME=/tmp PIP_NO_CACHE_DIR=1
+          MLSERVER_MODEL_IMPLEMENTATION=mlserver_mlflow.MLflowRuntime
+          MLSERVER_MODEL_URI=/mnt/models
+          MLSERVER_MODEL_NAME=sustainability-scorer
+          MLSERVER_HTTP_PORT=8080 MLSERVER_GRPC_PORT=8081
+          MLSERVER_METRICS_PORT=8082 MLSERVER_PARALLEL_WORKERS=0;
+          pip install -q mlserver mlserver-mlflow mlflow==3.4.0
+          scikit-learn==1.5.2 pandas==2.2.3 pyarrow==17.0.0 joblib &&
+          cd /tmp && exec mlserver start /tmp
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+      resources:
+        requests: {cpu: 500m, memory: 1Gi}
+        limits: {cpu: "1", memory: 2Gi}
+      startupProbe:
+        httpGet: {path: /v2/health/live, port: 8080}
+        periodSeconds: 10
+        failureThreshold: 90
+      readinessProbe:
+        httpGet: {path: /v2/health/ready, port: 8080}
+        periodSeconds: 10
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities: {drop: [ALL]}
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: sustainability-scorer
+  namespace: agent-school
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: "sustainability-scorer (energy-efficiency v1)"
+    serving.kserve.io/deploymentMode: Standard
+spec:
+  predictor:
+    serviceAccountName: fraud-serving
+    model:
+      modelFormat: {name: mlflow}
+      runtime: sustainability-mlserver
+      storageUri: s3://models/sustainability-energy-efficiency/1
+      resources:
+        requests: {cpu: 500m, memory: 1Gi}
+        limits: {cpu: "1", memory: 2Gi}
