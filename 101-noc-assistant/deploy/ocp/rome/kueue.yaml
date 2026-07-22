@@ -1,0 +1,32 @@
+# Kueue wiring for the agent-school project (RHBOK on RHOAI 3.5 EA2).
+#
+# Cluster-level prerequisites (created at install time on Rome; see
+# shared/manifests/rome/install-report.md):
+# - ResourceFlavors `default-flavor` (cpu/memory) and `nvidia-gpu-flavor`.
+# - ClusterQueue `default` with the SNO's nominal quotas.
+# - The RHBOK operator (DSC runs kueue Unmanaged, delegated to RHBOK).
+#
+# Two things had to change before workloads in this namespace queued
+# (both EA2 findings, applied on Rome):
+# 1. The Kueue cluster CR's framework list did not include plain batch
+#    Jobs — patch it:
+#      oc patch kueue.kueue.openshift.io/cluster --type merge -p \
+#        '{"spec":{"config":{"integrations":{"frameworks":["BatchJob","Deployment","Pod","PyTorchJob","RayCluster","RayJob","StatefulSet","TrainJob"]}}}}'
+# 2. RHBOK only watches namespaces that opt in:
+#      oc label namespace agent-school kueue.openshift.io/managed=true
+#
+# With those in place, this LocalQueue makes the dashboard's
+# Observe & monitor -> Workload metrics page live for the project, and
+# any Job/RayJob carrying the `kueue.x-k8s.io/queue-name` label is
+# admitted against the shared ClusterQueue.
+apiVersion: kueue.x-k8s.io/v1beta1
+kind: LocalQueue
+metadata:
+  name: agent-school-queue
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+  annotations:
+    kueue.x-k8s.io/default-queue: "true"
+spec:
+  clusterQueue: default
