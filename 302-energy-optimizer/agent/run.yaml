@@ -1,0 +1,66 @@
+# Llama Stack run configuration for the 302 Energy Optimizer harness.
+#
+# Rome's DataScienceCluster runs llamastackoperator Removed (EA2 state),
+# so the stack runs as a plain Deployment (deploy/ocp/rome/
+# llama-stack.yaml) — documented honestly; swap to the operator's
+# LlamaStackDistribution CR when it graduates. Inference is
+# remote::vllm pointing at the cluster's own Kimi-Linear endpoint —
+# same one model every course shares.
+#
+# Pinned: llama-stack==0.2.12 (+ opentelemetry-sdk,
+# opentelemetry-exporter-otlp-proto-http, aiosqlite, faiss-cpu,
+# autoevals, sqlalchemy, mcp — deps discovered by booting 0.2.12 from
+# a bare venv; the pip install in the Deployment lists them all).
+version: '2'
+image_name: energy-optimizer
+apis:
+  - inference
+  - agents
+  - safety
+  - telemetry
+  - vector_io
+  - tool_runtime
+providers:
+  inference:
+    - provider_id: vllm
+      provider_type: remote::vllm
+      config:
+        url: ${env.VLLM_URL}
+        api_token: none
+        max_tokens: 4096
+        tls_verify: false
+  agents:
+    - provider_id: meta-reference
+      provider_type: inline::meta-reference
+      config:
+        persistence_store:
+          type: sqlite
+          db_path: /tmp/agents.db
+        responses_store:
+          type: sqlite
+          db_path: /tmp/responses.db
+  safety:
+    - provider_id: llama-guard
+      provider_type: inline::llama-guard
+      config:
+        excluded_categories: []
+  telemetry:
+    - provider_id: meta-reference
+      provider_type: inline::meta-reference
+      config:
+        sinks: ['console']
+  vector_io:
+    - provider_id: faiss
+      provider_type: inline::faiss
+      config:
+        kvstore:
+          type: sqlite
+          db_path: /tmp/faiss.db
+  tool_runtime: []
+models:
+  - model_id: kimi-linear-48b-a3b
+    provider_id: vllm
+    model_type: llm
+shields: []
+server:
+  port: 8321
