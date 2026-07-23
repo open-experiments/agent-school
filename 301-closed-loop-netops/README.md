@@ -55,123 +55,6 @@ detected anomaly into a remediation-flow determination, keeping
    (the 12-Factor Agent discipline: strict hierarchy, no peer chatter,
    externalized state).
 
-## The loop, live on Rome
-
-The state store, the A2A skeleton, and the Diagnostic worker are live —
-captures from the cluster, not mockups.
-
-The externalized workflow state store runs as a Redis 7 deployment
-(`loop-state`); every loop iteration's record lands there under
-`loop:<id>:*` keys, so any worker can die and be replaced mid-loop
-([deploy/ocp/rome/state-store.yaml](./deploy/ocp/rome/state-store.yaml)).
-
-The Diagnostic agent ([agents/diagnostic/](./agents/diagnostic/)) is a
-LangGraph graph behind a real A2A surface — agent card at
-`/.well-known/agent.json`, JSON-RPC `message/send` (a2a-sdk 0.3.22,
-pinned: the 1.x line reshuffles the server API). Its three nodes:
-**sense** pulls the live anomaly verdicts and 1h KPI means from 101's
-Feast online store; **analyze** reasons over them with the cluster's
-own Kimi-Linear endpoint; **publish** externalizes the findings. The
-in-cluster A2A smoke client drove a real iteration end-to-end:
-incident=true across amf/smf/upf with evidence citing the live scores,
-and the state read back by a *different* pod (`status=diagnosed`) —
-the 12-Factor proof that the answer and the state are separate things:
-
-![Diagnostic run](./images/rhoai/diagnostic-run.png)
-
-Every iteration is one MLflow run in experiment `301-closed-loop` with
-the LangGraph trace attached — token-accounted observability for an
-A2A worker, in the same Experiments tab as every other course:
-
-![Diagnostic trace](./images/rhoai/diagnostic-trace.png)
-
-EA2 findings along the way: `mlflow.langchain.autolog()` needs base
-`langchain` installed (langchain-openai alone leaves tracing silently
-dark), and artifact logging (`log_dict`) needs the requests-level
-workspace-header shim — the same finding the 202 pipeline hit, now
-confirmed from a second call path.
-
-**Stage 2 — Planning and the external think-tank.** The MCP
-think-tank runs in its own namespace (`think-tank`): no shared
-ServiceAccounts, secrets, or state with the agents — they know only
-its URL. That is the article's separation of "what should we do" from
-"who is allowed to do it", modeled honestly on one cluster
-(off-cluster in a real deployment; the MCP-over-streamable-HTTP wire
-contract is identical either way). Its single tool,
-`determine_remediation_flow`, reasons over the findings with the
-cluster's Kimi endpoint and answers only in terms of the governed
-autonet playbook catalog ([agents/thinktank/](./agents/thinktank/)).
-
-The Planning agent ([agents/planning/](./agents/planning/)) reads the
-diagnostic record from the state store, consults the think-tank over
-MCP, and merges determination + findings into a governed plan — the
-think-tank's raw determination is preserved in the plan record, so
-the external black box stays auditable from the loop's side. The
-chain smoke Job drove both stages on one loop id:
-
-![Loop runs](./images/rhoai/loop-runs.png)
-
-The resulting plan is the governance artifact the article asks for:
-ordered steps restricted to the playbook catalog (on the live
-incident: rebalance_upf → restart_smf → scale_amf), risk=medium,
-**approval_required=true**, and a KPI rollback trigger — the human
-gate and the abort condition decided before anything runs:
-
-![Planning run](./images/rhoai/planning-run.png)
-
-**Stage 3 — Execution, the governed actuation arm.** Deliberately the
-least clever component in the system: no LLM in this pod. Execution
-([agents/execution/](./agents/execution/)) reads the governed plan
-from the state store, enforces the approval gate **in code** (not in a
-prompt — `approval_required=true` without an approve token is refused
-and recorded as `awaiting_approval`), and actuates the steps by
-running the real Ansible playbooks (`kubernetes.core`) in
-[agents/execution/playbooks/](./agents/execution/playbooks/). Its
-reach is exactly one Role: deployments and their scale in the
-`fiveg-core` namespace
-([deploy/ocp/rome/execution-rbac.yaml](./deploy/ocp/rome/execution-rbac.yaml)).
-Rome has no live 5G core, so the target is stand-in AMF/SMF/UPF
-Deployments ([fiveg-core.yaml](./deploy/ocp/rome/fiveg-core.yaml) —
-documented honestly); the governance mechanics are fully real.
-
-The full-loop smoke drove one iteration end to end — including the
-negative test. Four audited runs on one loop id, and the refusal is
-itself an audit record:
-
-![Full loop runs](./images/rhoai/loop-full-runs.png)
-
-The approved run actuated all three plan steps (`rebalance_upf`,
-`restart_smf`, `scale_amf`, each rc=0) and the cluster shows it: amf
-scaled 2 → 3 by the playbook (governed cap 5), smf pods rolled, upf
-re-homed — state advanced `planned → awaiting_approval → executed`
-with the playbook outputs and a post-action NF snapshot externalized
-for audit:
-
-![fiveg-core after](./images/rhoai/fiveg-core-after.png)
-
-**Stage 4 — Validation closes the cycle.** Also deterministic — no
-LLM. Validation ([agents/validation/](./agents/validation/)) re-reads
-the live anomaly verdicts after actuation, compares them against the
-pre-action baseline Diagnostic recorded, and decides with fixed
-thresholds: `improved` closes the loop as resolved, `stable` closes
-it as monitor, `deteriorated` triggers ROLLBACK — requested over A2A
-*through Execution*, because the loop has exactly one actuation path
-and Validation's ServiceAccount has no RBAC in `fiveg-core` at all.
-Intelligence lives in the middle of the loop (Diagnostic, Planning);
-both safety-critical ends are code.
-
-The validation smoke proved both dispositions. The natural path
-validated the executed loop: verdict `stable`, deltas 0.0 —
-honest, because the published telemetry is a fixed dataset, so the
-online verdicts cannot react to the stand-in NFs being scaled (on a
-live core they would). And the rollback drill — a clearly-labeled
-synthetic healthy baseline against the real post-action verdicts —
-tripped `deteriorated` and drove a REAL rollback: the playbook ran
-through Execution and amf returned to its baseline 2 replicas on the
-actual cluster. Every step of both paths is an MLflow run:
-
-![Closed loop runs](./images/rhoai/loop-closed-runs.png)
-
 ## Blueprint mapping
 
 | Blueprint component | Here |
@@ -195,21 +78,9 @@ actual cluster. Every step of both paths is an MLflow run:
 
 ## Status
 
-**Complete — all four agents live on Rome.** Stages 1-3:
-the state store (`loop-state`), the A2A skeleton, the Diagnostic
-agent (Feast verdicts → LangGraph → findings → externalized state →
-MLflow), the external MCP think-tank in its own namespace, and the
-Planning agent (state → MCP consult → governed plan with approval
-gate and rollback trigger) — chained end-to-end on one loop id by an
-in-cluster smoke client ([deploy/ocp/rome](./deploy/ocp/rome)). Stage 3:
-Execution actuates the governed plan with real Ansible playbooks
-against the stand-in `fiveg-core` NFs under a single namespace-scoped
-Role, approval gate enforced in code and proven by a negative test.
-Stage 4: Validation closes the cycle deterministically — verdict from
-pre/post KPI deltas, loop closed as monitor on the live iteration,
-and the rollback arm proven by a drill that really returned amf to
-baseline through Execution. Remaining for a later pass: the NemoClaw
-product-harness track and MCP-Gateway-fronted playbook access (Track
-4 scope). Reuses 101 telemetry tools, the autonet playbook
-set, and the autonet per-NF vector stores. Snapshots land stage by
-stage — no mockups.
+Planned — but the sensor half is not: 101's Feast pipeline, anomaly
+model, and online verdicts are live on Rome, so Diagnostic's input
+already exists. Reuses 101 telemetry tools, the autonet playbook set, and
+the autonet per-NF vector stores. Build order: state store and A2A
+skeleton, then agents one by one, Validation last. RHOAI snapshots will
+be added stage by stage as the loop goes live — no mockups.
