@@ -39,6 +39,83 @@ simulation and score attached; it never touches the network.
    with the simulation evidence attached. Below threshold: it revises the
    proposal and loops.
 
+## The skill backends, live on Rome
+
+Build stage 1 is live — both heavy skills exist for real before any
+agent code, because simulate-before-act starts with having something
+real to simulate against and score with.
+
+**Pattern 2 — the sustainability scorer on KServe.** Trained
+in-cluster ([training/train_sustainability.py](./training/train_sustainability.py))
+as a faithful reproduction of the source notebook's recipe:
+StandardScaler + LinearRegression over 11 network KPIs from the
+experiment's published 100K-row 5G netops dataset, energy efficiency
+= 100 − predicted fault rate (the source's own definition). r² 0.878
+on the 20% holdout. Registered as `sustainability-energy-efficiency`
+in MLflow and promoted to `rome-registry`, staged to MinIO, served by
+the same MLServer-on-stock-UBI9 pattern 202 proved out — live V2
+scoring verified against real dataset rows (served fault-rate
+predictions track ground truth):
+
+![Scorer deployment](./images/rhoai/scorer-deployment.png)
+
+**Pattern 3 — the cell-sleep simulation as a queued Job.** The
+simulation ([sim/cell_sleep_sim.py](./sim/cell_sleep_sim.py)) vendors
+the airan-energy experiment's power and cost model (1000/700/500 W
+active by load, 100 W light sleep, 200 W × 2 min wake transitions,
+$0.12/kWh, 0.5 kg CO₂/kWh) with its diurnal traffic shape, vectorized
+in JAX for a 24h sweep at 15-minute steps. QoS is physics, not
+prompting: sleeping cells' traffic re-homes to awake neighbors' spare
+capacity and the unservable remainder is reported as dropped. Each
+proposal is one Kueue-admitted Job (queue label → shared ClusterQueue
+→ Workload metrics), and the agent's ServiceAccount can do exactly
+one thing: submit and poll these Jobs
+([deploy/ocp/rome/sim-rbac.yaml](./deploy/ocp/rome/sim-rbac.yaml) —
+the pattern-3 RBAC lesson). First live run through the queue:
+night windows on 2 of 6 cells → 4.27% energy saved, 0.0% QoS drop,
+logged to MLflow experiment `302-energy-optimizer` as `sim-manual`.
+
+## The agent loop, live on Rome
+
+Build stage 2 is live: the Llama Stack loop runs the full
+simulate-before-act cycle on the cluster.
+
+The harness is a **Llama Stack** server
+([agent/run.yaml](./agent/run.yaml),
+[deploy/ocp/rome/llama-stack.yaml](./deploy/ocp/rome/llama-stack.yaml))
+with the `remote::vllm` inference provider pointing at the cluster's
+own Kimi endpoint. (EA2 honesty: the DataScienceCluster runs
+`llamastackoperator` Removed, so the stack runs as a plain Deployment
+rather than a `LlamaStackDistribution` CR — swap when it graduates.)
+
+The optimizer episode ([agent/energy_optimizer.py](./agent/energy_optimizer.py))
+runs the loop: the agent **proposes** cell-sleep windows through the
+Llama Stack Agents API (session memory carries rejections into revision
+turns); each proposal is **dispatched** as a Kueue-admitted simulation
+Job under the submit/poll-only Role (pattern 3 — the compute never runs
+in the agent pod); the simulated network condition is **scored** on the
+served sustainability model (pattern 2, KServe V2); and a **threshold
+gate in code** (not the prompt) accepts only if savings and QoS and
+efficiency all clear their bars. The agent's only output is a
+change-plan artifact — it never touches the RAN.
+
+Every attempt is an MLflow run, and the discipline shows in the record:
+one episode's proposals were all **rejected** (they slept too many
+cells, collapsing QoS) and closed `NO_PLAN` with no plan emitted; the
+next episode's proposal **cleared the gate** (3 cells asleep 00:00–06:00
+→ 7.67% energy saved, **0% QoS drop**, efficiency 68.3) and the
+change-plan artifact was written — emitted *only* because the simulated
+outcome passed:
+
+![Optimizer runs](./images/rhoai/optimizer-runs.png)
+
+EA2 findings from getting the loop live: the `llama-stack` Service's
+injected `LLAMA_STACK_PORT` env collides with the server's own config
+(`enableServiceLinks: false` is the fix); the client needs
+`fire`/`termcolor`; and reading a completed sim Job's result off pod
+stdout was unreliable (huge jax-install logs), so the loop reads the
+sim's result back from its MLflow run — a deterministic channel.
+
 ## Blueprint mapping
 
 | Blueprint component | Here |
@@ -59,8 +136,16 @@ simulation and score attached; it never touches the network.
 
 ## Status
 
-Planned. Requires the airan-energy JAX environment packaged as a Job image
-and the sustainability model served (KServe, or a local wrapper for laptop
-dev). The MLflow evidence trail follows the tracing pattern 101/201
-verified live on Rome. RHOAI snapshots will be added as stages go live —
-no mockups.
+Complete — both stages live on Rome.
+
+1. **Skill backends (done):** the sustainability scorer trained from
+   the published dataset, registered, promoted to `rome-registry`, and
+   serving on KServe (pattern 2, live V2 call verified); the JAX
+   cell-sleep simulation running as Kueue-admitted Jobs under
+   submit/poll-only RBAC (pattern 3, verified through the queue).
+2. **Agent (done):** the Llama Stack loop — propose (Agents API →
+   Kimi), dispatch the sim Job, score on the served model, threshold
+   gate in code, emit the change-plan artifact; both accept and
+   reject/NO_PLAN paths proven live, every attempt in MLflow.
+
+All RHOAI snapshots are live captures — no mockups.

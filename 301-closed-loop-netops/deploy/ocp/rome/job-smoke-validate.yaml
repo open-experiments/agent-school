@@ -1,0 +1,48 @@
+# One-shot: Validation smoke, both dispositions — natural validation
+# of the last executed loop (expected `stable` -> validated_monitor on
+# Rome's fixed dataset) AND the rollback drill (synthetic healthy
+# baseline -> deteriorated -> REAL rollback through Execution, amf
+# back to baseline replicas). See
+# ../../../agents/validation/smoke_validate.py.
+#
+# Prereq ConfigMap:
+#   oc create configmap validate-smoke-src -n agent-school \
+#     --from-file=smoke_validate.py=../../../agents/validation/smoke_validate.py
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-validate
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 1200
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: validate-smoke-src}
+      containers:
+        - name: smoke
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - name: STATE_PASSWORD
+              valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
+            - name: STATE_STORE_URL
+              value: redis://:$(STATE_PASSWORD)@loop-state.agent-school.svc.cluster.local:6379/0
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q "a2a-sdk==0.3.22" httpx redis &&
+              python3 /src/smoke_validate.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

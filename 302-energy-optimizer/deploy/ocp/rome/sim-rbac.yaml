@@ -1,0 +1,48 @@
+# Pattern 3 governance — the RBAC lesson 302 teaches.
+#
+# The energy-optimizer agent may SUBMIT and POLL simulation Jobs, and
+# read their logs. Nothing else: no deployments, no secrets, no exec,
+# no other namespaces. The GPU/compute work never runs in the agent
+# pod — it runs where Kueue puts it, under quota, visible in
+# Observe & monitor -> Workload metrics.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: energy-optimizer
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sim-job-submitter
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: energy-optimizer-sim-submitter
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+subjects:
+  - kind: ServiceAccount
+    name: energy-optimizer
+    namespace: agent-school
+roleRef:
+  kind: Role
+  name: sim-job-submitter
+  apiGroup: rbac.authorization.k8s.io
