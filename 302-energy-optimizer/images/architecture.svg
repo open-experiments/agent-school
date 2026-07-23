@@ -37,7 +37,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <rect x="30" y="260" width="175" height="120" rx="8"/>
 <text class="th" x="117" y="290" text-anchor="middle">RAN operations</text>
 <text class="ts" x="117" y="312" text-anchor="middle">consumes the change-plan</text>
-<text class="ts" x="117" y="330" text-anchor="middle">artifact — the agent</text>
+<text class="ts" x="117" y="330" text-anchor="middle">artifact · the agent</text>
 <text class="ts" x="117" y="348" text-anchor="middle">never touches the RAN</text>
 </g>
 
@@ -75,6 +75,8 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <text class="ts" x="690" y="210" text-anchor="middle">every simulated plan gets an</text>
 <text class="ts" x="690" y="228" text-anchor="middle">independent score before the</text>
 <text class="ts" x="690" y="246" text-anchor="middle">agent may emit it</text>
+<text class="ts" x="690" y="274" text-anchor="middle">reached ONLY via the Kuadrant</text>
+<text class="ts" x="690" y="292" text-anchor="middle">/score gateway (AuthN + rate cap)</text>
 </g>
 
 <!-- MLflow -->
@@ -83,9 +85,11 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <text class="th" x="990" y="118" text-anchor="middle">MLflow · workspace agent-school</text>
 <text class="ts" x="990" y="146" text-anchor="middle">every proposal · simulation ·</text>
 <text class="ts" x="990" y="164" text-anchor="middle">score · decision recorded</text>
-<text class="ts" x="990" y="192" text-anchor="middle">rejected proposals kept too —</text>
+<text class="ts" x="990" y="192" text-anchor="middle">rejected proposals kept too,</text>
 <text class="ts" x="990" y="210" text-anchor="middle">the audit is the loop's memory</text>
 <text class="ts" x="990" y="238" text-anchor="middle">Develop &amp; train → Experiments</text>
+<text class="ts" x="990" y="266" text-anchor="middle">+ GenAI eval suite measures the</text>
+<text class="ts" x="990" y="284" text-anchor="middle">judge (dataset · scorers · run)</text>
 </g>
 
 <!-- Agent pod -->
@@ -107,15 +111,16 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 </g>
 <g class="c-teal">
 <rect x="300" y="580" width="230" height="100" rx="8"/>
-<text class="th" x="415" y="606" text-anchor="middle">score</text>
-<text class="ts" x="415" y="628" text-anchor="middle">simulated plan → scorer ·</text>
-<text class="ts" x="415" y="646" text-anchor="middle">independent evidence</text>
+<text class="th" x="415" y="602" text-anchor="middle">score · quant</text>
+<text class="ts" x="415" y="624" text-anchor="middle">governed /score → calibrated</text>
+<text class="ts" x="415" y="642" text-anchor="middle">risk signal (energy · QoS)</text>
 </g>
 <g class="c-amber">
 <rect x="560" y="580" width="230" height="100" rx="8"/>
-<text class="th" x="675" y="606" text-anchor="middle">threshold gate</text>
-<text class="ts" x="675" y="628" text-anchor="middle">≥ threshold: emit change plan</text>
-<text class="ts" x="675" y="646" text-anchor="middle">below: revise and loop</text>
+<text class="th" x="675" y="600" text-anchor="middle">co-decide · arbiter</text>
+<text class="ts" x="675" y="620" text-anchor="middle">quant gate + GenAI judge</text>
+<text class="ts" x="675" y="638" text-anchor="middle">+ hard QoS rail (non-negotiable)</text>
+<text class="ts" x="675" y="656" text-anchor="middle">every override audited</text>
 </g>
 
 <!-- vLLM -->
@@ -125,6 +130,15 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <text class="ts" x="990" y="494" text-anchor="middle">reasoning for propose / revise</text>
 <text class="ts" x="990" y="514" text-anchor="middle">OpenAI-compatible /v1 ·</text>
 <text class="ts" x="990" y="532" text-anchor="middle">stateless, swappable</text>
+</g>
+
+<!-- GenAI Judge -->
+<g class="c-teal">
+<rect x="850" y="610" width="280" height="110" rx="8"/>
+<text class="th" x="990" y="636" text-anchor="middle">GenAI Judge (OGX · A2A)</text>
+<text class="ts" x="990" y="660" text-anchor="middle">grounds on the SAME governed</text>
+<text class="ts" x="990" y="678" text-anchor="middle">/score, then renders a verdict:</text>
+<text class="ts" x="990" y="696" text-anchor="middle">accept · revise · reject</text>
 </g>
 
 <!-- Arrows -->
@@ -155,7 +169,12 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <text class="tl" x="508" y="547" text-anchor="middle">revise</text>
 
 <polyline class="arrow dashed" points="675,700 675,745 117,745 117,674" marker-end="url(#a)"/>
-<text class="tl" x="400" y="738" text-anchor="middle">alt LLM path — same OpenAI-compatible contract</text>
+<text class="tl" x="400" y="738" text-anchor="middle">alt LLM path · same OpenAI-compatible contract</text>
 
-<text class="ts" x="590" y="778" text-anchor="middle">STATUS: PLANNED — ① package models · ② propose · ③ simulate as a Job · ④ independent score · ⑤ evidence recorded · ⑥ emit only what cleared — simulate-before-act</text>
+<line class="arrow" x1="848" y1="655" x2="792" y2="650" marker-end="url(#a)"/>
+<text class="tl" x="820" y="642" text-anchor="middle">verdict</text>
+<polyline class="arrow dashed" points="848,692 833,692 833,358 745,358 745,332" marker-end="url(#a)"/>
+<text class="tl" x="742" y="350" text-anchor="middle">grounds</text>
+
+<text class="ts" x="590" y="778" text-anchor="middle">STATUS: LIVE ON ROME · propose → simulate (Job) → score (governed, quant) → GenAI judge (A2A, qual) → arbiter co-decides (hard QoS rail, overrides audited) → emit</text>
 </svg>

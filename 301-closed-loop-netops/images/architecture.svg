@@ -1,4 +1,4 @@
-<svg viewBox="0 0 1180 860" width="1180" height="860" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1180 1010" width="1180" height="1010" xmlns="http://www.w3.org/2000/svg">
 <style>
 text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
@@ -19,10 +19,10 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .dashed { stroke-dasharray: 5 4; }
 </style>
 <defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
-<rect width="1180" height="860" fill="#ffffff"/>
+<rect width="1180" height="1010" fill="#ffffff"/>
 
 <!-- Zone: External -->
-<rect x="15" y="30" width="210" height="760" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<rect x="15" y="30" width="210" height="950" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
 <text class="tz" x="30" y="56">EXTERNAL</text>
 
 <g class="c-amber">
@@ -38,7 +38,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <rect x="30" y="290" width="175" height="120" rx="8"/>
 <text class="th" x="117" y="320" text-anchor="middle">autonet heritage</text>
 <text class="ts" x="117" y="342" text-anchor="middle">playbook set · per-NF</text>
-<text class="ts" x="117" y="360" text-anchor="middle">vector stores — custom</text>
+<text class="ts" x="117" y="360" text-anchor="middle">vector stores · custom</text>
 <text class="ts" x="117" y="378" text-anchor="middle">ACP replaced by A2A</text>
 </g>
 
@@ -50,7 +50,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 </g>
 
 <!-- Zone: Cluster -->
-<rect x="250" y="30" width="910" height="760" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<rect x="250" y="30" width="910" height="950" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
 <text class="tz" x="266" y="56">OPENSHIFT SNO "ROME" · RED HAT OPENSHIFT AI 3.5</text>
 
 <!-- Top row -->
@@ -61,7 +61,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <text class="ts" x="380" y="164" text-anchor="middle">anomaly_score / flag</text>
 <text class="ts" x="380" y="182" text-anchor="middle">per NF (live on Rome)</text>
 <text class="ts" x="380" y="210" text-anchor="middle">+ telemetry MCP tools</text>
-<text class="ts" x="380" y="238" text-anchor="middle">the loop's sensor —</text>
+<text class="ts" x="380" y="238" text-anchor="middle">the loop's sensor,</text>
 <text class="ts" x="380" y="256" text-anchor="middle">built in course 101</text>
 </g>
 
@@ -98,7 +98,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 
 <!-- Agent chain -->
 <rect x="270" y="396" width="870" height="190" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
-<text class="tl" x="286" y="416">EPHEMERAL WORKERS — one sandboxed pod each · strict hierarchy, no peer chatter</text>
+<text class="tl" x="286" y="416">EPHEMERAL WORKERS · one sandboxed pod each · strict hierarchy, no peer chatter</text>
 
 <g class="c-teal">
 <rect x="290" y="430" width="180" height="130" rx="8"/>
@@ -119,7 +119,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <g class="c-teal">
 <rect x="710" y="430" width="180" height="130" rx="8"/>
 <text class="th" x="800" y="458" text-anchor="middle">Execution</text>
-<text class="ts" x="800" y="480" text-anchor="middle">actuates the plan —</text>
+<text class="ts" x="800" y="480" text-anchor="middle">actuates the plan,</text>
 <text class="ts" x="800" y="498" text-anchor="middle">only through the</text>
 <text class="ts" x="800" y="516" text-anchor="middle">governed gateway path</text>
 </g>
@@ -142,7 +142,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <rect x="490" y="646" width="280" height="110" rx="8"/>
 <text class="th" x="630" y="676" text-anchor="middle">autonet playbooks (MCP server)</text>
 <text class="ts" x="630" y="698" text-anchor="middle">scale AMF · restart SMF ·</text>
-<text class="ts" x="630" y="716" text-anchor="middle">rebalance UPF — audited actuation</text>
+<text class="ts" x="630" y="716" text-anchor="middle">rebalance UPF · audited actuation</text>
 </g>
 <g class="c-amber">
 <rect x="800" y="646" width="330" height="110" rx="8"/>
@@ -187,8 +187,36 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <polyline class="arrow dashed" points="1010,430 1010,388 660,388 660,426" marker-end="url(#a)"/>
 <text class="tl" x="860" y="382" text-anchor="middle">rollback on failure</text>
 
-<polyline class="arrow dashed" points="475,586 475,815 117,815 117,744" marker-end="url(#a)"/>
-<text class="tl" x="400" y="808" text-anchor="middle">alt LLM path — same OpenAI-compatible contract</text>
+<!-- Quant + qual co-decision band -->
+<rect x="270" y="800" width="860" height="150" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<text class="tl" x="286" y="822">PLANNING'S QUANT + QUAL CO-DECISION · grounds a plan's risk &amp; approval before it is published</text>
 
-<text class="ts" x="590" y="848" text-anchor="middle">STATUS: PLANNED — ① sense (101's live pipeline) · ② strict A2A hierarchy · ③ external reasoning · ④ governed fix · ⑤ verify or roll back · build: state store first, Validation last</text>
+<g class="c-green">
+<rect x="300" y="838" width="250" height="98" rx="8"/>
+<text class="th" x="425" y="864" text-anchor="middle">remediation-risk scorer</text>
+<text class="ts" x="425" y="885" text-anchor="middle">netops-remediation-risk · calibrated</text>
+<text class="ts" x="425" y="903" text-anchor="middle">action-risk 0–1, served on KServe ·</text>
+<text class="ts" x="425" y="921" text-anchor="middle">reached ONLY via Kuadrant /plan-score</text>
+</g>
+<g class="c-teal">
+<rect x="575" y="838" width="270" height="98" rx="8"/>
+<text class="th" x="710" y="864" text-anchor="middle">plan-judge (OGX · A2A)</text>
+<text class="ts" x="710" y="885" text-anchor="middle">the qualitative half · grounds on</text>
+<text class="ts" x="710" y="903" text-anchor="middle">the SAME governed score, then</text>
+<text class="ts" x="710" y="921" text-anchor="middle">verdict: accept / revise / reject</text>
+</g>
+<g class="c-amber">
+<rect x="870" y="838" width="250" height="98" rx="8"/>
+<text class="th" x="995" y="864" text-anchor="middle">arbiter (Planning, code)</text>
+<text class="ts" x="995" y="885" text-anchor="middle">quant gate + judge verdict +</text>
+<text class="ts" x="995" y="903" text-anchor="middle">one hard risk rail no signal</text>
+<text class="ts" x="995" y="921" text-anchor="middle">overrides · audited in MLflow</text>
+</g>
+
+<polyline class="arrow" points="500,495 256,495 256,884 296,884" marker-end="url(#a)"/>
+<text class="tl" x="256" y="618" text-anchor="middle">⑨ co-decide</text>
+<polyline class="arrow dashed" points="573,890 552,890" marker-end="url(#a)"/>
+<line class="arrow" x1="847" y1="884" x2="868" y2="884" marker-end="url(#a)"/>
+
+<text class="ts" x="590" y="990" text-anchor="middle">STATUS: LIVE ON ROME · sense (101) → diagnose → plan with a quant + qual co-decision → govern-actuate through the gateway → verify or roll back</text>
 </svg>
