@@ -1,14 +1,18 @@
 # Execution agent — governed actuation arm of the 301 loop.
 # No LLM in this pod (deliberate: the most dangerous component gets no
-# creativity). ansible-core + kubernetes.core at startup; playbooks
-# mounted read-only from a ConfigMap; the SA's reach is exactly
-# execution-rbac.yaml.
+# creativity). As of Track 4 it holds NO fiveg-core RBAC and runs NO
+# Ansible: it actuates by calling the MCP playbook server over the
+# Kuadrant gateway (mcp-playbook.yaml, netops-gateway.yaml,
+# mcp-gateway-policies.yaml), presenting its own SA token. So this pod
+# only needs the MCP client — no ansible-core, no kubernetes.core, no
+# playbook ConfigMap.
 #
-# Prereqs: fiveg-core.yaml, execution-rbac.yaml, state store, plus:
+# Prereqs: fiveg-core.yaml, execution-rbac.yaml (SA + Role only; the
+# execution-agent->nf-actuator binding is intentionally removed),
+# netops-gateway.yaml, mcp-playbook.yaml, mcp-gateway-policies.yaml,
+# state store, plus:
 #   oc create configmap execution-agent-src -n agent-school \
 #     --from-file=agent.py=../../../agents/execution/agent.py
-#   oc create configmap nf-playbooks -n agent-school \
-#     --from-file=../../../agents/execution/playbooks/
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,8 +33,6 @@ spec:
       volumes:
         - name: src
           configMap: {name: execution-agent-src}
-        - name: playbooks
-          configMap: {name: nf-playbooks}
       containers:
         - name: agent
           image: registry.access.redhat.com/ubi9/python-311:latest
@@ -40,22 +42,20 @@ spec:
             - >
               export HOME=/tmp PIP_NO_CACHE_DIR=1;
               pip install -q "a2a-sdk[http-server]==0.3.22" uvicorn httpx
-              mlflow==3.4.0 redis ansible-core kubernetes &&
-              ansible-galaxy collection install kubernetes.core -p /tmp/.ansible/collections &&
-              export ANSIBLE_COLLECTIONS_PATH=/tmp/.ansible/collections &&
+              mlflow==3.4.0 redis "mcp==1.28.1" &&
               exec python3 /src/agent.py
           envFrom:
             - configMapRef: {name: mlflow-tracking}
           env:
             - {name: MLFLOW_EXPERIMENT, value: 301-closed-loop}
-            - {name: PLAYBOOK_DIR, value: /playbooks}
+            - name: GATEWAY_URL
+              value: http://netops-gateway-data-science-gateway-class.agent-school.svc.cluster.local:8080/mcp
             - name: STATE_PASSWORD
               valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
             - name: STATE_STORE_URL
               value: redis://:$(STATE_PASSWORD)@loop-state.agent-school.svc.cluster.local:6379/0
           volumeMounts:
             - {name: src, mountPath: /src}
-            - {name: playbooks, mountPath: /playbooks}
           ports:
             - {containerPort: 8080, name: a2a}
           startupProbe:

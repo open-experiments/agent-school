@@ -1,8 +1,10 @@
-# One optimization episode: propose (Llama Stack Agents API) ->
-# dispatch sim Job (pattern 3, Kueue) -> score on the served model
-# (pattern 2) -> threshold gate in code -> change-plan artifact in
-# MLflow (rejections logged too). The agent's ONLY output is the
-# artifact — it never touches a network.
+# One optimization episode: propose (OGX / Llama Stack Agents API) ->
+# dispatch sim Job (pattern 3, Kueue) -> score on the served model via
+# the Kuadrant-governed scorer MCP tool (pattern 2, governed) ->
+# quant+qual co-decision (classic threshold gate + GenAI judge over A2A,
+# hard QoS rail, audited overrides) -> change-plan artifact in MLflow
+# (rejections logged too). The agent's ONLY output is the artifact — it
+# never touches a network.
 # See ../../../agent/energy_optimizer.py.
 #
 # Prereq ConfigMap:
@@ -37,12 +39,14 @@ spec:
             - {name: MAX_QOS_DROP_PCT, value: "0.5"}
             - {name: MIN_EFFICIENCY, value: "60.0"}
             - {name: MAX_ROUNDS, value: "3"}
+            - {name: HARD_QOS_FLOOR_PCT, value: "2.0"}
           command:
             - /bin/sh
             - -c
             - >
               pip install -q llama-stack-client==0.2.12 fire termcolor
-              kubernetes mlflow==3.4.0 &&
+              kubernetes mlflow==3.4.0 "mcp==1.28.1"
+              "a2a-sdk==0.3.22" httpx &&
               python3 /src/energy_optimizer.py
           volumeMounts:
             - {name: src, mountPath: /src}

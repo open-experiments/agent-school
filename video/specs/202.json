@@ -1,0 +1,50 @@
+{
+  "output": "/home/user/agent-school/video/out/202-fraud-triage.mp4",
+  "course": { "banner": "202 · Fraud Triage — A Classic-ML Pipeline, Agentified" },
+  "scenes": [
+    {
+      "type": "title",
+      "title": "The problem: a fraud model is a factory output, not a notebook artifact",
+      "subtitle": "A telecom revenue-assurance team needs to catch fraudulent billing at scale. A model that scores well in a notebook is worthless if no one can reproduce it, version it, or serve it. And a high-stakes 'escalate' decision should never be made by a model alone — it needs a human. 202 turns the manual revenue-assurance flow into a repeatable pipeline that feeds a decision agent with a human-approval gate.",
+      "say": "A telecom revenue-assurance team needs to catch fraudulent billing across millions of records. Now, a model that scores beautifully in a data scientist's notebook is almost worthless in production if no one can reproduce it, version it, or serve it reliably. And a high-stakes decision — to escalate a suspected-fraud case — should never be made by a model alone; it needs a human in the loop. So course two-oh-two has two problems to solve: turn the manual revenue-assurance analysis into a repeatable model factory, and then let an agent consume that model to triage cases, with a human approval gate on the risky path. Let's build the factory first."
+    },
+    {
+      "type": "tab",
+      "step": 1,
+      "tab": "Data Science Pipelines · Run graph — the model factory",
+      "image": "/tmp/caps/202/pipeline-run.png",
+      "caption": "load-data → preprocess → train → evaluate → register, every stage green. What the notebooks did cell by cell now runs as a Data Science Pipeline (KFP v2) on our DevOps cluster called Rome.",
+      "say": "Here is the model factory, live on our DevOps cluster called Rome. What the original revenue-assurance notebooks did cell by cell now runs as a proper Data Science Pipeline: load a million billing records, preprocess them, train a Balanced Random Forest, evaluate it on a held-out split, and register the result. Every stage is a discrete, observable step, and the whole graph completed green in about two minutes. This is the difference between a model someone once trained and a model your platform can rebuild on demand, the same way, every time."
+    },
+    {
+      "type": "tab",
+      "step": 2,
+      "tab": "Develop & train · Experiments — the registered training run",
+      "image": "/tmp/caps/202/pipeline-mlflow-run.png",
+      "caption": "The register stage lands in MLflow with full lineage — fraud-class F1 0.998, ROC-AUC ~1.0 on 300,000 held-out rows — and registers revassurance-fraud-brf v1, the version the agent will consume.",
+      "say": "And the pipeline's register stage lands the run in M L flow with complete lineage. Read the metrics: fraud-class F-one of nought-point-nine-nine-eight, and R O C-A-U-C essentially one, measured on three hundred thousand held-out rows. The parameters record exactly how it was made — a Balanced Random Forest, one hundred estimators, trained on the published revenue-assurance dataset, through data-science-pipelines on K F P version two. And on the right, it registers revassurance-fraud-b-r-f, version one — the exact version the agent's scoring node will consume. Lineage is not paperwork here; it is the contract between the factory and the agent."
+    },
+    {
+      "type": "tab",
+      "step": 3,
+      "tab": "Model registry · Version promotion — the governed handoff",
+      "image": "/tmp/caps/202/registry-promotion.png",
+      "caption": "The registered fraud model is promoted through the registry — the explicit, governed step that decides which version the serving layer and the agent are allowed to use.",
+      "say": "Before the agent can use it, the registered model is promoted through the registry — the explicit, governed handoff you see here. This is the control point that decides which version the serving layer, and therefore the agent, is actually allowed to consume. In a fraud system this governance is not optional: you must be able to say precisely which model made which decision, and to roll forward or back deliberately. The registry makes that a first-class, auditable action rather than a file copied into a bucket."
+    },
+    {
+      "type": "tab",
+      "step": 4,
+      "tab": "Model serving · KServe deployment — the model as a tool",
+      "image": "/tmp/caps/202/model-deployment.png",
+      "caption": "The promoted version is served on KServe. This is pattern 2: the fraud model is a network endpoint the agent calls as a tool — never embedded in the agent pod.",
+      "say": "The promoted version is then served on K-Serve, shown here as a live model deployment. This is the pattern-two lesson made concrete: the fraud model is a network endpoint, a tool the agent calls, never a library baked into the agent pod. The agent's LangGraph state machine has a scoring node that calls this endpoint, gathers billing context for non-trivial scores, and then decides — clear and hold cases complete autonomously, while the escalate path hits a human-approval gate that checkpoints and pauses until a person approves. The model scores; the agent reasons; the human approves. Each of those is a separate, swappable, observable piece of the platform."
+    },
+    {
+      "type": "title",
+      "title": "202, solved: the pipeline is the model's factory, the agent is its consumer",
+      "subtitle": "A repeatable, per-stage-observable pipeline registers a versioned model; the registry governs the handoff; KServe serves it; and a LangGraph agent consumes it as a tool with human approval on the risky path. Classic ML as an agent tool, never the decision itself on high-risk cases. Next: 301 closes the loop — agents that don't just decide, but act, under governance.",
+      "say": "So that's two-oh-two, solved. A repeatable, per-stage-observable pipeline is the model's factory; it registers a versioned model; the registry governs the handoff; K-Serve serves it; and a LangGraph agent consumes it as a tool, with a human approval gate on the high-risk path. The classic model is an input to reasoning, never the final decision on a case that matters. From here, course three-oh-one raises the stakes again: agents that do not just decide, but act on the network — under governance. Thanks for watching."
+    }
+  ]
+}

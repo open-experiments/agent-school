@@ -1,0 +1,124 @@
+# Kuadrant governance for the autonet playbook MCP server (Track 4).
+# This is the article's "Execution can only reach the 5G core through
+# the MCP Gateway" made real on RHOAI: three layers on one path.
+#
+# 1. HTTPRoute — the gateway routes /mcp to the playbook server.
+# 2. AuthPolicy (Authorino) — WHO: only a caller presenting a valid
+#    ServiceAccount token that the cluster's TokenReview accepts, AND
+#    whose identity is exactly the execution-agent SA, may pass. An
+#    unauthenticated call, or any other identity, is rejected at the
+#    gateway before it reaches the actuator.
+# 3. RateLimitPolicy (Limitador) — HOW OFTEN: actuation is capped, so a
+#    compromised or looping agent cannot hammer the core.
+#
+# Apply after netops-gateway.yaml and mcp-playbook.yaml.
+#
+# ---------------------------------------------------------------------
+# PREREQUISITE (Rome, RHOAI 3.5 EA2 finding — one-time platform patch)
+# ---------------------------------------------------------------------
+# On this build the Kuadrant operator deploys Authorino with its gRPC
+# ext_authz listener on :50051 using TLS (an OpenShift service-serving
+# cert), but the auth-service cluster it injects into the gateway's Envoy
+# is PLAINTEXT (no transport_socket). The two disagree, so the wasm-shim's
+# gRPC Check to Authorino fails at the transport layer and, because the
+# auth action is failureMode=deny, EVERY request through the gateway
+# returns a bare "HTTP 500 Internal Server Error." — before authn is even
+# evaluated. (An EnvoyFilter that MERGEs a TLS transport_socket onto the
+# operator-owned cluster does not reliably match in Istio, so we align at
+# the Authorino side instead.) Authorino ext_authz has exactly one
+# consumer on this cluster — this AuthPolicy — so disabling its listener
+# TLS has no other blast radius:
+#
+#   oc patch authorino authorino -n kuadrant-system --type merge \
+#     -p '{"spec":{"listener":{"tls":{"enabled":false}}}}'
+#
+# The Authorino pod rolls and comes back serving plaintext gRPC on :50051,
+# matching the generated cluster. Verify:
+#   oc logs deploy/authorino -n kuadrant-system | grep 'grpc auth service'
+#   # -> "starting grpc auth service port=50051 tls=false"
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mcp-playbook-route
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  parentRefs:
+    - name: netops-gateway
+      namespace: agent-school
+  rules:
+    - matches:
+        - path: {type: PathPrefix, value: /mcp}
+      backendRefs:
+        - name: mcp-playbook
+          port: 8080
+---
+apiVersion: kuadrant.io/v1
+kind: AuthPolicy
+metadata:
+  name: mcp-playbook-authn
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: mcp-playbook-route
+  rules:
+    authentication:
+      # Authorino runs a Kubernetes TokenReview on the bearer token.
+      #
+      # EA finding (Rome, RHOAI 3.5 EA2): audiences MUST be set to the
+      # audience the caller's ServiceAccount token actually carries. A
+      # pod's default projected token
+      # (/var/run/secrets/kubernetes.io/serviceaccount/token) is minted
+      # with aud=["https://kubernetes.default.svc"]. With no audiences
+      # here, Authorino defaults the TokenReview audience to the
+      # AuthConfig's internal scope hash, which no real token carries —
+      # so every valid token is rejected at authn (HTTP 401). Setting the
+      # audience below makes the standard mounted token authenticate with
+      # no projected-audience volume gymnastics.
+      "sa-token":
+        kubernetesTokenReview:
+          audiences:
+            - https://kubernetes.default.svc
+    authorization:
+      # Only the Execution agent's own identity may actuate. Moving
+      # this check to the gateway means compromising the agent grants
+      # the ability to *ask*, not the ability to *act*.
+      "only-execution-agent":
+        patternMatching:
+          patterns:
+            - selector: auth.identity.user.username
+              operator: eq
+              value: "system:serviceaccount:agent-school:execution-agent"
+---
+apiVersion: kuadrant.io/v1
+kind: RateLimitPolicy
+metadata:
+  name: mcp-playbook-ratelimit
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: mcp-playbook-route
+  limits:
+    "actuation":
+      # A remediation loop actuates a handful of playbooks per incident,
+      # not a flood. Cap it; Limitador counts at the gateway.
+      #
+      # EA finding: the cap counts *gateway HTTP requests*, and MCP
+      # streamable-HTTP spends ~3-4 requests per tool call (initialize
+      # handshake + list/call). So a 3-step remediation plan is ~9-12
+      # requests, and an 8/60s cap trips mid-plan (scale_amf 429'd after
+      # rebalance_upf + restart_smf succeeded). 30/60s comfortably fits a
+      # full multi-step incident (~4-5 playbooks) while still stopping a
+      # runaway/looping agent from sustained hammering.
+      rates:
+        - limit: 30
+          window: 60s

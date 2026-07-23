@@ -1,0 +1,107 @@
+# The autonet playbook MCP server — the loop's governed tool boundary
+# (Track 4). This pod is now the ONLY thing that can actuate the 5G
+# core: it holds the nf-actuator Role (moved off the execution-agent
+# SA), mounts the audited playbooks, and exposes them as MCP tools.
+# Execution reaches it over MCP through the Kuadrant-governed
+# netops-gateway (netops-gateway.yaml, mcp-gateway-policies.yaml).
+#
+# Prereqs: fiveg-core.yaml, the nf-playbooks ConfigMap (already created
+# for Execution), and:
+#   oc create configmap mcp-playbook-src -n agent-school \
+#     --from-file=server.py=../../../agents/mcp-playbook/server.py
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: playbook-actuator
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+---
+# The nf-actuator Role (defined in execution-rbac.yaml, namespace
+# fiveg-core) is now bound to THIS SA, not the execution agent — the
+# governance shift Track 4 makes real.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: playbook-actuator-nf-actuator
+  namespace: fiveg-core
+  labels:
+    app.kubernetes.io/part-of: agent-school
+subjects:
+  - kind: ServiceAccount
+    name: playbook-actuator
+    namespace: agent-school
+roleRef:
+  kind: Role
+  name: nf-actuator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-playbook
+  namespace: agent-school
+  labels:
+    app: mcp-playbook
+    app.kubernetes.io/part-of: agent-school
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: mcp-playbook}
+  template:
+    metadata:
+      labels: {app: mcp-playbook}
+    spec:
+      serviceAccountName: playbook-actuator
+      volumes:
+        - name: src
+          configMap: {name: mcp-playbook-src}
+        - name: playbooks
+          configMap: {name: nf-playbooks}
+      containers:
+        - name: mcp
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp PIP_NO_CACHE_DIR=1;
+              pip install -q mcp==1.28.1 ansible-core kubernetes &&
+              ansible-galaxy collection install kubernetes.core
+              -p /tmp/.ansible/collections &&
+              exec python3 /src/server.py
+          env:
+            - {name: PORT, value: "8080"}
+            - {name: PLAYBOOK_DIR, value: /playbooks}
+          ports:
+            - {containerPort: 8080, name: mcp}
+          startupProbe:
+            tcpSocket: {port: 8080}
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket: {port: 8080}
+            periodSeconds: 10
+          volumeMounts:
+            - {name: src, mountPath: /src}
+            - {name: playbooks, mountPath: /playbooks}
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-playbook
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  selector: {app: mcp-playbook}
+  ports:
+    - {name: mcp, port: 8080, targetPort: 8080}

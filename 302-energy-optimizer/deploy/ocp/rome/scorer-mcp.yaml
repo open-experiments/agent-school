@@ -1,0 +1,84 @@
+# The governed scorer MCP server (302 quant+qual co-decision, Step 1).
+# Wraps the sustainability-scorer KServe InferenceService's V2 inference
+# as one MCP tool, reachable only through the Kuadrant netops-gateway
+# (see scorer-gateway-policies.yaml). No cluster RBAC needed: it just
+# calls the predictor over in-cluster HTTP.
+#
+# Prereqs: the sustainability-scorer InferenceService (serving.yaml) must
+# be Ready, and the 301 netops-gateway must exist (shared, same
+# namespace). Then:
+#   oc create configmap scorer-mcp-src -n agent-school \
+#     --from-file=server.py=../../../agent/scorer-mcp/server.py
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scorer-tool
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scorer-mcp
+  namespace: agent-school
+  labels:
+    app: scorer-mcp
+    app.kubernetes.io/part-of: agent-school
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: scorer-mcp}
+  template:
+    metadata:
+      labels: {app: scorer-mcp}
+    spec:
+      serviceAccountName: scorer-tool
+      volumes:
+        - name: src
+          configMap: {name: scorer-mcp-src}
+      containers:
+        - name: mcp
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp PIP_NO_CACHE_DIR=1;
+              pip install -q "mcp==1.28.1" &&
+              exec python3 /src/server.py
+          env:
+            - {name: PORT, value: "8080"}
+            - name: SCORER_URL
+              value: http://sustainability-scorer-predictor.agent-school.svc.cluster.local:8080
+          ports:
+            - {containerPort: 8080, name: mcp}
+          startupProbe:
+            tcpSocket: {port: 8080}
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket: {port: 8080}
+            periodSeconds: 10
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scorer-mcp
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  selector: {app: scorer-mcp}
+  ports:
+    - {name: mcp, port: 8080, targetPort: 8080}

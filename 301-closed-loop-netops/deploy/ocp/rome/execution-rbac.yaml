@@ -1,12 +1,18 @@
 # Governance for the loop's most dangerous component.
 #
-# An agent that can run playbooks is where scrutiny concentrates, so
-# Execution's ServiceAccount gets exactly one capability: deployments
-# (and their scale) in the fiveg-core namespace. Not cluster-admin,
-# not namespace edit, no secrets, no pod exec, nothing in agent-school
-# beyond what every pod has. The SA-group MLflow binding (101's
-# mlflow-workspace-rbac.yaml) covers its tracking writes; this file is
-# the entire actuation surface.
+# Track 4 moved the actuation capability OFF this agent. The nf-actuator
+# Role (deployments + scale + pod read in fiveg-core) is defined here but
+# is now bound ONLY to the MCP playbook server's ServiceAccount
+# (playbook-actuator, in mcp-playbook.yaml) — NOT to execution-agent.
+# Execution therefore has no direct reach into fiveg-core at all: it can
+# only *ask* the MCP server to actuate, through the Kuadrant gateway,
+# authenticated as itself. The SA-group MLflow binding (101's
+# mlflow-workspace-rbac.yaml) still covers its tracking writes.
+#
+# The execution-agent -> nf-actuator RoleBinding that used to live here
+# is intentionally gone. To retire it on a cluster that already applied
+# the pre-Track-4 manifest:
+#   oc delete rolebinding execution-agent-nf-actuator -n fiveg-core
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -29,19 +35,3 @@ rules:
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: execution-agent-nf-actuator
-  namespace: fiveg-core
-  labels:
-    app.kubernetes.io/part-of: agent-school
-subjects:
-  - kind: ServiceAccount
-    name: execution-agent
-    namespace: agent-school
-roleRef:
-  kind: Role
-  name: nf-actuator
-  apiGroup: rbac.authorization.k8s.io

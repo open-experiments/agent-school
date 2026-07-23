@@ -17,6 +17,14 @@ over them, and writes an RCA where every claim cites a retrieved record.
 101 uses, here split into investigate and write phases); Hermes Agent track
 planned (product harness over the same MCP skills).
 
+## Walkthrough video
+
+A narrated walkthrough (4:20) — the problem, then the step-by-step agentic
+solution over the live RHOAI portal on our DevOps cluster called Rome.
+Click the poster to play or download:
+
+[![201 · RCA Investigator — narrated walkthrough](./images/walkthrough-poster.png)](./images/201-rca-investigator.mp4)
+
 ## Architecture
 
 ![201 RCA Investigator architecture](./images/architecture.png)
