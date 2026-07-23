@@ -1,0 +1,84 @@
+{
+  "output": "/home/user/agent-school/video/out/101-noc-assistant.mp4",
+  "course": {
+    "banner": "101 · NOC Assistant — Agentic AI for a 5G Core NOC"
+  },
+  "scenes": [
+    {
+      "type": "title",
+      "title": "The problem: a 5G core NOC drowning in telemetry",
+      "subtitle": "Operators watch AMF, SMF and UPF pour out per-minute KPIs. When a registration storm or resource exhaustion hits, the signal is buried, the runbook is in another tab, and minutes cost sessions. We want an assistant that inspects the live network, finds the anomaly, consults the right runbook, and answers — like a senior NOC engineer, on call, instantly.",
+      "say": "Let's start with the problem. A five G core network function set — the A M F, the S M F, and the U P F — pours out per-minute telemetry: registration rates, session establishment, packet processing, latency. When something goes wrong, a registration storm, resource exhaustion, a session-management failure, the warning signal is buried in that flood, the relevant runbook lives in a different system, and every minute of confusion costs live subscriber sessions. What we want is an assistant that behaves like a senior network operations engineer: it inspects the live network state, detects the anomaly, consults the correct runbook, and answers — instantly, and on call. This is course one-oh-one, and this is how we build it on Red Hat OpenShift A I."
+    },
+    {
+      "type": "tab",
+      "step": 1,
+      "tab": "Solution shape — agent as a workload, platform as the backbone",
+      "image": "/home/user/agent-school/101-noc-assistant/images/architecture.png",
+      "caption": "The agent pod carries only the loop, its MCP skill servers, and runbooks. Everything stateful — features, the model, traces — lives behind platform services it consumes.",
+      "say": "Here is the shape of the solution. The agent itself is deliberately small — a disposable, C P U-only pod that carries just the reasoning loop, two skill servers exposed over M C P, and the runbooks. It is agent-as-a-workload. Everything that matters and must persist lives behind platform services the pod merely consumes: the live network state comes from a Feast feature store, the reasoning from a v L L M model endpoint, and every step is traced to M L flow. The classic data-science pipeline that keeps those services truthful — feature engineering, training, scoring — is not hidden in a notebook anymore. It is the platform's job, and the OpenShift A I dashboard shows every stage. Let's walk those stages, because the agent is only as good as the pipeline feeding it."
+    },
+    {
+      "type": "tab",
+      "step": 2,
+      "tab": "Develop & train · Feature store (Feast) — feature views",
+      "image": "/home/user/agent-school/101-noc-assistant/images/rhoai/feature-views.png",
+      "caption": "One feature view per network function; one noc_telemetry feature service. The pipeline engineers 1-hour rolling mean/min/max per KPI and pushes the latest vector online.",
+      "say": "Step one: features. Our ingest job pulls the real five-G core dataset, engineers one-hour rolling mean, minimum and maximum for each K P I, lands the offline history as parquet, and pushes the latest vector per network function into the online store. On this Feature Store tab you can see the result on our DevOps cluster called Rome: one feature view per network function, gathered under a single noc-telemetry feature service. This is what gives the agent a truthful, low-latency view of the network — the same features used to train the model are the ones served at inference, so there is no training-serving skew by construction."
+    },
+    {
+      "type": "tab",
+      "step": 3,
+      "tab": "Develop & train · Feature store — data sources",
+      "image": "/home/user/agent-school/101-noc-assistant/images/rhoai/feature-datasets.png",
+      "caption": "The offline parquet is a first-class, versioned data source — the point-in-time training set the model learns from.",
+      "say": "Feast also registers the offline data source you see here. This matters because it makes the training set reproducible and point-in-time correct. When we train, we retrieve features as they were at the moment of each labeled event — not as they look now. That single discipline is the difference between a demo model and one you would actually trust to flag an incident in production."
+    },
+    {
+      "type": "tab",
+      "step": 4,
+      "tab": "Develop & train · Experiments — training runs",
+      "image": "/home/user/agent-school/101-noc-assistant/images/rhoai/experiments-runs.png",
+      "caption": "Training is an experiment, not a script. An Isolation Forest per NF, validated against labeled alert windows, every run tracked in MLflow.",
+      "say": "Step two: training, as a tracked experiment. Our training job retrieves those point-in-time features and fits an anomaly detector — an Isolation Forest — one per network function, then validates it against the labeled alert windows the incident feed provides. On the Experiments tab, every run is captured in M L flow with its parameters, metrics and lineage. Nothing is buried in a notebook on someone's laptop; the whole team sees exactly how each candidate model was produced."
+    },
+    {
+      "type": "tab",
+      "step": 5,
+      "tab": "Develop & train · Model registry — versioned model",
+      "image": "/home/user/agent-school/101-noc-assistant/images/rhoai/model-overview.png",
+      "caption": "The run logs one pyfunc model that routes each row to its NF's forest, registered as 5gprod-anomaly-isolationforest with full lineage.",
+      "say": "Step three: a versioned model, not a pickle in a bucket. The winning run logs a single model that routes each incoming row to the right network function's forest, and registers it under a proper name — five-G-prod anomaly isolation forest. Its lineage — the dataset, the feature source, the window, the train-test split — is all recorded in the parameters you see here. When the agent asks 'is this anomalous', it is calling a specific, auditable version of this model, and we can always answer 'which one, and how was it trained'."
+    },
+    {
+      "type": "tab",
+      "step": 6,
+      "tab": "Model registry — version promotion",
+      "image": "/home/user/agent-school/101-noc-assistant/images/rhoai/registry-promotion.png",
+      "caption": "Promotion is an explicit, governed lifecycle step in the registry — the same mechanism a bigger-GPU cluster (Venice) will replay.",
+      "say": "And promotion between versions is an explicit, governed step in the registry, shown here. This is the lifecycle control that lets us move a model from candidate to the version the agent actually consumes — deliberately, with a record of who and when. It is also exactly the mechanism that lets us stand this whole course up again, unchanged, on a larger G P U cluster later."
+    },
+    {
+      "type": "tab",
+      "step": 7,
+      "tab": "Observe & monitor · Traces — inference observability",
+      "image": "/home/user/agent-school/101-noc-assistant/images/rhoai/model-traces.png",
+      "caption": "Every scoring call is traced against the logged model. The classical model gets the same observability as the GenAI agent loop.",
+      "say": "Step four: traced inference. When the pipeline scores the network and pushes anomaly scores and flags back online, every one of those scoring calls is traced against the logged model — you can see them here on the Traces tab. This is the point most teams miss: the classical machine-learning model deserves the same observability as the generative agent loop. Here they get it in one place, so when the assistant says 'the A M F is anomalous', you can trace that verdict all the way back to the exact inference that produced it."
+    },
+    {
+      "type": "tab",
+      "step": 8,
+      "tab": "Observe & monitor · Workload metrics — agent as a platform citizen",
+      "image": "/home/user/agent-school/101-noc-assistant/images/rhoai/workload-metrics.png",
+      "caption": "The agent and its pipeline jobs run as ordinary, observable OpenShift workloads — CPU-only, restricted-security, disposable.",
+      "say": "Finally, the agent and its pipeline jobs are ordinary, observable OpenShift workloads, shown on the workload-metrics tab. C P U-only, restricted security posture, no secrets baked in, disposable. This is the payoff of agent-as-a-workload: the intelligence is a citizen of the platform, monitored and scheduled like anything else, while the heavy, stateful capabilities stay behind services."
+    },
+    {
+      "type": "title",
+      "title": "101, solved: classic ML finds it, the agent reasons over it",
+      "subtitle": "Isolation Forest finds the anomaly, the alert feed scopes the incident, the language model reasons over both and answers — every step traced. The 'hello world' of agentic telco AI, already doing real work. Next: 201 turns this single assistant into a multi-step RCA investigator.",
+      "say": "So that's one-oh-one, solved end to end on our DevOps cluster called Rome. The classic model finds the anomaly, the alert feed scopes the incident, and the language model reasons over both before it answers — with every step, classical and generative, traced in one place. It is the hello-world of agentic telco A I, but it already does real work, and every piece is a first-class platform citizen rather than a notebook cell. From here, course two-oh-one turns this single assistant into a multi-step root-cause investigator. Thanks for watching."
+    }
+  ]
+}

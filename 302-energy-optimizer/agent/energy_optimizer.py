@@ -10,16 +10,21 @@ One optimization episode per run:
              simulation Job, created and polled through the K8s API
              under the submit/poll-only Role (sim-rbac.yaml). The
              compute never runs in this pod.
-  score    — pattern 2: the simulated network condition is scored by
-             the served sustainability model (KServe V2). Bridge,
-             documented: a dataset-median KPI row with the simulated
-             QoS impact applied (packet loss / call drops raised by
-             the sim's dropped-traffic percentage).
-  gate     — in code, not in the prompt: accept only if
-             savings_pct >= MIN_SAVINGS_PCT and qos_dropped_pct <=
-             MAX_QOS_DROP_PCT and energy_efficiency >= MIN_EFFICIENCY.
-             Rejected proposals are logged to MLflow and fed back to
-             the agent for revision (up to MAX_ROUNDS).
+  score    — pattern 2, governed: the simulated network condition is
+             scored by the served sustainability model — reached ONLY
+             through the Kuadrant gateway's scorer MCP tool (/score),
+             the same East-West governance 301 puts on actuation. The
+             documented KPI bridge lives server-side in that tool.
+  co-decide— quant+qual: the classic threshold gate (savings/QoS/
+             efficiency on the calibrated score) is computed as the
+             QUANT signal, and the GenAI judge agent (A2A; grounds on
+             the same governed scorer) renders the QUAL verdict. The
+             judge is a full co-decider — its accept/reject stands —
+             EXCEPT the one non-negotiable rail: qos_dropped_pct >
+             HARD_QOS_FLOOR_PCT rejects regardless. Any judge-vs-quant
+             disagreement is recorded as an audited override (arbiter
+             block in the MLflow attempt record). Judge unreachable →
+             quant gate alone, honestly recorded.
   emit     — the agent's ONLY output is a change-plan artifact with
              the simulation evidence and score attached
              (change_plan.json in the MLflow run). It never touches a
@@ -29,9 +34,9 @@ Runs as deploy/ocp/rome/job-optimize.yaml (SA energy-optimizer).
 """
 import json
 import os
-import ssl
+
 import time
-import urllib.request
+
 import uuid
 from pathlib import Path
 
@@ -40,27 +45,32 @@ MAX_QOS_DROP_PCT = float(os.environ.get("MAX_QOS_DROP_PCT", "0.5"))
 MIN_EFFICIENCY = float(os.environ.get("MIN_EFFICIENCY", "60.0"))
 MAX_ROUNDS = int(os.environ.get("MAX_ROUNDS", "3"))
 CELLS = int(os.environ.get("CELLS", "6"))
+# The one NON-NEGOTIABLE rail in the quant+qual co-decision: a proposal
+# whose simulated QoS drop breaches this floor is rejected no matter
+# what the classic gate or the GenAI judge says. Co-decide never means
+# "can cause an outage".
+HARD_QOS_FLOOR_PCT = float(os.environ.get("HARD_QOS_FLOOR_PCT", "2.0"))
 
 LLAMA_STACK_URL = os.environ.get(
     "LLAMA_STACK_URL",
     "http://llama-stack.agent-school.svc.cluster.local:8321")
-SCORER_URL = os.environ.get(
-    "SCORER_URL",
-    "http://sustainability-scorer-predictor.agent-school.svc.cluster.local:8080")
+# Track "quant+qual": the classic scorer is reached ONLY through the
+# Kuadrant-governed gateway (the scorer MCP tool on /score) — same
+# East-West governance as 301's actuation, applied to evaluation.
+SCORE_GW = os.environ.get(
+    "SCORE_GATEWAY_URL",
+    "http://netops-gateway-data-science-gateway-class."
+    "agent-school.svc.cluster.local:8080/score")
+# The GenAI judge — the qualitative co-decider (A2A).
+JUDGE_URL = os.environ.get(
+    "JUDGE_URL",
+    "http://judge-agent.agent-school.svc.cluster.local:8080")
 NAMESPACE = "agent-school"
 SA_DIR = "/var/run/secrets/kubernetes.io/serviceaccount"
 
-# Dataset-median KPI row for the scorer bridge (medians of the
-# published 100K-row 5G netops dataset; the sim's QoS impact is
-# applied on top — documented modeling bridge, not measurement).
-BASELINE_KPIS = {
-    "Cell Availability (%)": 98.6, "MTTR (hours)": 3.4,
-    "Throughput (Mbps)": 500.0, "Latency (ms)": 50.0,
-    "Packet Loss Rate (%)": 2.0, "Call Drop Rate (%)": 1.0,
-    "Handover Success Rate (%)": 97.0, "Alarm Count": 12,
-    "Critical Alarm Count": 3, "Temperature (°C)": 15.0,
-    "Humidity (%)": 55.0,
-}
+# (The dataset-median KPI bridge moved server-side into the governed
+# scorer MCP tool — agent/scorer-mcp/server.py — so every caller scores
+# through the same governed path with the same bridge.)
 
 
 # ---------------------------------------------------------------- mlflow
@@ -214,30 +224,88 @@ def fetch_sim_from_mlflow(proposal_id):
 
 
 # -------------------------------------------------------------- pattern 2
+def _sa_token():
+    return Path(SA_DIR + "/token").read_text().strip()
+
+
+def _run_async(coro):
+    """Run a coroutine on its own loop in a worker thread (safe even if
+    an event loop already exists in this process)."""
+    import asyncio
+    import threading
+    box = {}
+
+    def runner():
+        try:
+            box["v"] = asyncio.run(coro)
+        except Exception as e:  # noqa: BLE001
+            box["e"] = e
+
+    t = threading.Thread(target=runner)
+    t.start()
+    t.join()
+    if "e" in box:
+        raise box["e"]
+    return box["v"]
+
+
+async def _mcp_score(savings_pct, qos_dropped_pct):
+    from mcp import ClientSession
+    from mcp.client.streamable_http import streamablehttp_client
+    async with streamablehttp_client(
+            SCORE_GW, headers={"Authorization": "Bearer " + _sa_token()},
+            timeout=120) as (r, w, _):
+        async with ClientSession(r, w) as s:
+            await s.initialize()
+            res = await s.call_tool("score_condition",
+                                    {"savings_pct": savings_pct,
+                                     "qos_dropped_pct": qos_dropped_pct})
+            return json.loads(res.content[0].text)
+
+
 def score_simulation(sim):
-    """Score the simulated network condition on the served model."""
-    kpis = dict(BASELINE_KPIS)
-    drop = float(sim["qos_dropped_pct"])
-    kpis["Packet Loss Rate (%)"] = round(
-        kpis["Packet Loss Rate (%)"] + drop, 3)
-    kpis["Call Drop Rate (%)"] = round(
-        kpis["Call Drop Rate (%)"] + 0.5 * drop, 3)
-    inputs = []
-    for k, v in kpis.items():
-        dt = "INT64" if isinstance(v, int) else "FP64"
-        inputs.append({"name": k, "shape": [1, 1], "datatype": dt,
-                       "data": [v]})
-    body = json.dumps({"parameters": {"content_type": "pd"},
-                       "inputs": inputs}).encode()
-    req = urllib.request.Request(
-        SCORER_URL + "/v2/models/sustainability-scorer/infer",
-        data=body, headers={"Content-Type": "application/json"})
-    resp = json.loads(urllib.request.urlopen(req, timeout=60).read())
-    out = {o["name"]: o["data"][0] for o in resp.get("outputs", [])}
-    return {"energy_efficiency": round(float(out["energy_efficiency"]), 2),
-            "predicted_fault_rate": round(
-                float(out["predicted_fault_rate"]), 2),
-            "kpi_row_used": kpis}
+    """Score the simulated network condition on the classic regressor —
+    reached ONLY through the Kuadrant-governed scorer MCP tool. The KPI
+    bridge (dataset medians + sim QoS impact) is applied server-side."""
+    rec = _run_async(_mcp_score(float(sim["savings_pct"]),
+                                float(sim["qos_dropped_pct"])))
+    if "error" in rec:
+        raise RuntimeError("governed scorer failed: " + str(rec["error"]))
+    return {"energy_efficiency": rec["energy_efficiency"],
+            "predicted_fault_rate": rec["predicted_fault_rate"],
+            "kpi_row_used": rec.get("kpi_row_used")}
+
+
+async def _a2a_ask(base, text):
+    import httpx
+    from a2a.client import A2ACardResolver, A2AClient
+    from a2a.types import MessageSendParams, SendMessageRequest
+    async with httpx.AsyncClient(timeout=300) as hc:
+        card = await A2ACardResolver(httpx_client=hc, base_url=base
+                                     ).get_agent_card()
+        client = A2AClient(httpx_client=hc, agent_card=card)
+        req = SendMessageRequest(
+            id=str(uuid.uuid4()), params=MessageSendParams(
+                message={"role": "user", "message_id": uuid.uuid4().hex,
+                         "parts": [{"kind": "text", "text": text}]}))
+        resp = await client.send_message(req)
+        return json.loads(resp.root.result.parts[0].root.text)
+
+
+def judge_proposal(sim, proposal):
+    """Ask the GenAI judge (A2A) for the qualitative verdict. The judge
+    re-fetches the calibrated score itself through the governed scorer
+    tool, so its verdict is grounded by construction."""
+    payload = {
+        "savings_pct": float(sim["savings_pct"]),
+        "qos_dropped_pct": float(sim["qos_dropped_pct"]),
+        "proposal": proposal.get("windows", []),
+        "context": ("diurnal traffic, %d cells, deep-night trough "
+                    "00:00-06:00; thresholds: savings>=%.1f%%, "
+                    "qos_drop<=%.2f%%, efficiency>=%.1f"
+                    % (CELLS, MIN_SAVINGS_PCT, MAX_QOS_DROP_PCT,
+                       MIN_EFFICIENCY))}
+    return _run_async(_a2a_ask(JUDGE_URL, json.dumps(payload)))
 
 
 # ---------------------------------------------------------------- propose
@@ -337,11 +405,48 @@ def run_episode():
         sim = dispatch_simulation(
             {"cells": CELLS, "windows": wins}, pid)
         score = score_simulation(sim)
-        ok = (sim["savings_pct"] >= MIN_SAVINGS_PCT
-              and sim["qos_dropped_pct"] <= MAX_QOS_DROP_PCT
-              and score["energy_efficiency"] >= MIN_EFFICIENCY)
+
+        # ---- quant+qual co-decision (arbiter) -------------------------
+        # Signal 1 (quant): the classic threshold gate on the calibrated
+        # regressor output — same thresholds as before Track quant+qual.
+        quant_ok = (sim["savings_pct"] >= MIN_SAVINGS_PCT
+                    and sim["qos_dropped_pct"] <= MAX_QOS_DROP_PCT
+                    and score["energy_efficiency"] >= MIN_EFFICIENCY)
+        # Signal 2 (qual): the GenAI judge, grounded on the same governed
+        # scorer. Full co-decider: its decision stands...
+        try:
+            judgment = judge_proposal(sim, proposal)
+            j = judgment.get("verdict", {})
+        except Exception as e:  # noqa: BLE001
+            # Judge unreachable -> fall back to the quant gate alone,
+            # honestly recorded. The loop must not die with the judge.
+            judgment = {"error": type(e).__name__ + ": " + str(e)[:150]}
+            j = {"decision": "accept" if quant_ok else "reject",
+                 "confidence": 0.0,
+                 "rationale": "judge unavailable; quant gate applied",
+                 "risks": ["judge_unavailable"]}
+        decision = j.get("decision")
+        # ...except the one non-negotiable rail: a hard QoS breach is
+        # rejected regardless of either signal.
+        hard_rail = sim["qos_dropped_pct"] > HARD_QOS_FLOOR_PCT
+        ok = False if hard_rail else (decision == "accept")
+        override = (ok != quant_ok) and not hard_rail
+        arbiter = {"quant_ok": quant_ok, "judge_decision": decision,
+                   "judge_confidence": j.get("confidence"),
+                   "hard_qos_rail_tripped": hard_rail,
+                   "override": override,
+                   "override_note": (
+                       "judge %s what the quant gate would have %s: %s"
+                       % ("accepted" if ok else "rejected",
+                          "rejected" if quant_ok is False else "accepted",
+                          str(j.get("rationale"))[:200])) if override else None,
+                   "final": "accept" if ok else "reject"}
+        print("[arbiter]", json.dumps(arbiter)[:300], flush=True)
+
         verdict = {"round": round_no, "proposal": proposal,
-                   "simulation": sim, "score": score, "accepted": ok}
+                   "simulation": sim, "score": score,
+                   "judgment": judgment, "arbiter": arbiter,
+                   "accepted": ok}
         attempts.append(verdict)
 
         if mlflow:
@@ -351,11 +456,17 @@ def run_episode():
                     mlflow.log_param("episode", episode)
                     mlflow.log_param("round", round_no)
                     mlflow.log_param("accepted", ok)
+                    mlflow.log_param("quant_ok", quant_ok)
+                    mlflow.log_param("judge_decision", decision)
+                    mlflow.log_param("override", override)
+                    mlflow.log_param("hard_qos_rail", hard_rail)
                     mlflow.log_metric("savings_pct", sim["savings_pct"])
                     mlflow.log_metric("qos_dropped_pct",
                                       sim["qos_dropped_pct"])
                     mlflow.log_metric("energy_efficiency",
                                       score["energy_efficiency"])
+                    mlflow.log_metric("judge_confidence",
+                                      float(j.get("confidence") or 0.0))
                     mlflow.log_dict(verdict, "attempt.json")
             except Exception as e:
                 print("[mlflow] log skipped:", e, flush=True)
@@ -364,10 +475,13 @@ def run_episode():
             plan = {"episode": episode, "accepted_round": round_no,
                     "windows": proposal.get("windows", []),
                     "rationale": proposal.get("rationale"),
-                    "evidence": {"simulation": sim, "score": score},
+                    "evidence": {"simulation": sim, "score": score,
+                                 "judgment": judgment,
+                                 "arbiter": arbiter},
                     "thresholds": {"min_savings_pct": MIN_SAVINGS_PCT,
                                    "max_qos_drop_pct": MAX_QOS_DROP_PCT,
-                                   "min_efficiency": MIN_EFFICIENCY},
+                                   "min_efficiency": MIN_EFFICIENCY,
+                                   "hard_qos_floor_pct": HARD_QOS_FLOOR_PCT},
                     "attempts": attempts}
             if mlflow:
                 try:
@@ -385,13 +499,16 @@ def run_episode():
             print("CHANGE_PLAN " + json.dumps(plan), flush=True)
             return plan
 
-        prompt = ("REJECTED round %d: savings %.2f%% (need >= %.1f%%), "
-                  "dropped %.3f%% (max %.2f%%), efficiency %.1f "
-                  "(need >= %.1f). Revise the windows: %s. Respond "
-                  "STRICT JSON only." % (
-                      round_no, sim["savings_pct"], MIN_SAVINGS_PCT,
+        judge_note = str(j.get("rationale") or "")[:200]
+        prompt = ("REJECTED round %d (final=%s, judge=%s): savings %.2f%% "
+                  "(need >= %.1f%%), dropped %.3f%% (max %.2f%%), "
+                  "efficiency %.1f (need >= %.1f). Judge feedback: %s. "
+                  "Revise the windows: %s. Respond STRICT JSON only." % (
+                      round_no, arbiter["final"], decision,
+                      sim["savings_pct"], MIN_SAVINGS_PCT,
                       sim["qos_dropped_pct"], MAX_QOS_DROP_PCT,
                       score["energy_efficiency"], MIN_EFFICIENCY,
+                      judge_note,
                       "extend night windows or add cells if savings "
                       "too low; shrink windows if QoS dropped"))
     print("NO_PLAN after", MAX_ROUNDS, "rounds", flush=True)

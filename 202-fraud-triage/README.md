@@ -19,6 +19,14 @@ billing dataset published on Hugging Face).
 **Harness:** LangGraph; its `interrupt()` is the cleanest way to teach the
 human-approval pattern.
 
+## Walkthrough video
+
+A narrated walkthrough (3:40) — the problem, then the step-by-step agentic
+solution over the live RHOAI portal on our DevOps cluster called Rome.
+Click the poster to play or download:
+
+[![202 · Fraud Triage — narrated walkthrough](./images/walkthrough-poster.png)](./images/202-fraud-triage.mp4)
+
 ## Architecture
 
 ![202 Fraud Triage architecture](./images/architecture.png)

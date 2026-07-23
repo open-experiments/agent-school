@@ -1,0 +1,98 @@
+# The GenAI Judge agent (302 quant+qual co-decision, Step 2).
+#
+# The qualitative half of the optimizer's decision: an OGX (Llama Stack)
+# agent on the cluster Kimi model that grounds on the classic scorer —
+# which it reaches ONLY through the Kuadrant-governed scorer tool
+# (/score on the netops-gateway), authenticated as judge-agent — and
+# renders a structured accept/revise/reject verdict. No fiveg-core or
+# model RBAC: its only privileged reach is the governed scoring hop.
+#
+# EA-7: enableServiceLinks:false, or the injected LLAMA_STACK_PORT
+# service-link env collides with OGX's own config.
+# EA-10 pins: a2a-sdk 0.3.22, mcp 1.28.1, llama-stack-client 0.2.12.
+#
+# Prereqs: llama-stack.yaml (OGX), scorer-mcp.yaml + scorer-gateway-
+# policies.yaml, mlflow-tracking ConfigMap, plus:
+#   oc create configmap judge-agent-src -n agent-school \
+#     --from-file=agent.py=../../../agent/judge/agent.py
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: judge-agent
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: judge-agent
+  namespace: agent-school
+  labels:
+    app: judge-agent
+    app.kubernetes.io/part-of: agent-school
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: judge-agent}
+  template:
+    metadata:
+      labels: {app: judge-agent}
+    spec:
+      serviceAccountName: judge-agent
+      enableServiceLinks: false
+      volumes:
+        - name: src
+          configMap: {name: judge-agent-src}
+      containers:
+        - name: agent
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          command:
+            - /bin/sh
+            - -c
+            - >
+              export HOME=/tmp PIP_NO_CACHE_DIR=1;
+              pip install -q "a2a-sdk[http-server]==0.3.22" uvicorn httpx
+              mlflow==3.4.0 "mcp==1.28.1" "llama-stack-client==0.2.12"
+              fire termcolor &&
+              exec python3 /src/agent.py
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+          env:
+            - {name: MLFLOW_EXPERIMENT, value: 302-energy-optimizer}
+            - name: LLAMA_STACK_URL
+              value: http://llama-stack.agent-school.svc.cluster.local:8321
+            - {name: LS_MODEL, value: kimi-linear-48b-a3b}
+            - name: SCORE_GATEWAY_URL
+              value: http://netops-gateway-data-science-gateway-class.agent-school.svc.cluster.local:8080/score
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          ports:
+            - {containerPort: 8080, name: a2a}
+          startupProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /.well-known/agent.json, port: 8080}
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: judge-agent
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  selector: {app: judge-agent}
+  ports:
+    - {name: a2a, port: 8080, targetPort: 8080}

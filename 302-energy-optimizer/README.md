@@ -12,6 +12,15 @@ and [sustainability](https://github.com/open-experiments/Telco-AIX/tree/main/sus
 
 **Harness:** Llama Stack.
 
+## Walkthrough video
+
+A narrated walkthrough (5:43) — the problem, then the step-by-step quant+qual
+agentic solution over the live RHOAI portal and OpenShift console on our
+DevOps cluster called Rome, through the governed scorer and the GenAI
+evaluation suite. Click the poster to play or download:
+
+[![302 · Energy Optimizer — narrated walkthrough](./images/walkthrough-poster.png)](./images/302-energy-optimizer.mp4)
+
 ## Architecture
 
 ![302 Energy Optimizer architecture](./images/architecture.png)

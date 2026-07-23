@@ -1,0 +1,92 @@
+# Kuadrant governance for the scorer MCP tool (302, Step 1).
+#
+# The classic sustainability regressor is the calibrated half of the
+# optimizer's quant+qual co-decision. This puts the SAME East-West
+# governance 301 applies to *actuation* onto *evaluation*: the GenAI
+# judge (and the optimizer) may reach the classic model only by
+# presenting a valid ServiceAccount token that is exactly one of the
+# allowed identities, and only so many times per minute.
+#
+# Reuses the 301 netops-gateway (shared, same namespace) on a distinct
+# path (/score) so it coexists with the playbook tool (/mcp).
+#
+# Prereqs: 301 netops-gateway.yaml, scorer-mcp.yaml. Depends on the same
+# EA finding as 301: Authorino listener TLS must be disabled to match
+# the plaintext auth cluster (see 301 mcp-gateway-policies.yaml header).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: scorer-route
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  parentRefs:
+    - name: netops-gateway
+      namespace: agent-school
+  rules:
+    - matches:
+        - path: {type: PathPrefix, value: /score}
+      backendRefs:
+        - name: scorer-mcp
+          port: 8080
+---
+apiVersion: kuadrant.io/v1
+kind: AuthPolicy
+metadata:
+  name: scorer-authn
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: scorer-route
+  rules:
+    authentication:
+      # EA finding (see 301): audiences MUST match the caller token's
+      # audience; a pod's default projected token carries
+      # aud=["https://kubernetes.default.svc"].
+      "sa-token":
+        kubernetesTokenReview:
+          audiences:
+            - https://kubernetes.default.svc
+    authorization:
+      # Only the optimizer and the GenAI judge may score. Compromising
+      # some other agent grants no access to the classic model.
+      "scoring-callers":
+        patternMatching:
+          patterns:
+            - selector: auth.identity.user.username
+              operator: matches
+              value: "^system:serviceaccount:agent-school:(energy-optimizer|judge-agent)$"
+---
+apiVersion: kuadrant.io/v1
+kind: RateLimitPolicy
+metadata:
+  name: scorer-ratelimit
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: scorer-route
+  limits:
+    "scoring":
+      # Scoring is cheaper and more frequent than actuation (one per
+      # proposal round, several rounds per episode). The cap counts
+      # gateway requests, and MCP spends ~3-4 per tool call (EA-11).
+      #
+      # EA finding (raised 60->120): an EVALUATION workload (mlflow
+      # genai eval over the judge) is a legitimate burst consumer of
+      # this route — each eval row triggers the judge's own score fetch
+      # PLUS the harness's verification fetch (~8 gateway requests per
+      # row), and the 8-row suite tripped 60/60s mid-run (judge got
+      # 429s -> empty verdicts). 120/60s fits episodes AND paced eval
+      # runs while still bounding a runaway agent.
+      rates:
+        - limit: 120
+          window: 60s

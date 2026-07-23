@@ -17,6 +17,14 @@ A single agent that answers NOC questions about a 5G core: it inspects telemetry
 4. The data pipeline as a platform citizen: features in Feast, training in Experiments, the model versioned in a registry — not buried in a notebook.
 5. Tracing: every step — agent turns *and* classical-model inference — lands in MLflow.
 
+## Walkthrough video
+
+A narrated walkthrough (5:39) — the problem, then the step-by-step agentic
+solution over the live RHOAI portal on our DevOps cluster called Rome.
+Click the poster to play or download:
+
+[![101 · NOC Assistant — narrated walkthrough](./images/walkthrough-poster.png)](./images/101-noc-assistant.mp4)
+
 ## Architecture
 
 ![101 NOC Assistant architecture](./images/architecture.png)

@@ -1,0 +1,57 @@
+# GenAI evaluation of the 302 judge (EA-12 made measurable): creates
+# the evaluation dataset, registers the LLM-as-judge (cluster Kimi),
+# and runs mlflow.genai.evaluate() against the LIVE judge agent over
+# A2A with the groundedness/correctness/qos-safety scorers. Populates
+# the managed MLflow GenAI tabs: Datasets, Judges, Evaluation runs,
+# Traces. See ../../../eval/genai_eval.py.
+#
+# Prereq ConfigMap:
+#   oc create configmap genai-eval-src -n agent-school \
+#     --from-file=genai_eval.py=../../../eval/genai_eval.py
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: genai-eval
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 3000
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: energy-optimizer
+      volumes:
+        - name: src
+          configMap: {name: genai-eval-src}
+      containers:
+        - name: eval
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - {name: MLFLOW_EXPERIMENT, value: 302-energy-optimizer}
+            # LLM-as-judge backing model: the cluster's own Kimi vLLM
+            # (OpenAI-compatible). Key is a placeholder; the in-cluster
+            # endpoint does not require auth.
+            - {name: OPENAI_API_BASE,
+               value: "http://kimi-linear-48b-a3b-predictor.telco-aix.svc.cluster.local:8080/v1"}
+            - {name: OPENAI_API_KEY, value: "not-needed-in-cluster"}
+            - {name: MLFLOW_GENAI_EVAL_MAX_WORKERS, value: "2"}
+            - {name: USE_LLM_JUDGE, value: "1"}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q mlflow==3.4.0 litellm "mcp==1.28.1"
+              "a2a-sdk==0.3.22" httpx &&
+              python3 /src/genai_eval.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

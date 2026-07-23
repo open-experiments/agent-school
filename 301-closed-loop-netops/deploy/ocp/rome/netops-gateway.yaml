@@ -1,0 +1,27 @@
+# Dedicated Gateway for the NetOps governed-tool path (Track 4).
+#
+# The platform's shared data-science-gateway only accepts routes from
+# openshift-ingress / redhat-ods-applications (hard namespace selector,
+# an EA finding), so agent-school gets its own Gateway on the same
+# OpenShift gateway class. On this SNO the LoadBalancer Service gets no
+# external address (Gateway shows AddressNotAssigned) — that is fine:
+# the loop's calls are east-west, over the gateway's ClusterIP. The
+# Istio data plane (netops-gateway-data-science-gateway-class) is what
+# enforces the Kuadrant AuthPolicy + RateLimitPolicy in
+# mcp-gateway-policies.yaml.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: netops-gateway
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  gatewayClassName: data-science-gateway-class
+  listeners:
+    - name: http
+      port: 8080
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
