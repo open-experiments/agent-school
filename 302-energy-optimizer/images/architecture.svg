@@ -1,10 +1,10 @@
-<svg viewBox="0 0 1180 790" width="1180" height="790" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1320 900" width="1320" height="900" xmlns="http://www.w3.org/2000/svg">
 <style>
 text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
 .ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
 .tz { font-size: 13px; font-weight: 600; fill: #6b6b6b; letter-spacing: .4px; }
-.tl { font-size: 11.5px; font-weight: 500; fill: #6b6b6b; }
+.tl { font-size: 11.5px; font-weight: 600; fill: #6b6b6b; }
 .c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
 .c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
 .c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
@@ -15,166 +15,157 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
 .c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
 .c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
-.arrow { stroke: #8a8a8a; stroke-width: 1.5; fill: none; }
+.c-agent rect { fill: #FDF1F1; stroke: #C0392B; stroke-width: 2.5; }
+.agent-t { font-size: 21px; font-weight: 800; fill: #7A1C12; }
+.agent-flow { font-size: 15px; font-weight: 700; fill: #7A1C12; }
+.arrow { stroke: #8a8a8a; stroke-width: 1.6; fill: none; }
+.arrow-h { stroke: #C0392B; stroke-width: 1.8; fill: none; }
 .dashed { stroke-dasharray: 5 4; }
+.tab-rhoai rect { fill:#EAF2FB; stroke:#185FA5; stroke-width:1; }
+.tab-rhoai text { fill:#0C447C; font-size:11px; font-weight:700; }
+.tab-pod rect { fill:#C0392B; }
+.tab-pod text { fill:#ffffff; font-size:12px; font-weight:800; letter-spacing:.5px; }
 </style>
-<defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
-<rect width="1180" height="790" fill="#ffffff"/>
+<defs>
+<marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker>
+<marker id="ah" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#C0392B"/></marker>
+</defs>
+<rect width="1320" height="900" fill="#ffffff"/>
 
-<!-- Zone: External -->
-<rect x="15" y="30" width="210" height="690" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
-<text class="tz" x="30" y="56">EXTERNAL</text>
+<!-- Zones -->
+<rect x="20" y="44" width="250" height="812" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<text class="tz" x="36" y="70">EXTERNAL</text>
+<rect x="300" y="44" width="995" height="812" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
+<text class="tz" x="316" y="70">OPENSHIFT SNO "ROME" · RED HAT OPENSHIFT AI 3.5</text>
 
+<!-- External -->
 <g class="c-gray">
-<rect x="30" y="100" width="175" height="120" rx="8"/>
-<text class="th" x="117" y="130" text-anchor="middle">Published models</text>
-<text class="ts" x="117" y="152" text-anchor="middle">hf.co/fenar/sustainability</text>
-<text class="ts" x="117" y="170" text-anchor="middle">+ airan-energy JAX DQN</text>
-<text class="ts" x="117" y="188" text-anchor="middle">(Telco-AIX)</text>
+<rect x="35" y="100" width="220" height="125" rx="8"/>
+<text class="th" x="145" y="128" text-anchor="middle">Published models</text>
+<text class="ts" x="145" y="150" text-anchor="middle">hf.co/fenar/sustainability</text>
+<text class="ts" x="145" y="168" text-anchor="middle">+ airan-energy JAX DQN</text>
+<text class="ts" x="145" y="186" text-anchor="middle">(Telco-AIX)</text>
 </g>
-
 <g class="c-gray">
-<rect x="30" y="260" width="175" height="120" rx="8"/>
-<text class="th" x="117" y="290" text-anchor="middle">RAN operations</text>
-<text class="ts" x="117" y="312" text-anchor="middle">consumes the change-plan</text>
-<text class="ts" x="117" y="330" text-anchor="middle">artifact · the agent</text>
-<text class="ts" x="117" y="348" text-anchor="middle">never touches the RAN</text>
+<rect x="35" y="395" width="220" height="120" rx="8"/>
+<text class="th" x="145" y="423" text-anchor="middle">RAN operations</text>
+<text class="ts" x="145" y="445" text-anchor="middle">consumes the change-plan;</text>
+<text class="ts" x="145" y="463" text-anchor="middle">the agent never</text>
+<text class="ts" x="145" y="481" text-anchor="middle">touches the RAN</text>
 </g>
-
 <g class="c-green">
-<rect x="30" y="560" width="175" height="110" rx="8"/>
-<text class="th" x="117" y="590" text-anchor="middle">RHOAI MaaS</text>
-<text class="ts" x="117" y="612" text-anchor="middle">LiteLLM gateway ·</text>
-<text class="ts" x="117" y="630" text-anchor="middle">alt model path</text>
+<rect x="35" y="700" width="220" height="115" rx="8"/>
+<text class="th" x="145" y="728" text-anchor="middle">RHOAI MaaS</text>
+<text class="ts" x="145" y="750" text-anchor="middle">LiteLLM gateway ·</text>
+<text class="ts" x="145" y="768" text-anchor="middle">alt model path</text>
 </g>
 
-<!-- Zone: Cluster -->
-<rect x="250" y="30" width="910" height="690" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
-<text class="tz" x="266" y="56">OPENSHIFT SNO "ROME" · RED HAT OPENSHIFT AI 3.5</text>
-
-<!-- Batch sim -->
+<!-- Top band: develop / serve / observe -->
 <g class="c-amber">
-<rect x="280" y="90" width="250" height="240" rx="8"/>
-<text class="th" x="405" y="118" text-anchor="middle">JAX DQN simulation (Job)</text>
-<text class="ts" x="405" y="146" text-anchor="middle">pattern 3: batch dispatch via</text>
-<text class="ts" x="405" y="164" text-anchor="middle">the K8s Job API, scoped RBAC</text>
-<text class="ts" x="405" y="192" text-anchor="middle">airan-energy cell-sleep</text>
-<text class="ts" x="405" y="210" text-anchor="middle">optimization (30–35% savings</text>
-<text class="ts" x="405" y="228" text-anchor="middle">in the source experiment)</text>
-<text class="ts" x="405" y="256" text-anchor="middle">GPU work never runs</text>
-<text class="ts" x="405" y="274" text-anchor="middle">in the agent pod</text>
+<rect x="330" y="100" width="255" height="185" rx="8"/>
+<text class="th" x="457" y="130" text-anchor="middle">JAX DQN simulation (Job)</text>
+<text class="ts" x="457" y="156" text-anchor="middle">pattern 3 · Kueue batch Job</text>
+<text class="ts" x="457" y="174" text-anchor="middle">via the K8s Job API,</text>
+<text class="ts" x="457" y="192" text-anchor="middle">scoped RBAC</text>
+<text class="ts" x="457" y="220" text-anchor="middle">airan-energy cell-sleep</text>
+<text class="ts" x="457" y="238" text-anchor="middle">optimization · GPU work</text>
+<text class="ts" x="457" y="256" text-anchor="middle">never runs in the agent pod</text>
 </g>
-
-<!-- Scorer -->
 <g class="c-green">
-<rect x="560" y="90" width="260" height="240" rx="8"/>
-<text class="th" x="690" y="118" text-anchor="middle">Sustainability scorer</text>
-<text class="th" x="690" y="136" text-anchor="middle">on KServe</text>
-<text class="ts" x="690" y="164" text-anchor="middle">pattern 2: energy-efficiency</text>
-<text class="ts" x="690" y="182" text-anchor="middle">prediction model, served</text>
-<text class="ts" x="690" y="210" text-anchor="middle">every simulated plan gets an</text>
-<text class="ts" x="690" y="228" text-anchor="middle">independent score before the</text>
-<text class="ts" x="690" y="246" text-anchor="middle">agent may emit it</text>
-<text class="ts" x="690" y="274" text-anchor="middle">reached ONLY via the Kuadrant</text>
-<text class="ts" x="690" y="292" text-anchor="middle">/score gateway (AuthN + rate cap)</text>
+<rect x="620" y="100" width="270" height="185" rx="8"/>
+<text class="th" x="755" y="130" text-anchor="middle">Sustainability scorer · KServe</text>
+<text class="ts" x="755" y="156" text-anchor="middle">pattern 2 · energy-efficiency</text>
+<text class="ts" x="755" y="174" text-anchor="middle">prediction model, served</text>
+<text class="ts" x="755" y="202" text-anchor="middle">the calibrated QUANT signal ·</text>
+<text class="ts" x="755" y="220" text-anchor="middle">reached only through the</text>
+<text class="ts" x="755" y="238" text-anchor="middle">governed /score gateway below</text>
 </g>
-
-<!-- MLflow -->
 <g class="c-blue">
-<rect x="850" y="90" width="280" height="240" rx="8"/>
-<text class="th" x="990" y="118" text-anchor="middle">MLflow · workspace agent-school</text>
-<text class="ts" x="990" y="146" text-anchor="middle">every proposal · simulation ·</text>
-<text class="ts" x="990" y="164" text-anchor="middle">score · decision recorded</text>
-<text class="ts" x="990" y="192" text-anchor="middle">rejected proposals kept too,</text>
-<text class="ts" x="990" y="210" text-anchor="middle">the audit is the loop's memory</text>
-<text class="ts" x="990" y="238" text-anchor="middle">Develop &amp; train → Experiments</text>
-<text class="ts" x="990" y="266" text-anchor="middle">+ GenAI eval suite measures the</text>
-<text class="ts" x="990" y="284" text-anchor="middle">judge (dataset · scorers · run)</text>
+<rect x="925" y="100" width="350" height="185" rx="8"/>
+<text class="th" x="1100" y="130" text-anchor="middle">MLflow · workspace agent-school</text>
+<text class="ts" x="1100" y="156" text-anchor="middle">every proposal · simulation ·</text>
+<text class="ts" x="1100" y="174" text-anchor="middle">score · decision recorded</text>
+<text class="ts" x="1100" y="202" text-anchor="middle">rejected proposals kept too,</text>
+<text class="ts" x="1100" y="220" text-anchor="middle">the audit is the loop's memory</text>
+<text class="ts" x="1100" y="248" text-anchor="middle">+ GenAI eval suite measures the</text>
+<text class="ts" x="1100" y="266" text-anchor="middle">judge (dataset · scorers · run)</text>
 </g>
 
-<!-- Agent pod -->
-<g class="c-gray">
-<rect x="280" y="400" width="530" height="300" rx="8"/>
-<text class="th" x="296" y="426">Energy-optimizer agent pod · OGX loop (CPU-only)</text>
-</g>
-<g class="c-teal">
-<rect x="300" y="440" width="230" height="100" rx="8"/>
-<text class="th" x="415" y="466" text-anchor="middle">propose</text>
-<text class="ts" x="415" y="488" text-anchor="middle">candidate cell-sleep windows</text>
-<text class="ts" x="415" y="506" text-anchor="middle">from traffic forecasts</text>
-</g>
+<!-- Governance gateway between scorer and agent -->
 <g class="c-amber">
-<rect x="560" y="440" width="230" height="100" rx="8"/>
-<text class="th" x="675" y="466" text-anchor="middle">simulate (dispatch)</text>
-<text class="ts" x="675" y="488" text-anchor="middle">submit batch Job · poll results</text>
-<text class="ts" x="675" y="506" text-anchor="middle">RBAC-scoped ServiceAccount</text>
-</g>
-<g class="c-teal">
-<rect x="300" y="580" width="230" height="100" rx="8"/>
-<text class="th" x="415" y="602" text-anchor="middle">score · quant</text>
-<text class="ts" x="415" y="624" text-anchor="middle">governed /score → calibrated</text>
-<text class="ts" x="415" y="642" text-anchor="middle">risk signal (energy · QoS)</text>
-</g>
-<g class="c-amber">
-<rect x="560" y="580" width="230" height="100" rx="8"/>
-<text class="th" x="675" y="600" text-anchor="middle">co-decide · arbiter</text>
-<text class="ts" x="675" y="620" text-anchor="middle">quant gate + GenAI judge</text>
-<text class="ts" x="675" y="638" text-anchor="middle">+ hard QoS rail (non-negotiable)</text>
-<text class="ts" x="675" y="656" text-anchor="middle">every override audited</text>
+<rect x="625" y="320" width="260" height="56" rx="8"/>
+<text class="th" x="755" y="344" text-anchor="middle">Kuadrant /score gateway</text>
+<text class="ts" x="755" y="362" text-anchor="middle">AuthPolicy (optimizer + judge) · rate cap</text>
 </g>
 
-<!-- vLLM -->
+<!-- CENTER: the agent -->
+<g class="c-agent">
+<rect x="545" y="430" width="420" height="180" rx="12"/>
+<text class="agent-t" x="755" y="470" text-anchor="middle">Energy-optimizer agent</text>
+<text class="ts" x="755" y="494" text-anchor="middle">OGX loop · CPU-only · UBI9 · restricted PSS</text>
+<text class="agent-flow" x="755" y="536" text-anchor="middle">propose → simulate → score → co-decide → emit</text>
+<text class="ts" x="755" y="566" text-anchor="middle">simulate-before-act · the only output is a</text>
+<text class="ts" x="755" y="584" text-anchor="middle">change-plan artifact, never a network change</text>
+</g>
+
+<!-- Right: co-decision partner + reasoning -->
+<g class="c-teal">
+<rect x="1010" y="430" width="270" height="135" rx="8"/>
+<text class="th" x="1145" y="458" text-anchor="middle">GenAI Judge (OGX · A2A)</text>
+<text class="ts" x="1145" y="482" text-anchor="middle">the QUAL half · grounds on the</text>
+<text class="ts" x="1145" y="500" text-anchor="middle">SAME governed /score, then a</text>
+<text class="ts" x="1145" y="518" text-anchor="middle">verdict: accept / revise / reject ·</text>
+<text class="ts" x="1145" y="536" text-anchor="middle">arbiter adds one hard QoS rail</text>
+</g>
 <g class="c-green">
-<rect x="850" y="440" width="280" height="150" rx="8"/>
-<text class="th" x="990" y="470" text-anchor="middle">vLLM on RHOAI (KServe)</text>
-<text class="ts" x="990" y="494" text-anchor="middle">reasoning for propose / revise</text>
-<text class="ts" x="990" y="514" text-anchor="middle">OpenAI-compatible /v1 ·</text>
-<text class="ts" x="990" y="532" text-anchor="middle">stateless, swappable</text>
+<rect x="1010" y="600" width="270" height="130" rx="8"/>
+<text class="th" x="1145" y="628" text-anchor="middle">vLLM on RHOAI (KServe)</text>
+<text class="ts" x="1145" y="652" text-anchor="middle">Kimi-Linear-48B-A3B</text>
+<text class="ts" x="1145" y="670" text-anchor="middle">reasoning for propose / revise</text>
+<text class="ts" x="1145" y="688" text-anchor="middle">OpenAI-compatible /v1 ·</text>
+<text class="ts" x="1145" y="706" text-anchor="middle">stateless, swappable</text>
 </g>
 
-<!-- GenAI Judge -->
-<g class="c-teal">
-<rect x="850" y="610" width="280" height="110" rx="8"/>
-<text class="th" x="990" y="636" text-anchor="middle">GenAI Judge (OGX · A2A)</text>
-<text class="ts" x="990" y="660" text-anchor="middle">grounds on the SAME governed</text>
-<text class="ts" x="990" y="678" text-anchor="middle">/score, then renders a verdict:</text>
-<text class="ts" x="990" y="696" text-anchor="middle">accept · revise · reject</text>
-</g>
+<!-- Spokes from the agent (numbered) -->
+<!-- 1 dispatch to sim Job -->
+<polyline class="arrow-h" points="600,430 600,300 500,300 500,287" marker-end="url(#ah)"/>
+<text class="tl" x="612" y="322" text-anchor="middle">①</text>
+<!-- 2 score via gateway to scorer -->
+<polyline class="arrow-h" points="735,430 735,378" marker-end="url(#ah)"/>
+<text class="tl" x="720" y="404" text-anchor="middle">②</text>
+<line class="arrow" x1="755" y1="320" x2="755" y2="287" marker-end="url(#a)"/>
+<!-- 3 audit + eval to MLflow -->
+<polyline class="arrow-h" points="945,435 945,300 1015,300 1015,287" marker-end="url(#ah)"/>
+<text class="tl" x="962" y="322" text-anchor="middle">③</text>
+<!-- 4 co-decide with judge -->
+<line class="arrow-h" x1="965" y1="480" x2="1006" y2="480" marker-end="url(#ah)"/>
+<text class="tl" x="988" y="472" text-anchor="middle">④</text>
+<!-- judge grounds on the same governed score -->
+<polyline class="arrow dashed" points="1075,430 1075,348 889,348" marker-end="url(#a)"/>
+<text class="tl" x="965" y="342" text-anchor="middle">grounds</text>
+<!-- 5 reason via vLLM -->
+<polyline class="arrow-h" points="965,575 988,575 988,650 1006,650" marker-end="url(#ah)"/>
+<text class="tl" x="978" y="595" text-anchor="middle">⑤</text>
+<!-- 6 emit change-plan out to RAN ops -->
+<polyline class="arrow-h" points="545,500 300,500 258,478" marker-end="url(#ah)"/>
+<text class="tl" x="405" y="492" text-anchor="middle">⑥ emit change-plan</text>
+<!-- package models in -->
+<line class="arrow" x1="255" y1="150" x2="326" y2="180" marker-end="url(#a)"/>
+<text class="tl" x="292" y="146" text-anchor="middle">package</text>
+<!-- alt LLM path -->
+<polyline class="arrow dashed" points="145,700 145,548 541,548" marker-end="url(#a)"/>
+<text class="tl" x="330" y="542" text-anchor="middle">alt LLM path · same OpenAI contract</text>
 
-<!-- Arrows -->
-<line class="arrow" x1="205" y1="150" x2="274" y2="150" marker-end="url(#a)"/>
-<text class="tl" x="240" y="140" text-anchor="middle">①</text>
-<text class="tl" x="240" y="176" text-anchor="middle">package</text>
-
-<polyline class="arrow" points="415,440 415,372 990,372 990,436" marker-end="url(#a)"/>
-<text class="tl" x="852" y="366" text-anchor="middle">② reason · revise loop</text>
-
-<polyline class="arrow" points="675,440 675,388 405,388 405,336" marker-end="url(#a)"/>
-<text class="tl" x="540" y="382" text-anchor="middle">③ submit · poll (pattern 3)</text>
-
-<polyline class="arrow" points="530,614 545,614 545,368 690,368 690,336" marker-end="url(#a)"/>
-<text class="tl" x="614" y="362" text-anchor="middle">④ score the plan</text>
-
-<polyline class="arrow" points="790,630 830,630 830,354 925,354 925,336" marker-end="url(#a)"/>
-<text class="tl" x="884" y="348" text-anchor="middle">⑤ evidence trail</text>
-
-<polyline class="arrow" points="620,680 620,712 240,712 240,384 209,384" marker-end="url(#a)"/>
-<text class="tl" x="430" y="706" text-anchor="middle">⑥ change-plan artifact (simulation + score attached)</text>
-
-<line class="arrow" x1="530" y1="490" x2="556" y2="490" marker-end="url(#a)"/>
-<text class="tl" x="543" y="481" text-anchor="middle">then</text>
-<polyline class="arrow" points="330,540 330,576" marker-end="url(#a)"/>
-<line class="arrow" x1="530" y1="648" x2="556" y2="648" marker-end="url(#a)"/>
-<polyline class="arrow dashed" points="675,580 675,552 340,552 340,544" marker-end="url(#a)"/>
-<text class="tl" x="508" y="547" text-anchor="middle">revise</text>
-
-<polyline class="arrow dashed" points="675,700 675,745 117,745 117,674" marker-end="url(#a)"/>
-<text class="tl" x="400" y="738" text-anchor="middle">alt LLM path · same OpenAI-compatible contract</text>
-
-<line class="arrow" x1="848" y1="655" x2="792" y2="650" marker-end="url(#a)"/>
-<text class="tl" x="820" y="642" text-anchor="middle">verdict</text>
-<polyline class="arrow dashed" points="848,692 833,692 833,358 745,358 745,332" marker-end="url(#a)"/>
-<text class="tl" x="742" y="350" text-anchor="middle">grounds</text>
-
-<text class="ts" x="590" y="778" text-anchor="middle">STATUS: LIVE ON ROME · propose → simulate (Job) → score (governed, quant) → GenAI judge (A2A, qual) → arbiter co-decides (hard QoS rail, overrides audited) → emit</text>
+<!-- Legend -->
+<text class="tl" x="660" y="812" text-anchor="middle">Tabs: red POD = a Pod you ship (a workload) · blue = the RHOAI platform feature/service · left column = external</text>
+<text class="ts" x="660" y="836" text-anchor="middle">① dispatch sim (Job) · ② score (governed, quant) · ③ audit + GenAI eval · ④ co-decide with the judge (qual) · ⑤ reason · ⑥ emit</text>
+<!-- type tabs: POD = a workload you ship · RHOAI = a platform feature/service -->
+<g class="tab-rhoai"><rect x="348" y="90" width="90" height="20" rx="6"/><text x="393" y="104" text-anchor="middle">RHOAI · Kueue</text></g>
+<g class="tab-rhoai"><rect x="638" y="90" width="94" height="20" rx="6"/><text x="685" y="104" text-anchor="middle">RHOAI · KServe</text></g>
+<g class="tab-rhoai"><rect x="943" y="90" width="94" height="20" rx="6"/><text x="990" y="104" text-anchor="middle">RHOAI · MLflow</text></g>
+<g class="tab-rhoai"><rect x="643" y="310" width="102" height="20" rx="6"/><text x="694" y="324" text-anchor="middle">RHOAI · Kuadrant</text></g>
+<g class="tab-rhoai"><rect x="1028" y="590" width="94" height="20" rx="6"/><text x="1075" y="604" text-anchor="middle">RHOAI · KServe</text></g>
+<g class="tab-pod"><rect x="560" y="418" width="64" height="23" rx="6"/><text x="592" y="434" text-anchor="middle">POD</text></g>
+<g class="tab-pod"><rect x="1024" y="418" width="64" height="23" rx="6"/><text x="1056" y="434" text-anchor="middle">POD</text></g>
+<g class="tab-rhoai"><rect x="1028" y="555" width="152" height="20" rx="6"/><text x="1104" y="569" text-anchor="middle">RHOAI · Model Serving</text></g>
 </svg>

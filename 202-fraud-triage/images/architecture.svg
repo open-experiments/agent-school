@@ -1,10 +1,9 @@
-<svg viewBox="0 0 1180 790" width="1180" height="790" xmlns="http://www.w3.org/2000/svg">
-<style>
+<svg viewBox="0 0 1320 900" width="1320" height="900" xmlns="http://www.w3.org/2000/svg"><style>
 text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .th { font-size: 14px; font-weight: 600; fill: #2a2a2a; }
 .ts { font-size: 12px; font-weight: 400; fill: #5f5f5f; }
 .tz { font-size: 13px; font-weight: 600; fill: #6b6b6b; letter-spacing: .4px; }
-.tl { font-size: 11.5px; font-weight: 500; fill: #6b6b6b; }
+.tl { font-size: 11.5px; font-weight: 600; fill: #6b6b6b; }
 .c-blue rect { fill: #E6F1FB; stroke: #185FA5; stroke-width: 1.25; }
 .c-blue .th { fill: #0C447C; } .c-blue .ts { fill: #185FA5; }
 .c-teal rect { fill: #E0F4F2; stroke: #0E7569; stroke-width: 1.25; }
@@ -15,165 +14,14 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 .c-green .th { fill: #114D1F; } .c-green .ts { fill: #1F7A33; }
 .c-gray rect { fill: #F2F2F1; stroke: #8a8a8a; stroke-width: 1.25; }
 .c-gray .th { fill: #3A3A3A; } .c-gray .ts { fill: #6B6B6B; }
-.arrow { stroke: #8a8a8a; stroke-width: 1.5; fill: none; }
+.c-agent rect { fill: #FDF1F1; stroke: #C0392B; stroke-width: 2.5; }
+.agent-t { font-size: 21px; font-weight: 800; fill: #7A1C12; }
+.agent-flow { font-size: 15px; font-weight: 700; fill: #7A1C12; }
+.arrow { stroke: #8a8a8a; stroke-width: 1.6; fill: none; }
+.arrow-h { stroke: #C0392B; stroke-width: 1.8; fill: none; }
 .dashed { stroke-dasharray: 5 4; }
-</style>
-<defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker></defs>
-<rect width="1180" height="790" fill="#ffffff"/>
-
-<!-- Zone: External -->
-<rect x="15" y="30" width="210" height="690" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
-<text class="tz" x="30" y="56">EXTERNAL</text>
-
-<g class="c-gray">
-<rect x="30" y="100" width="175" height="120" rx="8"/>
-<text class="th" x="117" y="130" text-anchor="middle">Published dataset</text>
-<text class="ts" x="117" y="152" text-anchor="middle">hf.co/datasets/fenar</text>
-<text class="ts" x="117" y="170" text-anchor="middle">(revenue_assurance:</text>
-<text class="ts" x="117" y="188" text-anchor="middle">telecom billing records)</text>
-</g>
-
-<g class="c-amber">
-<rect x="30" y="260" width="175" height="120" rx="8"/>
-<text class="th" x="117" y="290" text-anchor="middle">Human approver</text>
-<text class="ts" x="117" y="312" text-anchor="middle">the gate the graph</text>
-<text class="ts" x="117" y="330" text-anchor="middle">waits on — escalations</text>
-<text class="ts" x="117" y="348" text-anchor="middle">never complete alone</text>
-</g>
-
-<g class="c-green">
-<rect x="30" y="560" width="175" height="110" rx="8"/>
-<text class="th" x="117" y="590" text-anchor="middle">RHOAI MaaS</text>
-<text class="ts" x="117" y="612" text-anchor="middle">LiteLLM gateway ·</text>
-<text class="ts" x="117" y="630" text-anchor="middle">any OpenAI-compatible</text>
-<text class="ts" x="117" y="648" text-anchor="middle">endpoint</text>
-</g>
-
-<!-- Zone: Cluster -->
-<rect x="250" y="30" width="910" height="690" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/>
-<text class="tz" x="266" y="56">OPENSHIFT SNO "ROME" · RED HAT OPENSHIFT AI 3.5</text>
-
-<!-- Fraud-model pipeline -->
-<g class="c-amber">
-<rect x="280" y="90" width="250" height="240" rx="8"/>
-<text class="th" x="405" y="118" text-anchor="middle">Fraud-model pipeline (Jobs)</text>
-<text class="ts" x="405" y="146" text-anchor="middle">Feast: billing features</text>
-<text class="ts" x="405" y="164" text-anchor="middle">(offline + online)</text>
-<text class="ts" x="405" y="190" text-anchor="middle">train Balanced Random Forest</text>
-<text class="ts" x="405" y="208" text-anchor="middle">validate · register version</text>
-<text class="ts" x="405" y="236" text-anchor="middle">the same pipeline pattern</text>
-<text class="ts" x="405" y="254" text-anchor="middle">101 proved live on Rome —</text>
-<text class="ts" x="405" y="272" text-anchor="middle">here applied to the</text>
-<text class="ts" x="405" y="290" text-anchor="middle">revenueassurance models</text>
-</g>
-
-<!-- KServe fraud model -->
-<g class="c-green">
-<rect x="560" y="90" width="260" height="240" rx="8"/>
-<text class="th" x="690" y="118" text-anchor="middle">Fraud model on KServe</text>
-<text class="ts" x="690" y="146" text-anchor="middle">revenueassurance BRF /</text>
-<text class="ts" x="690" y="164" text-anchor="middle">Transformer</text>
-<text class="ts" x="690" y="192" text-anchor="middle">pattern 2: served behind REST,</text>
-<text class="ts" x="690" y="210" text-anchor="middle">never embedded in the agent</text>
-<text class="ts" x="690" y="238" text-anchor="middle">the score is an input to</text>
-<text class="ts" x="690" y="256" text-anchor="middle">reasoning — never the decision</text>
-<text class="ts" x="690" y="274" text-anchor="middle">on high-risk paths</text>
-</g>
-
-<!-- MLflow -->
-<g class="c-blue">
-<rect x="850" y="90" width="280" height="240" rx="8"/>
-<text class="th" x="990" y="118" text-anchor="middle">MLflow · workspace agent-school</text>
-<text class="ts" x="990" y="146" text-anchor="middle">Experiments: fraud-training runs</text>
-<text class="ts" x="990" y="170" text-anchor="middle">Registry: fraud-model versions</text>
-<text class="ts" x="990" y="194" text-anchor="middle">(graduate to serving)</text>
-<text class="ts" x="990" y="222" text-anchor="middle">Traces: graph-node spans +</text>
-<text class="ts" x="990" y="240" text-anchor="middle">audit trail per case</text>
-<text class="ts" x="990" y="268" text-anchor="middle">Develop &amp; train →</text>
-<text class="ts" x="990" y="286" text-anchor="middle">Experiments · Feature store</text>
-</g>
-
-<!-- Agent pod -->
-<g class="c-gray">
-<rect x="280" y="400" width="530" height="300" rx="8"/>
-<text class="th" x="296" y="426">Fraud-triage agent pod — LangGraph state machine (CPU-only)</text>
-</g>
-<g class="c-teal">
-<rect x="300" y="440" width="150" height="100" rx="8"/>
-<text class="th" x="375" y="470" text-anchor="middle">score</text>
-<text class="ts" x="375" y="492" text-anchor="middle">fraud model</text>
-<text class="ts" x="375" y="510" text-anchor="middle">as a tool</text>
-</g>
-<g class="c-teal">
-<rect x="470" y="440" width="150" height="100" rx="8"/>
-<text class="th" x="545" y="470" text-anchor="middle">context</text>
-<text class="ts" x="545" y="492" text-anchor="middle">billing records</text>
-<text class="ts" x="545" y="510" text-anchor="middle">ground the case</text>
-</g>
-<g class="c-teal">
-<rect x="640" y="440" width="150" height="100" rx="8"/>
-<text class="th" x="715" y="470" text-anchor="middle">decide</text>
-<text class="ts" x="715" y="492" text-anchor="middle">clear · hold ·</text>
-<text class="ts" x="715" y="510" text-anchor="middle">escalate</text>
-</g>
-<g class="c-amber">
-<rect x="300" y="580" width="230" height="100" rx="8"/>
-<text class="th" x="415" y="606" text-anchor="middle">approval gate</text>
-<text class="ts" x="415" y="628" text-anchor="middle">interrupt() · checkpoint ·</text>
-<text class="ts" x="415" y="646" text-anchor="middle">resume only on human approval</text>
-</g>
-<g class="c-gray">
-<rect x="560" y="580" width="230" height="100" rx="8"/>
-<text class="th" x="675" y="606" text-anchor="middle">audit writer</text>
-<text class="ts" x="675" y="628" text-anchor="middle">score · context · decision ·</text>
-<text class="ts" x="675" y="646" text-anchor="middle">approver — externalized</text>
-</g>
-
-<!-- vLLM -->
-<g class="c-green">
-<rect x="850" y="440" width="280" height="150" rx="8"/>
-<text class="th" x="990" y="470" text-anchor="middle">vLLM on RHOAI (KServe)</text>
-<text class="ts" x="990" y="494" text-anchor="middle">reasoning for the decide node</text>
-<text class="ts" x="990" y="514" text-anchor="middle">OpenAI-compatible /v1 ·</text>
-<text class="ts" x="990" y="532" text-anchor="middle">stateless, swappable</text>
-</g>
-
-<!-- Arrows -->
-<line class="arrow" x1="205" y1="150" x2="274" y2="150" marker-end="url(#a)"/>
-<text class="tl" x="240" y="140" text-anchor="middle">①</text>
-
-<polyline class="arrow" points="405,90 405,70 990,70 990,86" marker-end="url(#a)"/>
-<text class="tl" x="700" y="64" text-anchor="middle">② runs · registered fraud-model versions</text>
-
-<line class="arrow" x1="530" y1="150" x2="554" y2="150" marker-end="url(#a)"/>
-<text class="tl" x="545" y="140" text-anchor="middle">③</text>
-
-<polyline class="arrow" points="375,440 375,380 620,380 620,336" marker-end="url(#a)"/>
-<text class="tl" x="498" y="374" text-anchor="middle">④ /predict</text>
-
-<polyline class="arrow" points="545,440 545,368 455,368 455,336" marker-end="url(#a)"/>
-<text class="tl" x="548" y="362" text-anchor="middle">⑤ billing features (Feast online)</text>
-
-<line class="arrow" x1="790" y1="490" x2="844" y2="490" marker-end="url(#a)"/>
-<text class="tl" x="818" y="480" text-anchor="middle">⑥</text>
-
-<polyline class="arrow" points="300,630 240,630 240,320 209,320" marker-end="url(#a)"/>
-<text class="tl" x="243" y="420" text-anchor="middle">⑦</text>
-<text class="tl" x="243" y="436" text-anchor="middle">approve</text>
-<text class="tl" x="243" y="452" text-anchor="middle">/ reject</text>
-
-<polyline class="arrow" points="790,630 830,630 830,362 925,362 925,336" marker-end="url(#a)"/>
-<text class="tl" x="880" y="380" text-anchor="middle">⑧ audit + traces</text>
-
-<line class="arrow" x1="450" y1="490" x2="466" y2="490" marker-end="url(#a)"/>
-<line class="arrow" x1="620" y1="490" x2="636" y2="490" marker-end="url(#a)"/>
-<polyline class="arrow" points="700,540 700,576" marker-end="url(#a)"/>
-<text class="tl" x="745" y="562" text-anchor="middle">clear · hold</text>
-<polyline class="arrow" points="660,540 660,558 430,558 430,576" marker-end="url(#a)"/>
-<text class="tl" x="530" y="552" text-anchor="middle">escalate</text>
-
-<polyline class="arrow dashed" points="675,700 675,745 117,745 117,674" marker-end="url(#a)"/>
-<text class="tl" x="400" y="738" text-anchor="middle">alt LLM path — same OpenAI-compatible contract</text>
-
-<text class="ts" x="590" y="778" text-anchor="middle">STATUS: PLANNED — mapped to the pattern 101/201 proved on Rome · ① dataset → pipeline · ②③ train → register → serve · ④⑤⑥ score · ground · reason · ⑦ human gate · ⑧ audit</text>
-</svg>
+.tab-rhoai rect { fill:#EAF2FB; stroke:#185FA5; stroke-width:1; }
+.tab-rhoai text { fill:#0C447C; font-size:11px; font-weight:700; }
+.tab-pod rect { fill:#C0392B; }
+.tab-pod text { fill:#ffffff; font-size:12px; font-weight:800; letter-spacing:.5px; }
+</style><defs><marker id="a" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#8a8a8a"/></marker><marker id="ah" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#C0392B"/></marker></defs><rect width="1320" height="900" fill="#ffffff"/><rect x="20" y="44" width="250" height="812" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/><text class="tz" x="36" y="70">EXTERNAL</text><rect x="300" y="44" width="995" height="812" rx="10" fill="none" stroke="#8a8a8a" stroke-dasharray="4 4"/><text class="tz" x="316" y="70">OPENSHIFT SNO "ROME" · RED HAT OPENSHIFT AI 3.5</text><g class="c-gray"><rect x="35" y="100" width="220" height="120" rx="8"/><text class="th" x="145" y="128" text-anchor="middle">Published dataset</text><text class="ts" x="145" y="154" text-anchor="middle">hf.co/datasets/fenar</text><text class="ts" x="145" y="172" text-anchor="middle">revenue_assurance billing</text></g><g class="c-amber"><rect x="35" y="395" width="220" height="130" rx="8"/><text class="th" x="145" y="423" text-anchor="middle">Human approver</text><text class="ts" x="145" y="449" text-anchor="middle">the gate the graph waits</text><text class="ts" x="145" y="467" text-anchor="middle">on · escalations never</text><text class="ts" x="145" y="485" text-anchor="middle">complete alone</text></g><g class="c-green"><rect x="35" y="705" width="220" height="110" rx="8"/><text class="th" x="145" y="733" text-anchor="middle">RHOAI MaaS</text><text class="ts" x="145" y="759" text-anchor="middle">LiteLLM gateway ·</text><text class="ts" x="145" y="777" text-anchor="middle">any OpenAI endpoint</text></g><g class="c-amber"><rect x="325" y="100" width="235" height="185" rx="8"/><text class="th" x="442" y="128" text-anchor="middle">Fraud-model pipeline</text><text class="ts" x="442" y="154" text-anchor="middle">DS Pipelines · Feast billing</text><text class="ts" x="442" y="172" text-anchor="middle">features (offline + online)</text><text class="ts" x="442" y="190" text-anchor="middle">train Balanced Random Forest</text><text class="ts" x="442" y="208" text-anchor="middle">validate · register version</text></g><g class="tab-rhoai"><rect x="343" y="90" width="126" height="20" rx="6"/><text x="406" y="104" text-anchor="middle">RHOAI · Pipelines</text></g><g class="c-green"><rect x="585" y="100" width="235" height="185" rx="8"/><text class="th" x="702" y="128" text-anchor="middle">Fraud model · KServe</text><text class="ts" x="702" y="154" text-anchor="middle">revenueassurance BRF</text><text class="ts" x="702" y="172" text-anchor="middle">served behind REST,</text><text class="ts" x="702" y="190" text-anchor="middle">never embedded in the agent</text><text class="ts" x="702" y="208" text-anchor="middle">the score is an INPUT to</text><text class="ts" x="702" y="226" text-anchor="middle">reasoning, not the decision</text></g><g class="tab-rhoai"><rect x="603" y="90" width="107" height="20" rx="6"/><text x="656" y="104" text-anchor="middle">RHOAI · KServe</text></g><g class="c-blue"><rect x="845" y="100" width="190" height="185" rx="8"/><text class="th" x="940" y="128" text-anchor="middle">Feast</text><text class="ts" x="940" y="154" text-anchor="middle">billing features</text><text class="ts" x="940" y="172" text-anchor="middle">online + offline</text><text class="ts" x="940" y="190" text-anchor="middle">grounds each case</text></g><g class="tab-rhoai"><rect x="863" y="90" width="152" height="20" rx="6"/><text x="939" y="104" text-anchor="middle">RHOAI · Feature Store</text></g><g class="c-blue"><rect x="1055" y="100" width="220" height="185" rx="8"/><text class="th" x="1165" y="128" text-anchor="middle">MLflow</text><text class="ts" x="1165" y="154" text-anchor="middle">workspace agent-school</text><text class="ts" x="1165" y="172" text-anchor="middle">fraud-training runs ·</text><text class="ts" x="1165" y="190" text-anchor="middle">registry · graph-node</text><text class="ts" x="1165" y="208" text-anchor="middle">spans + audit per case</text></g><g class="tab-rhoai"><rect x="1073" y="90" width="107" height="20" rx="6"/><text x="1126" y="104" text-anchor="middle">RHOAI · MLflow</text></g><g class="c-agent"><rect x="560" y="400" width="410" height="205" rx="12"/><text class="agent-t" x="765" y="442" text-anchor="middle">Fraud-triage agent</text><text class="ts" x="765" y="466" text-anchor="middle">LangGraph state machine · CPU-only · UBI9 · restricted PSS</text><text class="agent-flow" x="765" y="502" text-anchor="middle">score → context → decide</text><text class="ts" x="765" y="530" text-anchor="middle">clear · hold · escalate · approval gate (interrupt + checkpoint,</text><text class="ts" x="765" y="548" text-anchor="middle">resume only on human approval) · audit writer externalizes each case</text></g><g class="tab-pod"><rect x="576" y="389" width="64" height="23" rx="6"/><text x="608" y="405" text-anchor="middle">POD</text></g><g class="c-green"><rect x="1010" y="415" width="270" height="150" rx="8"/><text class="th" x="1145" y="443" text-anchor="middle">vLLM on RHOAI (KServe)</text><text class="ts" x="1145" y="469" text-anchor="middle">reasoning for the decide node</text><text class="ts" x="1145" y="487" text-anchor="middle">OpenAI-compatible /v1 ·</text><text class="ts" x="1145" y="505" text-anchor="middle">stateless, swappable</text></g><g class="tab-rhoai"><rect x="1028" y="405" width="107" height="20" rx="6"/><text x="1081" y="419" text-anchor="middle">RHOAI · KServe</text></g><polyline class="arrow-h" points="680,400 680,287" marker-end="url(#ah)"/><text class="tl" x="666" y="360" text-anchor="middle">①</text><polyline class="arrow-h" points="900,400 900,287" marker-end="url(#ah)"/><text class="tl" x="886" y="360" text-anchor="middle">②</text><polyline class="arrow-h" points="970,470 1006,470" marker-end="url(#ah)"/><text class="tl" x="988" y="462" text-anchor="middle">③</text><polyline class="arrow-h" points="950,400 950,360 1150,360 1150,287" marker-end="url(#ah)"/><text class="tl" x="978" y="350" text-anchor="middle">④</text><polyline class="arrow-h" points="560,500 258,500" marker-end="url(#ah)"/><text class="tl" x="410" y="492" text-anchor="middle">⑤ escalate</text><polyline class="arrow" points="255,150 321,170" marker-end="url(#a)"/><text class="tl" x="290" y="146" text-anchor="middle">pull</text><polyline class="arrow" points="585,175 562,175" marker-end="url(#a)"/><text class="tl" x="560" y="150" text-anchor="middle">register → serve</text><polyline class="arrow" points="845,190 823,190" marker-end="url(#a)"/><text class="tl" x="832" y="182" text-anchor="middle">features</text><polyline class="arrow dashed" points="145,705 145,548 556,548" marker-end="url(#a)"/><text class="tl" x="350" y="542" text-anchor="middle">alt LLM path · same OpenAI contract</text><text class="tl" x="660" y="812" text-anchor="middle">Tabs: red POD = a Pod you ship (a workload) · blue = the RHOAI platform feature/service · left column = external</text><text class="ts" x="660" y="835" text-anchor="middle">① score · fraud model as a tool · ② context · Feast billing features · ③ decide · reason via vLLM · ④ audit → MLflow · ⑤ escalate → human approval gate</text><text class="ts" x="660" y="876" text-anchor="middle">Fraud Triage architecture</text></svg>
