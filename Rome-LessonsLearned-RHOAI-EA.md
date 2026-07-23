@@ -233,6 +233,20 @@ Pre-GA and fast-moving SDKs required exact pins to keep the agent harnesses stab
 
 ---
 
+## EA-14 — Bootstrapping a calibrated model with a *computed* proxy target (no live labels), honestly
+
+**Context.** 301's quant+qual co-decision needs a calibrated *quantitative* signal for remediation risk, but Rome has no live 5G core, so there are no real remediation-outcome labels ("did restarting the SMF during this incident cause instability?"). The rule was: no invented labels, no facade.
+
+**What worked.** Train the model (`netops-remediation-risk`, GradientBoosting) on the **real** 5gprod per-minute KPI series, with a target that is a **documented deterministic function of quantities that are actually measured** — `risk = sigmoid(Z0 + Wb·base_disruptiveness + Wl·util·base + Ws·severity + Wbs·base·severity)`, where `base_disruptiveness` is the intrinsic churn each real playbook causes (scale_amf < rebalance_upf < rollback < restart_smf), `util` is the NF's measured cpu/mem/buffer load, and `severity` is deviation from the NF's healthy baseline grounded by the labelled alert windows. This is a distilled operational heuristic learned into a **served, versioned, governed** model — the value is the full lifecycle (MLflow → registry → KServe → Kuadrant `/plan-score` → observability) and a drop-in slot for real outcome labels later; the computed target is the replaceable bootstrap. Result on the real data: **r² ≈ 0.97, MAE ≈ 0.02 over 8,646 rows**, and it discriminates correctly (restart on a saturated/degraded SMF ≈ 0.8 high; scale on an idle/healthy AMF ≈ 0.2 low).
+
+**Calibration finding.** The first target was **multiplicative-then-clip** (`base·(1+Wl·util·base)·(1+Ws·sev)`, clip 0–1). It **saturated at 1.0** for the high-disruptiveness actions — restart and rollback returned 1.0 across almost all incident severities, so the model had no resolution to learn and the quant gate lost discrimination at the dangerous end. Switching to a **bounded logistic** combination (same real inputs) spread risk across the full range and restored resolution (restart severe 0.82 vs quiet 0.75; scale stays ~0.2; rebalance/rollback land in the medium band where the judge's nuance matters). Lesson: when distilling a heuristic into a learnable target, use a bounded (logistic) form, not multiply-and-clip — clipping destroys the gradient the model needs and collapses the top of your scale.
+
+## EA-15 — The one hard rail is course-specific: 302 fails to *reject*, 301 fails to *human-approval*
+
+**Context.** Both 302 and 301 use the "full co-decider judge + exactly one non-negotiable rail" arbiter (EA-12). But the *safe state* the rail forces is not the same, and copying 302's rail verbatim into 301 would be wrong.
+
+302 has no human in the loop, so its safe state is **reject**: a simulated QoS drop above the hard floor is rejected no matter what. 301 already has a human approval gate (`approval_required`, enforced in Execution's code), and rejecting a high-risk remediation outright can *strand a real incident* that genuinely needs a disruptive fix (you sometimes must restart the SMF). So 301's rail forces **human approval**, not rejection: a step whose calibrated risk breaches `HARD_RISK_FLOOR` (0.85) sets `approval_required=true` regardless of the judge — the co-decision may never mark a very-high-risk plan as *autonomously* actuatable, but it also never silently discards it. Verified offline across the truth table: consensus accept → autonomous; judge override in both directions → honoured with an audited override; hard rail → approval forced even when the judge accepts. Lesson: the arbiter *structure* (full co-decider + one rail + audited overrides) ports across courses; the rail's *forced state* must match what "safe" means for that loop — reject where there is no human fallback, escalate-to-human where there is.
+
 ## Quick reference — Rome platform facts
 
 - Kuadrant CRDs are all `kuadrant.io/v1` (AuthPolicy, RateLimitPolicy); the `Kuadrant` CR is `kuadrant.io/v1beta1` and exposes `spec.mtls` / `spec.components` / `spec.observability`.

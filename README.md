@@ -63,23 +63,31 @@ Every course folder follows the same shape, so once you have read 101 you can na
 
 ```
 agent-school/
-├── 101-noc-assistant/        # working: agent + MCP tools + real 5gprod data + runbooks
-│   ├── agent/                #   the teaching harness (readable tool-calling loop)
-│   ├── tools/                #   skills: in-process lib + stdio MCP servers
+├── 101-noc-assistant/        # single-agent NOC assistant · real 5gprod data · runbooks
+│   ├── agent/  tools/        #   teaching harness (readable loop) + MCP skill servers
 │   ├── data/  runbooks/      #   real Telco-AIX dataset and matching runbooks
+│   ├── feature_repo/ training/  #   Feast features + IsolationForest training
 │   ├── harness-tracks/       #   same skills under product harnesses (OpenClaw)
-│   ├── deploy/               #   Containerfile + OpenShift manifests (Job/CronJob)
-│   ├── QA/                   #   evidence pack: logs + wire traces
-│   └── images/               #   architecture drawing
-├── 201-rca-investigator/     # working: two-phase RCA agent + RAG service backend
-│   ├── agent/  tools/        #   as above
-│   ├── backend/              #   pattern-2 skill backend (FastAPI RAG service)
-│   ├── deploy/  QA/  images/ #   as above (Deployment+Service for the backend)
-│   └── reports/              #   cited RCA artifacts from QA runs
-├── 202-fraud-triage/         # in progress: pipeline/ + deploy/ live on Rome, agent next
-├── 301-closed-loop-netops/   # planned: solution README + architecture
-├── 302-energy-optimizer/     # planned: solution README + architecture
-└── shared/                   # endpoint options, OCP secret template
+│   └── deploy/  QA/  images/ #   OpenShift manifests · evidence pack · arch + video
+├── 201-rca-investigator/     # two-phase RCA agent + RAG backend + LLM-judge grounding
+│   ├── agent/  tools/  backend/  #   harness · skills · pattern-2 RAG service
+│   └── eval/  deploy/  QA/  reports/  images/
+├── 202-fraud-triage/         # fraud model (DS Pipelines → KServe) as an agent tool
+│   ├── pipeline/  serving/   #   training pipeline + KServe serving
+│   └── deploy/  QA/  images/
+├── 301-closed-loop-netops/   # Diagnostic→Planning→Execution→Validation loop (flagship)
+│   ├── agents/               #   diagnostic·planning·execution·validation·judge
+│   │                         #     ·scorer-mcp·thinktank·mcp-playbook
+│   ├── training/  serving/   #   netops-remediation-risk (quant+qual co-decision)
+│   └── deploy/  QA/  images/ #   Kuadrant-governed gateway · arch + video
+├── 302-energy-optimizer/     # RAN cell-sleep · simulate-before-act · quant+qual co-decision
+│   ├── agent/  sim/          #   optimizer·scorer-mcp·judge · JAX simulation
+│   ├── training/ serving/ eval/  #   scorer · KServe · MLflow GenAI eval suite
+│   └── deploy/  QA/  images/
+├── video/                    # walkthrough-video pipeline (produce.py + per-course specs)
+├── docs/                     # GitHub Pages landing page (index.html)
+├── shared/                   # endpoint options · OCP secret template · manifests · logo
+└── Rome-LessonsLearned-RHOAI-EA.md   # live EA findings from building on RHOAI 3.5 EA
 ```
 
 ## Deploy on OpenShift

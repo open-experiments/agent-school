@@ -1,0 +1,71 @@
+# One-shot: train + register the remediation-risk scorer — 301's own
+# classic-ML track, the quantitative half of the Planning quant+qual
+# co-decision. Registers `netops-remediation-risk` v1 in the workspace
+# MLflow. See ../../../training/train_remediation_risk.py.
+#
+# The training substrate is 101's real 5gprod per-minute KPI series
+# (amf/smf/upf) + the labelled alert windows. It is mounted as a gzipped
+# ConfigMap rather than pulled from a URL: the four files total ~860 KB
+# of text (over the 1 MB ConfigMap ceiling once base64-inflated), but
+# gzip them to ~380 KB and the whole real dataset ships in one ConfigMap.
+#
+# Prereq ConfigMaps:
+#   oc create configmap remediation-train-src -n agent-school \
+#     --from-file=train.py=../../../training/train_remediation_risk.py
+#   tar -czf /tmp/remdata.tgz -C ../../../../101-noc-assistant/data \
+#     amf_metrics.csv smf_metrics.csv upf_metrics.csv alerts.json
+#   oc create configmap remediation-train-data -n agent-school \
+#     --from-file=data.tgz=/tmp/remdata.tgz
+#
+# (mlflow-tracking ConfigMap — MLFLOW_TRACKING_URI/_WORKSPACE — is the
+# same one 101 created; every Rome workload uses it.)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: train-remediation-risk
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 1200
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: remediation-train-src}
+        - name: data
+          configMap:
+            name: remediation-train-data
+        - name: work
+          emptyDir: {}
+      containers:
+        - name: train
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - {name: REMEDIATION_DATA_DIR, value: /work/data}
+            - {name: MLFLOW_EXPERIMENT, value: 301-closed-loop}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              mkdir -p /work/data &&
+              tar -xzf /data/data.tgz -C /work/data &&
+              pip install -q mlflow==3.4.0 scikit-learn==1.5.2
+              pandas==2.2.3 numpy joblib &&
+              python3 /src/train.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+            - {name: data, mountPath: /data}
+            - {name: work, mountPath: /work}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

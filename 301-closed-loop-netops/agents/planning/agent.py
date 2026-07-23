@@ -10,6 +10,18 @@ the governed playbook catalog. The think-tank's raw determination is
 preserved in the plan record — the external black box stays auditable
 from the loop's side.
 
+quant+qual co-decision: the drafted plan is only a *candidate*. Before
+publish, a `codecide` node grounds its risk and approval on two signals
+that meet in a code arbiter — the calibrated remediation-risk regressor
+(quant, reached only through the Kuadrant-governed /plan-score tool) and
+the GenAI plan-judge (qual, A2A, grounded on the same governed scorer).
+The judge is a full co-decider; one non-negotiable rail (a step risk
+above HARD_RISK_FLOOR) forces human approval regardless. The grounded
+risk/approval OVERWRITE the LLM's self-assessment, and every
+judge-vs-quant disagreement is recorded as an audited override —
+mirroring 302's arbiter, now on the actuation-planning side. Judge
+unreachable → the quant gate alone, honestly recorded.
+
 Input over A2A: a message containing `loop_id=<id>` for a loop that
 Diagnostic has already written (`loop:<id>:diagnostic` in the state
 store). Output: the plan JSON; state moves to `status=planned`.
@@ -84,6 +96,77 @@ STATE = redislib.Redis.from_url(os.environ["STATE_STORE_URL"],
 
 THINKTANK_URL = os.environ["THINKTANK_MCP_URL"]
 
+# ------------------------------------------------- quant+qual co-decision
+# The plan the LLM drafts from the think-tank determination is a
+# *candidate*. Before it is published, two grounded signals co-decide its
+# risk and whether it may actuate autonomously:
+#   quant — the calibrated remediation-risk regressor, reached ONLY
+#           through the Kuadrant-governed scorer tool (/plan-score).
+#   qual  — the GenAI plan-judge (A2A), which grounds itself on the SAME
+#           governed scorer and returns accept/revise/reject.
+# The judge is a full co-decider (its decision stands) except one
+# non-negotiable rail: a step whose calibrated risk breaches
+# HARD_RISK_FLOOR forces human approval no matter what either signal says.
+SA_DIR = "/var/run/secrets/kubernetes.io/serviceaccount"
+SCORE_GW = os.environ.get(
+    "SCORE_GATEWAY_URL",
+    "http://netops-gateway-data-science-gateway-class."
+    "agent-school.svc.cluster.local:8080/plan-score")
+JUDGE_URL = os.environ.get(
+    "JUDGE_URL",
+    "http://plan-judge-agent.agent-school.svc.cluster.local:8080")
+# quant gate: a max step risk at/above this band (high) is not
+# auto-approvable by the quant signal alone.
+QUANT_RISK_CEILING = float(os.environ.get("QUANT_RISK_CEILING", "0.66"))
+# non-negotiable rail: a step risk at/above this forces human approval.
+HARD_RISK_FLOOR = float(os.environ.get("HARD_RISK_FLOOR", "0.85"))
+ACTION_CATALOG = {"scale_amf", "rebalance_upf", "restart_smf", "rollback"}
+
+
+def _sa_token():
+    return Path(SA_DIR + "/token").read_text().strip()
+
+
+def _anom01(nf_tel):
+    """101's Feast anomaly_score is in [-1,1] (lower = more anomalous);
+    map to a 0..1 severity where higher = worse."""
+    try:
+        s = float(nf_tel.get("anomaly_score"))
+    except (TypeError, ValueError):
+        return 0.5
+    return min(max(0.5 - 0.5 * s, 0.0), 1.0)
+
+
+async def _mcp_score(step):
+    from mcp import ClientSession
+    from mcp.client.streamable_http import streamablehttp_client
+    args = {"action": step["action"], "target_nf": step["target_nf"],
+            "anomaly_score": float(step.get("anomaly_score", 0.0))}
+    async with streamablehttp_client(
+            SCORE_GW, headers={"Authorization": "Bearer " + _sa_token()},
+            timeout=120) as (r, w, _):
+        async with ClientSession(r, w) as s:
+            await s.initialize()
+            res = await s.call_tool("score_remediation", args)
+            return json.loads(res.content[0].text)
+
+
+async def _ask_judge(steps, context):
+    import httpx
+    from a2a.client import A2ACardResolver, A2AClient
+    from a2a.types import MessageSendParams, SendMessageRequest
+    body = json.dumps({"steps": steps, "context": context})
+    async with httpx.AsyncClient(timeout=300) as hc:
+        card = await A2ACardResolver(httpx_client=hc,
+                                     base_url=JUDGE_URL).get_agent_card()
+        client = A2AClient(httpx_client=hc, agent_card=card)
+        req = SendMessageRequest(id=uuid.uuid4().hex, params=MessageSendParams(
+            message={"role": "user", "message_id": uuid.uuid4().hex,
+                     "parts": [{"kind": "text", "text": body}]}))
+        resp = await client.send_message(req)
+        return json.loads(resp.root.result.parts[0].root.text)
+
+
 # ------------------------------------------------------------- langgraph
 from typing import TypedDict  # noqa: E402
 
@@ -100,8 +183,10 @@ LLM = ChatOpenAI(
 class LoopState(TypedDict, total=False):
     loop_id: str
     findings: dict
+    telemetry: dict
     determination: dict
     plan: dict
+    codecision: dict
     error: str
 
 
@@ -109,7 +194,10 @@ def fetch(state: LoopState) -> LoopState:
     raw = STATE.get("loop:" + state["loop_id"] + ":diagnostic")
     if not raw:
         return {"error": "no diagnostic record for loop " + state["loop_id"]}
-    return {"findings": json.loads(raw).get("findings", {})}
+    rec = json.loads(raw)
+    # telemetry carries the per-NF anomaly_score the co-decision grounds on
+    return {"findings": rec.get("findings", {}),
+            "telemetry": rec.get("telemetry", {})}
 
 
 async def consult(state: LoopState) -> LoopState:
@@ -173,13 +261,111 @@ def plan(state: LoopState) -> LoopState:
     return {"plan": p}
 
 
+async def codecide(state: LoopState) -> LoopState:
+    """Quant + qual co-decision over the candidate plan. Grounds the
+    plan's risk/approval on a calibrated model (through the governed
+    scorer tool) and a GenAI judge, and records every disagreement."""
+    if state.get("error"):
+        return {}
+    plan = dict(state.get("plan") or {})
+    steps = plan.get("steps") or []
+    tel = state.get("telemetry") or {}
+
+    # Build scoring steps from the plan's governed playbook actions.
+    sc_steps = []
+    for st in steps:
+        action = str(st.get("playbook", "")).replace(".yml", "").replace(
+            ".yaml", "")
+        nf = st.get("target_nf")
+        if action in ACTION_CATALOG and nf:
+            sc_steps.append({"action": action, "target_nf": nf,
+                             "anomaly_score": _anom01(tel.get(nf, {}))})
+
+    if not sc_steps:
+        # nothing actuable to score (e.g. empty flow) — leave as-is,
+        # record that the co-decision had no steps.
+        return {"codecision": {"scored_steps": 0, "note": "no governed "
+                               "actions to score", "final": "noop"}}
+
+    # ---- Signal 1 (quant): calibrated risk via the governed scorer -----
+    quant = []
+    for s in sc_steps:
+        try:
+            quant.append(await _mcp_score(s))
+        except Exception as e:  # noqa: BLE001
+            quant.append({"error": type(e).__name__ + ": " + str(e)[:150]})
+    risks = [float(q["risk"]) for q in quant
+             if isinstance(q.get("risk"), (int, float))]
+    max_risk = max(risks) if risks else 0.0
+    scorer_ok = all("error" not in q for q in quant) and bool(risks)
+    quant_ok = scorer_ok and max_risk < QUANT_RISK_CEILING
+
+    # ---- Signal 2 (qual): the GenAI plan-judge, grounded on the same ---
+    context = ("closed-loop remediation for a 5G core; affected NFs %s; "
+               "playbook-catalog actions only; execution is ordered and "
+               "governed (scale cap enforced at the actuator)."
+               % state.get("findings", {}).get("affected_nfs", []))
+    try:
+        judgment = await _ask_judge(sc_steps, context)
+        j = judgment.get("verdict", {}) if isinstance(judgment, dict) else {}
+        if not j:
+            raise ValueError("empty judge verdict")
+    except Exception as e:  # noqa: BLE001
+        # Judge unreachable -> quant gate alone, honestly recorded. The
+        # loop must not die with the judge.
+        judgment = {"error": type(e).__name__ + ": " + str(e)[:150]}
+        j = {"decision": "accept" if quant_ok else "revise",
+             "confidence": 0.0,
+             "rationale": "judge unavailable; quant gate applied",
+             "risks": ["judge_unavailable"]}
+    decision = j.get("decision")
+
+    # ---- Arbiter: full co-decider + one non-negotiable rail ------------
+    hard_rail = max_risk >= HARD_RISK_FLOOR
+    autonomous = (decision == "accept") and not hard_rail
+    approval_required = not autonomous
+    override = ((decision == "accept") != quant_ok) and not hard_rail
+    band = ("high" if max_risk >= QUANT_RISK_CEILING
+            else "medium" if max_risk >= 0.33 else "low")
+
+    arbiter = {
+        "max_step_risk": round(max_risk, 3),
+        "quant_ok": quant_ok, "scorer_reachable": scorer_ok,
+        "judge_decision": decision,
+        "judge_confidence": j.get("confidence"),
+        "hard_risk_rail_tripped": hard_rail,
+        "override": override,
+        "override_note": (
+            "judge %s what the quant gate would have %s: %s"
+            % ("cleared for autonomous run" if autonomous else "held for "
+               "approval",
+               "held" if quant_ok is False else "cleared",
+               str(j.get("rationale"))[:200])) if override else None,
+        "autonomous": autonomous,
+        "final": decision,
+        "thresholds": {"quant_risk_ceiling": QUANT_RISK_CEILING,
+                       "hard_risk_floor": HARD_RISK_FLOOR}}
+
+    # The grounded co-decision OVERWRITES the LLM's self-assessed
+    # risk/approval — Execution enforces approval_required in code.
+    plan["risk"] = band
+    plan["approval_required"] = approval_required
+    plan["codecision_disposition"] = decision
+    codecision = {"scored_steps": len(sc_steps), "steps": sc_steps,
+                  "quant_scores": quant, "judgment": judgment,
+                  "arbiter": arbiter}
+    print("[codecide]", json.dumps(arbiter)[:300], flush=True)
+    return {"plan": plan, "codecision": codecision}
+
+
 def publish(state: LoopState) -> LoopState:
     if state.get("error"):
         return {}
     lid = state["loop_id"]
     rec = {"loop_id": lid, "stage": "planning",
            "determination": state.get("determination", {}),
-           "plan": state.get("plan", {})}
+           "plan": state.get("plan", {}),
+           "codecision": state.get("codecision", {})}
     STATE.set("loop:" + lid + ":plan", json.dumps(rec))
     STATE.set("loop:" + lid + ":status", "planned")
     return {}
@@ -189,11 +375,13 @@ graph = StateGraph(LoopState)
 graph.add_node("fetch", fetch)
 graph.add_node("consult", consult)
 graph.add_node("plan", plan)
+graph.add_node("codecide", codecide)
 graph.add_node("publish", publish)
 graph.set_entry_point("fetch")
 graph.add_edge("fetch", "consult")
 graph.add_edge("consult", "plan")
-graph.add_edge("plan", "publish")
+graph.add_edge("plan", "codecide")
+graph.add_edge("codecide", "publish")
 graph.add_edge("publish", END)
 PLANNING = graph.compile()
 
@@ -231,9 +419,22 @@ class PlanningExecutor(AgentExecutor):
                         mlflow.log_param("approval_required",
                                          p.get("approval_required"))
                         mlflow.log_param("steps", len(p.get("steps", [])))
+                    cod = result.get("codecision", {})
+                    arb = cod.get("arbiter", {}) if cod else {}
+                    if arb:
+                        mlflow.log_param("judge_decision",
+                                         arb.get("judge_decision"))
+                        mlflow.log_param("quant_ok", arb.get("quant_ok"))
+                        mlflow.log_param("override", arb.get("override"))
+                        mlflow.log_param("hard_risk_rail",
+                                         arb.get("hard_risk_rail_tripped"))
+                        mlflow.log_param("autonomous", arb.get("autonomous"))
+                        if arb.get("max_step_risk") is not None:
+                            mlflow.log_metric("max_step_risk",
+                                              float(arb["max_step_risk"]))
                     mlflow.log_dict(
                         {"determination": result.get("determination", {}),
-                         "plan": p}, "plan.json")
+                         "plan": p, "codecision": cod}, "plan.json")
                 except Exception as e:
                     print("[mlflow] log skipped:", type(e).__name__, e,
                           flush=True)

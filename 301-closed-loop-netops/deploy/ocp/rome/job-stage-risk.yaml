@@ -1,0 +1,52 @@
+# Stage the registered remediation-risk model from MLflow into MinIO for
+# KServe (KServe pulls object storage, not MLflow — the same bridge 202
+# and 302 use). Lands the artifact tree at
+# s3://models/netops-remediation-risk/1/. See ../../../serving/stage_model.py.
+#
+# Prereq ConfigMap:
+#   oc create configmap remediation-stage-src -n agent-school \
+#     --from-file=stage_model.py=../../../serving/stage_model.py
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stage-remediation-risk
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 900
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: remediation-stage-src}
+      containers:
+        - name: stage
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - {name: MODEL_NAME, value: netops-remediation-risk}
+            - {name: MODEL_VERSION, value: "1"}
+            - name: AK
+              valueFrom: {secretKeyRef: {name: dspa-minio-creds, key: accesskey}}
+            - name: SK
+              valueFrom: {secretKeyRef: {name: dspa-minio-creds, key: secretkey}}
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q mlflow==3.4.0 boto3 &&
+              python3 /src/stage_model.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

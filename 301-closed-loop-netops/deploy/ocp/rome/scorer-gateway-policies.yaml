@@ -1,0 +1,84 @@
+# Kuadrant governance for the remediation-risk scorer MCP tool (301
+# quant+qual co-decision, Step 2). Governance is no longer only on
+# ACTUATION (the playbook route, /mcp) — it now wraps the DECISION
+# itself: the Planning agent and the GenAI judge may reach the calibrated
+# risk model only by presenting a valid ServiceAccount token that is
+# exactly one of the allowed identities, and only so many times/minute.
+#
+# Reuses 301's own netops-gateway on a distinct path (/plan-score) so it
+# coexists with the playbook tool (/mcp) and the 302 scorer (/score).
+#
+# Prereqs: netops-gateway.yaml, scorer-mcp.yaml. Same Authorino-TLS EA
+# prerequisite as mcp-gateway-policies.yaml (that header has the patch).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: plan-score-route
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  parentRefs:
+    - name: netops-gateway
+      namespace: agent-school
+  rules:
+    - matches:
+        - path: {type: PathPrefix, value: /plan-score}
+      backendRefs:
+        - name: risk-scorer-mcp
+          port: 8080
+---
+apiVersion: kuadrant.io/v1
+kind: AuthPolicy
+metadata:
+  name: plan-scorer-authn
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: plan-score-route
+  rules:
+    authentication:
+      # EA finding (see mcp-gateway-policies.yaml): audiences MUST match
+      # the caller token's audience; a pod's default projected token
+      # carries aud=["https://kubernetes.default.svc"].
+      "sa-token":
+        kubernetesTokenReview:
+          audiences:
+            - https://kubernetes.default.svc
+    authorization:
+      # Only the Planning agent and the GenAI judge may score. The
+      # decision surface is governed exactly like the actuation surface.
+      "scoring-callers":
+        patternMatching:
+          patterns:
+            - selector: auth.identity.user.username
+              operator: matches
+              value: "^system:serviceaccount:agent-school:(planning-agent|plan-judge-agent)$"
+---
+apiVersion: kuadrant.io/v1
+kind: RateLimitPolicy
+metadata:
+  name: plan-scorer-ratelimit
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: plan-score-route
+  limits:
+    "scoring":
+      # One incident's Planning pass scores a handful of candidate
+      # (action, target) pairs, and the judge re-fetches each to ground
+      # itself — a few tool calls per plan. The cap counts gateway
+      # requests, and MCP spends ~3-4 per tool call (EA-11), so a
+      # multi-step plan + judge grounding is ~20-40 requests. 60/60s fits
+      # a full co-decision comfortably while bounding a runaway agent.
+      rates:
+        - limit: 60
+          window: 60s

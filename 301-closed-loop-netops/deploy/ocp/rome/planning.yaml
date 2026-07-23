@@ -55,6 +55,15 @@ spec:
             - {name: MLFLOW_EXPERIMENT, value: 301-closed-loop}
             - {name: THINKTANK_MCP_URL,
                value: "http://think-tank.think-tank.svc.cluster.local:8080/mcp"}
+            # quant+qual co-decision: the candidate plan is scored on the
+            # calibrated risk model (through the governed /plan-score
+            # tool) and judged by the plan-judge over A2A before publish.
+            - name: SCORE_GATEWAY_URL
+              value: http://netops-gateway-data-science-gateway-class.agent-school.svc.cluster.local:8080/plan-score
+            - name: JUDGE_URL
+              value: http://plan-judge-agent.agent-school.svc.cluster.local:8080
+            - {name: QUANT_RISK_CEILING, value: "0.66"}
+            - {name: HARD_RISK_FLOOR, value: "0.85"}
             - name: STATE_PASSWORD
               valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
             - name: STATE_STORE_URL

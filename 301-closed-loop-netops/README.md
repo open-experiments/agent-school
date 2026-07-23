@@ -128,6 +128,52 @@ gate and the abort condition decided before anything runs:
 
 ![Planning run](./images/rhoai/planning-run.png)
 
+**Stage 2b — the quant + qual co-decision.** Until now that plan's
+`risk` and `approval_required` were the *language model's own*
+self-assessment — qualitative reasoning with nothing calibrated
+underneath it. This stage grounds the decision, mirroring 302's
+arbiter on the actuation-planning side: the drafted plan is a
+*candidate*, and before it is published two signals co-decide.
+
+*Quant* is 301's own classic-ML track — `netops-remediation-risk`, a
+calibrated regressor (`training/train_remediation_risk.py`,
+GradientBoosting, r² ≈ 0.97) that scores how risky it is to actuate a
+given playbook action on a given NF under the current incident state.
+301 no longer only *borrows* 101's anomaly verdict; it has its own
+model, trained on the real 5gprod per-minute KPIs, tracked in MLflow,
+registered and promoted (`netops-remediation-risk`), and served on
+KServe. Its target is a **documented computed proxy** —
+`base_disruptiveness[action] × load × severity`, all real measured
+quantities (a restart on a saturated, degraded SMF scores ~0.8; adding
+an AMF replica on an idle one ~0.2) — an honest bootstrap that a live
+core's real remediation outcomes replace, never an invented label
+(lessons doc EA-14). The plan agent reaches it **only** through the
+Kuadrant gateway's `/plan-score` tool: Authorino authorizes exactly
+`planning-agent` and `plan-judge-agent`, Limitador caps the rate — the
+same East-West governance 301 puts on *actuation*, now on the
+*decision*.
+
+*Qual* is the GenAI **plan-judge** (`agents/judge/`, A2A, OGX
+(Llama Stack) on the cluster Kimi). It receives the ordered plan, re-fetches each
+step's calibrated risk itself through the same governed tool (grounded
+by construction), and returns `accept | revise | reject` with
+confidence, rationale, cited risks, and the context a scalar cannot see
+— an ordering hazard (restart before rebalance drains sessions), a peak
+or maintenance window, blast radius on an already-degraded neighbour.
+
+A code arbiter combines them. The judge is a **full co-decider** — its
+decision stands, and it can clear a plan the quant gate would have held
+or hold one the quant gate would have cleared — with exactly one
+non-negotiable rail: a step whose calibrated risk breaches
+`HARD_RISK_FLOOR` (0.85) forces human approval no matter what either
+signal says. The grounded verdict **overwrites** the LLM's `risk` and
+`approval_required` (Execution still enforces the approval gate in
+code, unchanged), and every judge-vs-quant disagreement is recorded as
+an audited **override** in the plan record and MLflow. Judge
+unreachable → the quant gate alone, honestly recorded. Intelligence
+still lives in the middle of the loop; now it is calibrated and
+governed, not just fluent.
+
 **Stage 3 — Execution, the governed actuation arm.** Deliberately the
 least clever component in the system: no LLM in this pod. Execution
 ([agents/execution/](./agents/execution/)) reads the governed plan
@@ -189,6 +235,9 @@ actual cluster. Every step of both paths is an MLflow run:
 | Orchestration | A2A messaging + AgentCards |
 | Sensing | 101's Feast online anomaly verdicts (live on Rome today) |
 | External reasoning | MCP think-tank: anomaly meaning → remediation-flow determination |
+| Decision — quant | `netops-remediation-risk` regressor on KServe, reached only through the Kuadrant `/plan-score` tool |
+| Decision — qual | GenAI plan-judge (A2A), grounded on the same governed scorer |
+| Decision discipline | quant threshold + judge verdict + hard risk rail, in code; overrides audited in MLflow |
 | Tool governance | playbooks behind MCP Gateway, scoped RBAC |
 | Externalized state | workflow store outside all agents |
 | Observability | MLflow traces per agent, per loop iteration |
@@ -201,6 +250,14 @@ actual cluster. Every step of both paths is an MLflow run:
 2. Ephemeral workers and externalized state as the scaling unlock.
 3. Governed actuation: the loop can touch the network only through an
    authorized, audited gateway path, with rollback owned by Validation.
+4. **Quant + qual co-decision on the actuation side**: a calibrated
+   risk model and a reasoning judge decide the plan together, grounded
+   on the same governed number, with one hard rail no signal can
+   override — and governance wraps the *decision*, not just the action.
+   The calibrated model and the judge fail in opposite ways
+   (calibrated-but-blind vs context-aware-but-uncalibrated), so pair
+   them, ground the judge on the model's risk, and audit every
+   disagreement.
 
 ## Status
 
@@ -217,8 +274,21 @@ Role, approval gate enforced in code and proven by a negative test.
 Stage 4: Validation closes the cycle deterministically — verdict from
 pre/post KPI deltas, loop closed as monitor on the live iteration,
 and the rollback arm proven by a drill that really returned amf to
-baseline through Execution. Remaining for a later pass: the NemoClaw
-product-harness track and MCP-Gateway-fronted playbook access (Track
-4 scope). Reuses 101 telemetry tools, the autonet playbook
-set, and the autonet per-NF vector stores. Snapshots land stage by
-stage — no mockups.
+baseline through Execution. Reuses 101 telemetry tools, the autonet
+playbook set, and the autonet per-NF vector stores. Snapshots land
+stage by stage — no mockups.
+
+**Stage 2b (quant + qual co-decision) — built and offline-verified;
+live-on-Rome proof is the remaining pass.** The classic-ML track is
+real and trained: `netops-remediation-risk` fits the actual 5gprod KPI
+series (r² ≈ 0.97, MAE ≈ 0.02 over 8,646 rows), and the code arbiter's
+full-co-decider + hard-rail truth table is verified offline (consensus,
+override-in-both-directions, and the hard rail forcing approval even
+when the judge accepts). What remains — and needs the cluster — is
+registering/serving the model, applying the `/plan-score` gateway
+policies and the plan-judge, and running consensus + override episodes
+with the RHOAI/console captures, exactly as 302 was proven. The
+run-book for that pass is in [deploy/ocp/rome](./deploy/ocp/rome)
+(job-train-risk → job-stage-risk → serving → scorer-mcp →
+scorer-gateway-policies → judge → planning). Nothing here is a mockup;
+the "live" captures are simply pending a Rome-connected run.
