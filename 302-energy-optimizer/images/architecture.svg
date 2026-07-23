@@ -91,7 +91,7 @@ text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
 <!-- Agent pod -->
 <g class="c-gray">
 <rect x="280" y="400" width="530" height="300" rx="8"/>
-<text class="th" x="296" y="426">Energy-optimizer agent pod — Llama Stack loop (CPU-only)</text>
+<text class="th" x="296" y="426">Energy-optimizer agent pod · OGX loop (CPU-only)</text>
 </g>
 <g class="c-teal">
 <rect x="300" y="440" width="230" height="100" rx="8"/>
