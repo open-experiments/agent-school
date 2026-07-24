@@ -181,8 +181,8 @@
       <p class="kicker">Publications</p>
       <h1>The thinking behind the build.</h1>
       <p class="lede">Agent School is the working implementation of a body of writing on cloud-native
-        AI agents and distributed inference. Each article below opens on the Red Hat Developer portal,
-        where it was published.</p>
+        AI agents and distributed inference. Each article below opens on the site where it was
+        published.</p>
     </div>
   </div>
   <section class="pad">
@@ -265,6 +265,12 @@ const PUBS=[
  {t:"What GPU kernels mean for your distributed inference",d:"May 20, 2026",
   u:"https://developers.redhat.com/articles/2026/05/20/what-gpu-kernels-mean-your-distributed-inference",
   s:"What GPU compute kernels are, the role they play in distributed AI inference, and the Hugging Face Kernel Hub."},
+ {t:"The 12-Factor Agent: Why Agentic AI Patterns Look Suspiciously Familiar",d:"February 3, 2026",src:"Enterprise AI on Medium",
+  u:"https://medium.com/enterpriseai/the-12-factor-agent-why-agentic-ai-patterns-look-suspiciously-familiar-6dec539036c1",
+  s:"Why agentic AI patterns mirror cloud-native and 12-Factor principles: the discipline behind Agent School's ephemeral, restartable sessions."},
+ {t:"Beyond Chat and Copilots: How Enterprises Will Actually Consume AI Agents",d:"December 13, 2025",src:"Enterprise AI on Medium",
+  u:"https://medium.com/enterpriseai/beyond-chat-and-copilots-how-enterprises-will-actually-consume-ai-agents-8c8860cde367",
+  s:"The Agentic Work Exchange (AWE) pattern: a dynamic marketplace where work specs attract competitive agent bids, instead of static capability registries."},
  {t:"Why vLLM is the best choice for AI inference today",d:"October 30, 2025",
   u:"https://developers.redhat.com/articles/2025/10/30/why-vllm-best-choice-ai-inference-today",
   s:"Why vLLM, an open source inference server that speeds up generative AI by making better use of GPU memory, is the reference serving path."},
@@ -328,16 +334,18 @@ function show(view){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.getElementById('cardgrid').innerHTML=COURSES.map(courseCard).join('');
-document.getElementById('publist').innerHTML=PUBS.map((p,i)=>`
+document.getElementById('publist').innerHTML=PUBS.map((p,i)=>{
+  var host='';try{host=new URL(p.u).hostname.replace(/^www\./,'');}catch(e){}
+  return `
   <div class="pub">
     <div class="num">${String(i+1).padStart(2,'0')}</div>
     <div>
       <h3>${p.t}</h3>
-      <div class="meta">Red Hat Developer · ${p.d}</div>
+      <div class="meta">${p.src||'Red Hat Developer'} · ${p.d}</div>
       <p>${p.s}</p>
-      <a class="read" href="${p.u}" target="_blank" rel="noopener">Read on developers.redhat.com ↗</a>
+      <a class="read" href="${p.u}" target="_blank" rel="noopener">Read on ${host} ↗</a>
     </div>
-  </div>`).join('');
+  </div>`;}).join('');
 </script>
 </body>
 </html>
