@@ -26,6 +26,7 @@ spec:
       containers:
         - name: stage
           image: registry.access.redhat.com/ubi9/python-311:latest
+          imagePullPolicy: IfNotPresent  # EA: registry.access flaked mid-run; node cache is authoritative
           envFrom:
             - configMapRef: {name: mlflow-tracking}
           env:

@@ -45,6 +45,14 @@
     {
       "type": "tab",
       "step": 5,
+      "tab": "Co-decision, live · the audited episode record",
+      "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail.png",
+      "caption": "A live episode's planning run: max_step_risk 0.813 scored by the served model through the governed gateway; the quant gate holds; the judge rules revise at 0.75 confidence; consensus recorded as platform data · override False, hard rail False, approval required True.",
+      "say": "And here is that co-decision actually happening on our DevOps cluster called Rome — not a diagram, an audited record. The planning agent drafted a three-step remediation ending in an SMF restart. The served risk model, reached only through the governed gateway, scored the riskiest step at nought-point-eight-one-three, so the quantitative gate held the plan. The GenAI judge, grounding itself on that very same number, independently ruled revise, with seventy-five percent confidence. Two different kinds of intelligence agreeing to hold a risky plan — and every element of that agreement lands as platform data: the maximum step risk as a metric, and the judge's decision, the quant verdict, the override flag, and the approval requirement as parameters on the run. We even re-drove the loop with a tighter risk ceiling, and the changed threshold shows up in the episode's audit trail. A decision you can replay, inspect, and defend."
+    },
+    {
+      "type": "tab",
+      "step": 6,
       "tab": "Diagnostic trace · the reasoning behind the detection",
       "image": "301-closed-loop-netops/images/rhoai/diagnostic-trace.png",
       "caption": "The diagnostic agent's work is fully traced: what it observed, how it classified the incident, the severity it assigned · the evidence the plan is built on.",
@@ -52,7 +60,7 @@
     },
     {
       "type": "tab",
-      "step": 6,
+      "step": 7,
       "tab": "OpenShift · fiveg-core Deployments · the network it remediates",
       "image": "301-closed-loop-netops/images/rhoai/fiveg-core-after.png",
       "caption": "The target is real: the AMF, SMF and UPF of a 5G core, running as live Deployments. When the loop scales, restarts, or rebalances a network function, it changes these.",
@@ -60,7 +68,7 @@
     },
     {
       "type": "tab",
-      "step": 7,
+      "step": 8,
       "tab": "Kuadrant AuthPolicies · Enforced · the governed tool boundary",
       "image": "301-closed-loop-netops/images/rhoai/loop-full-runs.png",
       "caption": "The execution agent no longer holds the keys to the core. It must ask through a Kuadrant-governed MCP gateway · AuthPolicy Accepted & Enforced: only the right identity may actuate, and only so often.",

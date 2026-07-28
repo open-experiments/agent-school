@@ -20,7 +20,7 @@ Figure-1.
 
 ## Walkthrough video
 
-A narrated walkthrough (4:49) — the problem, then the step-by-step agentic
+A narrated walkthrough (6:57) — the problem, then the step-by-step agentic
 solution over the live RHOAI portal and OpenShift console on our DevOps
 cluster called Rome, including the Kuadrant-governed actuation boundary.
 Click the poster to play or download:
@@ -147,11 +147,23 @@ KServe. Its target is a **documented computed proxy** —
 quantities (a restart on a saturated, degraded SMF scores ~0.8; adding
 an AMF replica on an idle one ~0.2) — an honest bootstrap that a live
 core's real remediation outcomes replace, never an invented label
-(lessons doc EA-14). The plan agent reaches it **only** through the
+(lessons doc EA-14). Trained live on Rome (r² 0.9714, MAE 0.0235 over
+8,646 rows), it serves next to its course siblings on the AI hub
+Deployments tab and is promoted in the model registry as
+`netops-remediation-risk` 1.0.0:
+
+![Remediation-risk scorer deployed](./images/rhoai/risk-scorer-deployment.png)
+
+![Model registry — netops-remediation-risk promoted](./images/rhoai/risk-model-registry.png)
+
+The plan agent reaches it **only** through the
 Kuadrant gateway's `/plan-score` tool: Authorino authorizes exactly
 `planning-agent` and `plan-judge-agent`, Limitador caps the rate — the
 same East-West governance 301 puts on *actuation*, now on the
-*decision*.
+*decision*. On Rome the decision surface and the actuation surface sit
+side by side, all Accepted and Enforced:
+
+![Kuadrant AuthPolicies — decision + actuation both governed](./images/rhoai/plan-scorer-authpolicies.png)
 
 *Qual* is the GenAI **plan-judge** (`agents/judge/`, A2A, OGX
 (Llama Stack) on the cluster Kimi). It receives the ordered plan, re-fetches each
@@ -173,6 +185,31 @@ an audited **override** in the plan record and MLflow. Judge
 unreachable → the quant gate alone, honestly recorded. Intelligence
 still lives in the middle of the loop; now it is calibrated and
 governed, not just fluent.
+
+**The co-decision, live on Rome.** Two full loop episodes drove the
+codecide path end to end. Each episode's diagnostic → planning →
+plan-judge stages land as runs in `301-closed-loop`, next to the
+`remediation-risk-gbr` training run:
+
+![Co-decision episodes in Experiments](./images/rhoai/codecision-runs.png)
+
+Open a planning run and the co-decision is platform data, not prose.
+On the live incident the planner drafted a three-step plan including
+`restart_smf`; the served model scored `max_step_risk` **0.813**
+through the governed gateway; the quant gate held it
+(`quant_ok=False` against the 0.66 ceiling); the judge independently
+ruled `revise` at 0.75 confidence; consensus — `override=False`,
+`hard_risk_rail=False`, `approval_required=True`:
+
+![Co-decision run detail — the audited record](./images/rhoai/codecision-run-detail.png)
+
+An override drill then tightened `QUANT_RISK_CEILING` to 0.3 and
+re-drove the loop: the changed threshold shows up in the second
+episode's audit record, and the judge *still* declined to clear the
+risky plan — a co-decider that refuses to rubber-stamp. The
+override-in-both-directions and hard-rail paths remain verified by the
+offline arbiter truth table; nothing about a live LLM's judgment is
+staged to force an outcome.
 
 **Stage 3 — Execution, the governed actuation arm.** Deliberately the
 least clever component in the system: no LLM in this pod. Execution
@@ -278,17 +315,20 @@ baseline through Execution. Reuses 101 telemetry tools, the autonet
 playbook set, and the autonet per-NF vector stores. Snapshots land
 stage by stage — no mockups.
 
-**Stage 2b (quant + qual co-decision) — built and offline-verified;
-live-on-Rome proof is the remaining pass.** The classic-ML track is
-real and trained: `netops-remediation-risk` fits the actual 5gprod KPI
-series (r² ≈ 0.97, MAE ≈ 0.02 over 8,646 rows), and the code arbiter's
-full-co-decider + hard-rail truth table is verified offline (consensus,
-override-in-both-directions, and the hard rail forcing approval even
-when the judge accepts). What remains — and needs the cluster — is
-registering/serving the model, applying the `/plan-score` gateway
-policies and the plan-judge, and running consensus + override episodes
-with the RHOAI/console captures, exactly as 302 was proven. The
-run-book for that pass is in [deploy/ocp/rome](./deploy/ocp/rome)
-(job-train-risk → job-stage-risk → serving → scorer-mcp →
-scorer-gateway-policies → judge → planning). Nothing here is a mockup;
-the "live" captures are simply pending a Rome-connected run.
+**Stage 2b (quant + qual co-decision) — live on Rome, proven.** The
+run-book in [deploy/ocp/rome](./deploy/ocp/rome) was executed end to
+end on the cluster (July 2026): `netops-remediation-risk` trained
+on-cluster (r² 0.9714, MAE 0.0235 over 8,646 rows, honesty probes
+correct), registered in workspace MLflow, staged to MinIO, served on
+KServe (Ready), promoted in the model registry, and wrapped as the
+governed `/plan-score` tool with its AuthPolicy and RateLimitPolicy
+Accepted + Enforced beside the actuation policies. The plan-judge is
+deployed and Planning runs the codecide node. Two live loop episodes
+produced audited co-decisions — the served model scored the drafted
+plan at 0.813 through the gateway, the quant gate held, the judge
+independently ruled revise, consensus recorded as platform data — and
+an override drill proved the thresholds are live and audited (the
+tightened ceiling appears in the episode record). The
+override-in-both-directions and hard-rail paths are verified by the
+offline arbiter truth table; the captures above are from the cluster,
+not mockups.
