@@ -145,16 +145,19 @@ sim's result back from its MLflow run — a deterministic channel.
 
 ## Status
 
-Complete — both stages live on Rome.
-
-1. **Skill backends (done):** the sustainability scorer trained from
-   the published dataset, registered, promoted to `rome-registry`, and
-   serving on KServe (pattern 2, live V2 call verified); the JAX
-   cell-sleep simulation running as Kueue-admitted Jobs under
-   submit/poll-only RBAC (pattern 3, verified through the queue).
-2. **Agent (done):** the Llama Stack loop — propose (Agents API →
-   Kimi), dispatch the sim Job, score on the served model, threshold
-   gate in code, emit the change-plan artifact; both accept and
-   reject/NO_PLAN paths proven live, every attempt in MLflow.
-
-All RHOAI snapshots are live captures — no mockups.
+**Complete — quant + qual co-decision live on Rome, and the judge is
+measured.** The sustainability scorer (trained from the published
+dataset, registered, promoted to `rome-registry`) serves on KServe and
+is reached only through the Kuadrant-governed `/score` route
+(AuthPolicy + RateLimitPolicy Accepted and Enforced); the JAX
+cell-sleep simulation runs as Kueue-admitted Jobs under
+submit/poll-only RBAC. The OGX (Llama Stack) optimizer proposes,
+simulates, and scores; the GenAI judge grounds on the same governed
+scorer and co-decides with a hard QoS rail, every quant-vs-judge
+disagreement recorded as an audited override. And the judge is itself
+evaluated as platform data: a curated eight-case dataset, a
+`verdict-groundedness` LLM-as-a-judge on the cluster's own Kimi
+endpoint, and an evaluation run scoring decision-correctness 0.75,
+groundedness 0.875, and QoS-safety 0.875 — the two failures caught
+being exactly the failure modes the design predicted. All snapshots
+are live captures — no mockups.

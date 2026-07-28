@@ -210,3 +210,16 @@ second agent executes the fix — the
 [autonet](https://github.com/open-experiments/Telco-AIX/tree/main/autonet)
 pattern. The agent code barely changes; the platform around it grows. That
 is the point.
+
+## Status
+
+**Complete, QA-passed, live on Rome.** The full develop-and-train
+lifecycle runs on the cluster: the feature pipeline lands offline
+history and pushes per-NF verdicts to the Feast online store on a
+CronJob cadence; the IsolationForest detector is trained, versioned in
+workspace MLflow (`5gprod-anomaly`), and calibrated by a RayJob sweep
+admitted through Kueue; and the agent's tool-calling loop is traced
+end to end. The `QA/` pack carries the full evidence: deterministic
+offline run, MCP smoke tests, and live wire-logged runs (auth
+redacted). The [OpenClaw harness track](./harness-tracks/openclaw.md)
+is the one product-harness track shipped in the repo. No mockups.

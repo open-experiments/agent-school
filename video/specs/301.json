@@ -53,10 +53,10 @@
     {
       "type": "tab",
       "step": 6,
-      "tab": "Diagnostic trace · the reasoning behind the detection",
+      "tab": "Diagnostic trace · the telemetry and the finding, explicit",
       "image": "301-closed-loop-netops/images/rhoai/diagnostic-trace.png",
-      "caption": "The diagnostic agent's work is fully traced: what it observed, how it classified the incident, the severity it assigned · the evidence the plan is built on.",
-      "say": "The intelligence in the middle is fully observable too. Here is a diagnostic trace: what the agent observed in the network, how it classified the incident, and the severity it assigned. This is the evidence the whole loop is built on, and because it is traced, an operator can always check the agent's reasoning rather than trusting a black box. Good diagnosis, transparently shown, is what earns the loop the right to act."
+      "caption": "The trace shows exactly what the agent saw and what it concluded: per-NF telemetry (1h KPI means, anomaly flags and scores for AMF, SMF, UPF) and the structured finding · incident true, severity medium, evidence citing the live scores, a hypothesis, and a recommended focus.",
+      "say": "The intelligence in the middle is fully observable too, and here is the proof at full resolution. This is the diagnostic trace from the very episode we just watched being co-decided. On the telemetry side, exactly what the agent observed: for each network function, the one-hour rolling KPI means, the C P U and memory utilization, and the anomaly flag with its real Isolation-Forest score. And below it, the structured finding the agent produced: incident true, all three network functions affected, severity medium, with evidence that cites those same scores, a hypothesis about a coordinated capacity issue, and a recommended focus for the operator. Nothing is a black box: the observation, the reasoning, and the conclusion are all first-class, inspectable platform data."
     },
     {
       "type": "tab",

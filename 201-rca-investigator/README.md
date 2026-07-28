@@ -145,3 +145,15 @@ One image, two roles: the RAG backend as Deployment + Service, each RCA as
 a Job calling it over Service DNS. The `rome` overlay adds the MLflow
 tracking wiring and the judge's vLLM endpoint config. See
 [deploy/](./deploy/).
+
+## Status
+
+**Complete, QA-passed, live on Rome.** The two-phase RCA agent and the
+FastAPI RAG backend run on the cluster (backend as Deployment +
+Service, each investigation as a Job over Service DNS). Every LLM call
+is traced in workspace MLflow via autolog, the small-vs-large routing
+economics are visible per trace, and the evidence-grounding LLM judge
+attaches its verdict to the very trace it scores, using the cluster's
+own model. Cited RCA reports from live runs are in
+[reports/](./reports/); the `QA/` pack carries deterministic and
+wire-logged live evidence. No mockups.

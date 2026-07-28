@@ -20,7 +20,7 @@ Figure-1.
 
 ## Walkthrough video
 
-A narrated walkthrough (6:57) — the problem, then the step-by-step agentic
+A narrated walkthrough (7:22) — the problem, then the step-by-step agentic
 solution over the live RHOAI portal and OpenShift console on our DevOps
 cluster called Rome, including the Kuadrant-governed actuation boundary.
 Click the poster to play or download:
@@ -298,22 +298,18 @@ actual cluster. Every step of both paths is an MLflow run:
 
 ## Status
 
-**Complete — all four agents live on Rome.** Stages 1-3:
-the state store (`loop-state`), the A2A skeleton, the Diagnostic
-agent (Feast verdicts → LangGraph → findings → externalized state →
-MLflow), the external MCP think-tank in its own namespace, and the
-Planning agent (state → MCP consult → governed plan with approval
-gate and rollback trigger) — chained end-to-end on one loop id by an
-in-cluster smoke client ([deploy/ocp/rome](./deploy/ocp/rome)). Stage 3:
-Execution actuates the governed plan with real Ansible playbooks
-against the stand-in `fiveg-core` NFs under a single namespace-scoped
-Role, approval gate enforced in code and proven by a negative test.
-Stage 4: Validation closes the cycle deterministically — verdict from
-pre/post KPI deltas, loop closed as monitor on the live iteration,
-and the rollback arm proven by a drill that really returned amf to
-baseline through Execution. Reuses 101 telemetry tools, the autonet
-playbook set, and the autonet per-NF vector stores. Snapshots land
-stage by stage — no mockups.
+**Complete — the full loop is live on Rome.** All four agents
+(Diagnostic → Planning → Execution → Validation) run on the cluster
+over A2A with externalized state (`loop-state`), the external MCP
+think-tank in its own namespace, and exactly one governed actuation
+path: Execution runs the real autonet Ansible playbooks against the
+stand-in `fiveg-core` NFs under a single namespace-scoped Role, with
+the approval gate enforced in code and proven by a negative test, and
+Validation closes each cycle deterministically — including a rollback
+drill that really returned amf to baseline through Execution. Every
+stage of every episode is an MLflow run. Reuses 101 telemetry tools
+and the autonet playbook set and vector stores. All captures are from
+the cluster — no mockups.
 
 **Stage 2b (quant + qual co-decision) — live on Rome, proven.** The
 run-book in [deploy/ocp/rome](./deploy/ocp/rome) was executed end to

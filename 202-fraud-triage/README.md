@@ -151,16 +151,14 @@ uploads) are documented in [pipeline/](./pipeline/) and
 
 ## Status
 
-In progress — build stages 1 and 2 of 3 complete.
-
-1. **Model pipeline (done, live on Rome):** `fraud-brf-training` on Data
-   Science Pipelines, model registered as `revassurance-fraud-brf` and
-   promoted to `rome-registry`.
-2. **Serving (done, live on Rome):** the registered version deployed on
-   KServe as `fraud-detector` — custom MLServer runtime, model staged
-   MLflow → MinIO, verified with a live V2 inference smoke test.
-3. **Agent:** the LangGraph graph with the approval gate, consuming the
-   served model; Feast billing features for online case context.
-
-RHOAI snapshots are added as each stage goes live — this README carries
-no mockups.
+**Model factory and serving live on Rome; the triage agent is the
+remaining stage.** The repeatable pipeline (`fraud-brf-training` on
+Data Science Pipelines) trains and registers `revassurance-fraud-brf`
+with full lineage, the registry promotion to `rome-registry` governs
+the handoff, and the promoted version serves on KServe as
+`fraud-detector` (custom MLServer runtime, staged MLflow to MinIO,
+proven with a live V2 inference smoke test). The LangGraph triage
+agent (score, context, decide, with the human-approval gate) is
+designed in the architecture and walkthrough but its code is not yet
+in the repo; it lands next, and the `QA/` pack fills with it. Nothing
+here is a mockup, and nothing is claimed beyond what runs.
