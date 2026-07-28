@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Agent School · Interactive Lab</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2129;--line:#2d333b;--ink:#e6edf3;--muted:#8b949e;
+  --accent:#e5484d;--ok:#3fb950;--warn:#d29922;--blue:#58a6ff;--radius:10px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+a{color:var(--blue);text-decoration:none}
+header{display:flex;align-items:center;gap:14px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto}
+header .badge{background:var(--accent);color:#fff;font-weight:700;font-size:13px;border-radius:6px;padding:2px 9px}
+header h1{font-size:16px;font-weight:600}
+header .snap{margin-left:auto;color:var(--muted);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 9px}
+header .snap b{color:var(--warn)}
+main{flex:1;display:grid;grid-template-columns:330px 1fr 400px;min-height:0}
+/* left: steps */
+#left{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+#steplist{flex:0 0 auto;padding:10px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line)}
+.stepdot{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;background:var(--panel2)}
+.stepdot.cur{border-color:var(--blue);color:var(--blue)}
+.stepdot.done{border-color:var(--ok);color:var(--ok)}
+#stepbody{flex:1;overflow-y:auto;padding:16px}
+#stepbody h2{font-size:17px;margin-bottom:10px}
+#stepbody h4{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin:14px 0 6px;font-family:var(--mono)}
+#stepbody p{color:#c9d1d9;line-height:1.55;font-size:13.5px;white-space:pre-wrap}
+#stepbody code{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-family:var(--mono);font-size:12px}
+#expectbox{margin-top:14px;border:1px solid var(--warn);border-radius:var(--radius);padding:10px 12px;font-size:13px;color:#c9d1d9}
+#expectbox.pass{border-color:var(--ok)}
+#expectbox .tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--warn)}
+#expectbox.pass .tag{color:var(--ok)}
+/* center: console */
+#center{display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+#actionbar{flex:0 0 auto;padding:12px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
+button{font-family:var(--sans);font-size:14px;font-weight:600;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--ink);padding:9px 16px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:disabled{opacity:.35;cursor:default}
+button:disabled{opacity:.35;cursor:default}
+#term{flex:1;overflow-y:auto;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#b9c2cc;white-space:pre-wrap;word-break:break-all}
+#term .p{color:var(--ok)}
+#term .recon{color:var(--muted);font-style:italic}
+#termfoot{flex:0 0 auto;padding:6px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;display:flex;gap:14px;align-items:center}
+/* right: platform */
+#right{border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+#tabs{flex:0 0 auto;display:flex;border-bottom:1px solid var(--line)}
+#tabs div{padding:10px 12px;font-size:12.5px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+#tabs div.on{color:var(--ink);border-bottom-color:var(--accent)}
+#tabs div.pulse{color:var(--warn)}
+#platform{flex:1;overflow-y:auto;padding:14px}
+.res{border:1px solid var(--line);border-radius:8px;padding:8px 11px;margin-bottom:8px;background:var(--panel2);font-size:12.5px}
+.res b{font-family:var(--mono);font-size:12px}
+.res .kind{color:var(--muted);font-size:11px;font-family:var(--mono)}
+.pill{display:inline-block;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;margin-left:6px}
+.pill.ok{background:#12351c;color:var(--ok)} .pill.warn{background:#3a2d12;color:var(--warn)}
+.kv{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:4px;white-space:pre-wrap}
+#dashnote{border:1px dashed var(--blue);border-radius:8px;padding:9px 11px;margin-bottom:12px;font-size:12.5px;color:#c9d1d9}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:var(--muted);text-align:left;font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}
+td{padding:4px 6px;border-bottom:1px solid #21262d;font-family:var(--mono);font-size:11.5px}
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);width:min(680px,90vw);max-height:80vh;display:flex;flex-direction:column}
+#modal .box h3{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--line)}
+#modal pre{flex:1;overflow:auto;padding:14px 16px;font-family:var(--mono);font-size:11.5px;color:#b9c2cc}
+#modal .foot{padding:10px 16px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+#loading{padding:60px;text-align:center;color:var(--muted)}
+@media (max-width:1100px){main{grid-template-columns:280px 1fr}#right{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <span class="badge" id="hbadge">···</span>
+  <h1 id="htitle">Agent School · Interactive Lab</h1>
+  <span class="snap" id="hsnap"><b>TIME-SNAPSHOTTED REPLAY</b> · loading…</span>
+  <a id="hmanual" href="#" target="_blank" rel="noopener" style="font-size:12.5px">Course Manual ↗</a>
+</header>
+<main id="main" style="display:none">
+  <section id="left">
+    <div id="steplist"></div>
+    <div id="stepbody"></div>
+  </section>
+  <section id="center">
+    <div id="actionbar">
+      <button class="primary" id="actbtn">Run step</button>
+      <button id="nextbtn" disabled>Next step →</button>
+      <label style="margin-left:auto;color:var(--muted);font-size:12px;display:flex;gap:6px;align-items:center">
+        <input type="checkbox" id="fast"/> fast playback</label>
+    </div>
+    <div id="term"></div>
+    <div id="termfoot"><span id="reconnote"></span></div>
+  </section>
+  <section id="right">
+    <div id="tabs"></div>
+    <div id="platform"></div>
+  </section>
+</main>
+<div id="loading">Loading tape…</div>
+<div id="modal"><div class="box">
+  <h3 id="mtitle">Import YAML</h3>
+  <pre id="myaml"></pre>
+  <div class="foot"><button onclick="closeModal()">Cancel</button>
+    <button class="primary" onclick="applyModal()">Apply</button></div>
+</div></div>
+<script>
+const qs = new URLSearchParams(location.search);
+const tapeName = qs.get('tape') || '101-venice';
+let TAPE=null, cur=0, done=new Set(), revealed=new Set(), playing=false;
+const $=id=>document.getElementById(id);
+
+fetch('tapes/'+tapeName+'.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(t=>{TAPE=t;init();})
+ .catch(()=>{$('loading').textContent='Tape "'+tapeName+'" not found.'});
+
+function init(){
+  $('loading').style.display='none';$('main').style.display='grid';
+  $('hbadge').textContent=TAPE.course;
+  $('htitle').textContent=TAPE.title+' · Interactive Lab';
+  $('hsnap').innerHTML='<b>TIME-SNAPSHOTTED REPLAY</b> · '+TAPE.cluster+' cluster · captured '+TAPE.capturedAt.slice(0,10);
+  $('hmanual').href='https://github.com/open-experiments/agent-school/blob/main/'+dirFor(TAPE.course)+'/MANUAL.md';
+  $('steplist').innerHTML=TAPE.steps.map((s,i)=>'<div class="stepdot" id="dot'+i+'" onclick="jump('+i+')">'+s.n+'</div>').join('');
+  ['resources','featurestore','experiments','workloads','registry'].forEach(p=>{
+    const d=document.createElement('div');d.textContent=label(p);d.id='tab-'+p;d.onclick=()=>showTab(p);$('tabs').appendChild(d);});
+  jump(0);
+}
+function dirFor(c){return {101:'101-noc-assistant',201:'201-rca-investigator',202:'202-fraud-triage',301:'301-closed-loop-netops',302:'302-energy-optimizer'}[c];}
+function label(p){return {resources:'Project',featurestore:'Feature store',experiments:'Experiments',workloads:'Workloads',registry:'Registry'}[p];}
+function md(s){s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;');s=s.replace(/```([\s\S]*?)```/g,function(_,c){return '<span style="display:block;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px;font-family:var(--mono);font-size:11.5px;margin:6px 0;white-space:pre-wrap">'+c.trim()+'</span>';});return s.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');}
+
+function jump(i){
+  if(playing)return;
+  cur=i;const s=TAPE.steps[i];
+  for(let k=0;k<i;k++){done.add(k);(TAPE.steps[k].playback.reveal||[]).forEach(r=>revealed.add(r));}
+  TAPE.steps.slice(i).forEach((st,k)=>{done.delete(i+k);});
+  refreshDots();
+  $('stepbody').innerHTML='<h2>Step '+s.n+' · '+s.title+'</h2>'
+    +'<h4>Why</h4><p>'+md(s.why)+'</p><h4>Do</h4><p>'+md(s.do)+'</p>'
+    +'<div id="expectbox"><span class="tag">EXPECT</span><p style="margin-top:5px">'+md(s.expect)+'</p></div>';
+  $('actbtn').disabled=false;$('actbtn').textContent=s.action.label;
+  $('nextbtn').disabled=true;
+  $('term').innerHTML='';$('reconnote').textContent='';
+  showTab((s.playback.dashboard||{}).panel||'resources');
+  renderPlatform();
+}
+function refreshDots(){TAPE.steps.forEach((_,k)=>{const d=$('dot'+k);d.className='stepdot'+(k===cur?' cur':'')+(done.has(k)?' done':'');});}
+
+$('actbtn').onclick=()=>{
+  const s=TAPE.steps[cur];
+  if(s.action.kind==='import-yaml'&&s.action.yamlAsset){
+    $('mtitle').textContent=s.action.label;
+    $('myaml').textContent=yamlPreview(s);
+    $('modal').style.display='flex';
+  } else run();
+};
+function yamlPreview(s){
+  const a=TAPE.assets.resources[s.action.yamlAsset];
+  return a?jsyaml(a):'(see the manual for the manifest files this step applies)';
+}
+function jsyaml(o,ind){ind=ind||'';let out='';
+  for(const[k,v]of Object.entries(o)){if(v==null)continue;
+    if(typeof v==='object'&&!Array.isArray(v)){out+=ind+k+':\n'+jsyaml(v,ind+'  ');}
+    else if(Array.isArray(v)){out+=ind+k+':\n'+v.map(x=>typeof x==='object'?ind+'- \n'+jsyaml(x,ind+'    '):ind+'- '+x+'\n').join('');}
+    else out+=ind+k+': '+v+'\n';}
+  return out;}
+function closeModal(){$('modal').style.display='none';}
+function applyModal(){closeModal();run();}
+
+async function run(){
+  if(playing)return;playing=true;
+  const s=TAPE.steps[cur];$('actbtn').disabled=true;
+  const lines=typeof s.playback.terminal==='string'?TAPE.assets.logs[s.playback.terminal]:s.playback.terminal;
+  if(s.playback.reconstructed)$('reconnote').textContent='⚠ transcript reconstructed from the live session records (pod expired before capture)';
+  else $('reconnote').textContent='● recorded verbatim from the live cluster';
+  const term=$('term');const fast=$('fast').checked;
+  term.innerHTML='<span class="p">$ '+s.action.label+'</span>\n';
+  let last=0;
+  for(const[t,text]of lines){
+    if(!fast){await sleep(Math.min(t-last,600));}else{await sleep(8);}
+    last=t;
+    const d=document.createElement('div');
+    if(s.playback.reconstructed)d.className='recon';
+    d.textContent=text;term.appendChild(d);term.scrollTop=term.scrollHeight;
+  }
+  (s.playback.reveal||[]).forEach(r=>revealed.add(r));
+  done.add(cur);playing=false;refreshDots();
+  const eb=$('expectbox');eb.classList.add('pass');
+  let verdict='step complete';
+  if(s.check){const a=TAPE.assets.resources[s.check.asset];const v=s.check.path.split('.').reduce((o,k)=>o&&o[k],a);
+    verdict=(v===s.check.equals)?('verified: '+s.check.path+' = '+JSON.stringify(v)):'check mismatch (tape)';}
+  eb.querySelector('.tag').textContent='✓ EXPECT MET · '+verdict;
+  const panel=(s.playback.dashboard||{}).panel;if(panel){$('tab-'+panel).classList.add('pulse');showTab(panel);}
+  renderPlatform();
+  if(cur<TAPE.steps.length-1)$('nextbtn').disabled=false;
+  else $('nextbtn').textContent='Course complete ✓';
+}
+$('nextbtn').onclick=()=>{if(cur<TAPE.steps.length-1)jump(cur+1);};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+let curTab='resources';
+function showTab(p){curTab=p;document.querySelectorAll('#tabs div').forEach(d=>d.classList.remove('on'));
+  const t=$('tab-'+p);if(t){t.classList.add('on');t.classList.remove('pulse');}renderPlatform();}
+
+function renderPlatform(){
+  const s=TAPE.steps[cur],A=TAPE.assets,el=$('platform');let h='';
+  const note=(s.playback.dashboard||{});
+  if(done.has(cur)&&note.panel===curTab&&note.note)h+='<div id="dashnote">'+md(note.note)+'</div>';
+  const vis=k=>revealed.has(k)||done.has(TAPE.steps.length-1);
+  if(curTab==='resources'){
+    const rows=Object.entries(A.resources).filter(([k])=>vis(k));
+    h+=rows.length?'':'<p style="color:var(--muted);font-size:13px">Objects appear here as your steps create them.</p>';
+    for(const[k,r]of rows){
+      const ready=readyOf(r);
+      h+='<div class="res"><span class="kind">'+r.kind+'</span><br><b>'+r.metadata.name+'</b>'
+        +(ready?'<span class="pill '+ready[1]+'">'+ready[0]+'</span>':'')
+        +'</div>';}
+  }
+  if(curTab==='featurestore'){
+    const fs=A.resources['featurestore'];
+    if(fs&&vis('featurestore')){
+      const conds=(fs.status&&fs.status.conditions||[]).map(c=>c.type+'='+c.status).join(' · ');
+      h+='<div class="res"><span class="kind">FeatureStore</span><br><b>'+fs.metadata.name+'</b><span class="pill ok">'+(fs.status&&fs.status.phase||'')+'</span><div class="kv">'+conds+'</div>'
+        +'<div class="kv">online: '+((fs.status||{}).serviceHostnames?JSON.stringify(fs.status.serviceHostnames).slice(0,120):'')+'…</div></div>';
+      h+='<div class="res"><span class="kind">Feature views (from the loaded store)</span><div class="kv">amf_kpis · 46 features\nsmf_kpis · 34 features\nupf_kpis · 38 features\nnoc_telemetry feature service · online</div></div>';
+    } else h+='<p style="color:var(--muted);font-size:13px">The feature store appears after Step 4.</p>';
+  }
+  if(curTab==='experiments'){
+    for(const e of A.mlflow.experiments||[]){
+      h+='<div class="res"><span class="kind">Experiment</span><br><b>'+e.meta.name+'</b><span class="pill ok">'+(e.runs.length)+' runs</span>';
+      if(e.runs.length){h+='<table><tr><th>run</th><th>status</th><th>metrics</th></tr>';
+        for(const r of e.runs.slice(0,8)){const m=r.data&&r.data.metrics?r.data.metrics.slice(0,3).map(x=>x.key+'='+(+x.value).toFixed(3)).join(' '):'';
+          h+='<tr><td>'+(r.info.run_name||r.info.run_id.slice(0,8))+'</td><td>'+r.info.status+'</td><td>'+m+'</td></tr>';}
+        h+='</table>';}
+      else h+='<div class="kv">runs of the 101 agent log as traces; open the walkthrough to see the trace UI</div>';
+      h+='</div>';}
+  }
+  if(curTab==='workloads'){
+    const rj=A.resources['rayjob'],wl=A.resources['kueue-workload'];
+    if(rj&&vis('rayjob')){h+='<div class="res"><span class="kind">RayJob</span><br><b>'+rj.metadata.name+'</b><span class="pill ok">'+((rj.status||{}).jobStatus||'')+'</span>'
+      +'<div class="kv">deployment: '+((rj.status||{}).jobDeploymentStatus||'')+' · entrypoint: '+(rj.spec.entrypoint||'')+'</div></div>';}
+    if(wl&&vis('kueue-workload')){h+='<div class="res"><span class="kind">Kueue Workload</span><br><b>'+wl.metadata.name+'</b><span class="pill ok">admitted</span>'
+      +'<div class="kv">queue: agent-school-queue → ClusterQueue default</div></div>';}
+    if(!h)h='<p style="color:var(--muted);font-size:13px">Kueue-admitted work appears after Step 7.</p>';
+  }
+  if(curTab==='registry'){
+    for(const m of A.registry||[]){
+      h+='<div class="res"><span class="kind">Registered model</span><br><b>'+m.m.name+'</b><span class="pill ok">'+m.m.state+'</span>'
+        +'<div class="kv">'+(m.m.description||'').slice(0,220)+'</div>';
+      for(const v of m.vs)h+='<div class="kv">version '+v.v.name+' · '+v.v.state+'</div>';
+      h+='</div>';}
+    if(!(A.registry||[]).length)h='<p style="color:var(--muted);font-size:13px">Nothing registered yet.</p>';
+  }
+  el.innerHTML=h;
+}
+function readyOf(r){
+  if(r.kind==='Pod')return[(r.status||{}).phase||'?', ((r.status||{}).phase==='Running')?'ok':'warn'];
+  if(r.kind==='PersistentVolumeClaim')return[(r.status||{}).phase||'?', 'ok'];
+  if(r.kind==='CronJob')return[r.spec&&r.spec.suspend?'suspended':'active', r.spec&&r.spec.suspend?'warn':'ok'];
+  if(r.kind==='RayJob')return[((r.status||{}).jobStatus)||'?', 'ok'];
+  return null;
+}
+</script>
+</body>
+</html>
