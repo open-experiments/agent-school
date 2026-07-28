@@ -220,6 +220,7 @@
 <script>
 const RAW="https://raw.githubusercontent.com/open-experiments/agent-school/main";
 const REPO="https://github.com/open-experiments/agent-school/tree/main";
+const LABS=["101"]; // courses with a portal tape (interactive lab)
 
 const COURSES=[
  {id:"101",dir:"101-noc-assistant",title:"NOC Assistant",len:"5:39",flag:false,
@@ -311,6 +312,7 @@ function openCourse(id){
         <a class="btn primary" href="${REPO}/${c.dir}" target="_blank" rel="noopener">Code &amp; docs on GitHub ↗</a>
         <a class="btn ghost" href="${vid}" target="_blank" rel="noopener">Open walkthrough (${c.len})</a>
         <a class="btn ghost" href="${REPO}/${c.dir}/MANUAL.md" target="_blank" rel="noopener">Course Manual</a>
+        ${LABS.includes(c.id)?`<a class="btn ghost" href="portal/index.html?tape=${c.id}-venice" target="_blank" rel="noopener">Open interactive lab <span style="font-size:11px;color:var(--muted)">beta</span></a>`:''}
       </div>
       <figure class="arch">
         <img src="${arch}" alt="${c.title} architecture" loading="lazy"/>
