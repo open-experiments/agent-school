@@ -1,0 +1,1193 @@
+{
+ "venice": {
+  "cluster": "venice",
+  "capturedAt": "2026-07-28T19:45:00Z",
+  "namespaces": {
+   "agent-school": {
+    "pods": [
+     "anomaly-contamination-sweep-c4hnw-head-9wnnv",
+     "anomaly-contamination-sweep-c4hnw-small-worker-v9vdx",
+     "anomaly-contamination-sweep-d42vf",
+     "diagnostic-agent-b85477884-4fkvq",
+     "ds-pipeline-dspa-7c8879b6d7-97sxr",
+     "ds-pipeline-metadata-envoy-dspa-664bd989f7-xb7r5",
+     "ds-pipeline-metadata-grpc-dspa-848cbb5d66-vjlpk",
+     "ds-pipeline-persistenceagent-dspa-6577b4cd48-mwpxb",
+     "ds-pipeline-scheduledworkflow-dspa-67d8dc84b6-gzn4w",
+     "ds-pipeline-workflow-controller-dspa-7cbfc4c6c6-2vpcl",
+     "execution-agent-7bc9d957b-92sfr",
+     "feast-fivegprod-665dcd564c-wxq9d",
+     "fraud-brf-training-bkcxf-system-container-driver-1343655967",
+     "fraud-brf-training-bkcxf-system-container-driver-1537045483",
+     "fraud-brf-training-bkcxf-system-container-driver-3404964602",
+     "fraud-brf-training-bkcxf-system-container-driver-3556579164",
+     "fraud-brf-training-bkcxf-system-container-driver-3957448548",
+     "fraud-brf-training-bkcxf-system-container-impl-1278835828",
+     "fraud-brf-training-bkcxf-system-container-impl-2477397277",
+     "fraud-brf-training-bkcxf-system-container-impl-3295679857",
+     "fraud-brf-training-bkcxf-system-container-impl-3923805586",
+     "fraud-brf-training-bkcxf-system-container-impl-4286101546",
+     "fraud-brf-training-bkcxf-system-dag-driver-126450035",
+     "fraud-detector-predictor-745557d9f6-jdllj",
+     "genai-eval-gn4lb",
+     "judge-agent-666d8d6d58-ngnqr",
+     "llama-stack-c5f4cf968-pcjzn",
+     "loop-state-574bfc999c-f6qvx",
+     "mariadb-dspa-8d54d66b8-f4lxp",
+     "mcp-playbook-576b8fb6df-9kkv6",
+     "netops-gateway-data-science-gateway-class-9b795696d-r5v87",
+     "netops-remediation-risk-predictor-c76748786-vqbbn",
+     "noc-assistant-1-build",
+     "noc-assistant-2-build",
+     "optimize-episode-kbscn",
+     "plan-judge-agent-66c695499b-fh9hn",
+     "planning-agent-668c65945b-95knk",
+     "rca-investigator-1-build",
+     "rca-rag-764bc9bb8f-dk4nn",
+     "risk-scorer-mcp-5f7458796f-6tk5z",
+     "scorer-mcp-5d8777c6f8-xjv6b",
+     "sim-556f27e635-r1-5hfpm",
+     "smoke-chain-srrfc",
+     "stage-remediation-risk-6zpfc",
+     "stage-sustainability-5dgtq",
+     "sustainability-scorer-predictor-69b5857b8c-lq68f",
+     "train-remediation-risk-vvknj",
+     "train-sustainability-wzq86",
+     "validation-agent-7595446c49-bhgpj"
+    ],
+    "services": [
+     "anomaly-contamination-sweep-c4hnw-head-svc",
+     "diagnostic-agent",
+     "ds-pipeline-dspa",
+     "ds-pipeline-md-dspa",
+     "ds-pipeline-metadata-grpc-dspa",
+     "ds-pipeline-workflow-controller-metrics-dspa",
+     "execution-agent",
+     "feast-fivegprod-online",
+     "feast-fivegprod-registry",
+     "feast-fivegprod-registry-rest",
+     "fraud-detector-predictor",
+     "judge-agent",
+     "llama-stack",
+     "loop-state",
+     "mariadb-dspa",
+     "mcp-playbook",
+     "metadata-grpc-service",
+     "ml-pipeline",
+     "netops-gateway-data-science-gateway-class",
+     "netops-remediation-risk-predictor",
+     "plan-judge-agent",
+     "planning-agent",
+     "rca-rag",
+     "risk-scorer-mcp",
+     "scorer-mcp",
+     "sustainability-scorer-predictor",
+     "validation-agent"
+    ],
+    "configmaps": [
+     "chain-smoke-src",
+     "diagnostic-agent-src",
+     "diagnostic-smoke-src",
+     "ds-pipeline-metadata-envoy-config-dspa",
+     "ds-pipeline-server-config-dspa",
+     "ds-pipeline-workflow-controller-dspa",
+     "ds-pipelines-mariadb-tls-config-dspa",
+     "dsp-trusted-ca-dspa",
+     "execution-agent-src",
+     "feast-fivegprod-client",
+     "feast-fivegprod-client-ca",
+     "feast-fivegprod-intra-comm",
+     "feast-pipeline-src",
+     "feast-saveds-src",
+     "feature-store-client",
+     "fraud-detector-kube-rbac-proxy-sar-config",
+     "fraud-detector-metrics-dashboard",
+     "fraud-infer-smoke-src",
+     "fraud-pipeline-src",
+     "fraud-stage-src",
+     "genai-eval-src",
+     "istio-ca-crl",
+     "judge-agent-src",
+     "kfp-launcher",
+     "kube-rbac-proxy-config-anomaly-contamination-sweep-c4hnw",
+     "kube-rbac-proxy-config-ds-pipeline-dspa",
+     "kube-rbac-proxy-metadata-config-dspa",
+     "kube-root-ca.crt",
+     "llama-stack-config",
+     "loop-smoke-src",
+     "mcp-playbook-src",
+     "metadata-grpc-configmap",
+     "mlflow-tracking",
+     "netops-remediation-risk-kube-rbac-proxy-sar-config",
+     "netops-remediation-risk-metrics-dashboard",
+     "nf-playbooks",
+     "noc-assistant-1-ca",
+     "noc-assistant-1-global-ca",
+     "noc-assistant-1-sys-config",
+     "noc-assistant-2-ca",
+     "noc-assistant-2-global-ca",
+     "noc-assistant-2-sys-config",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-gw-ca-root-cert",
+     "openshift-service-ca.crt",
+     "optimizer-src",
+     "plan-judge-agent-src",
+     "planning-agent-src",
+     "ray-sweep-src",
+     "rca-eval-src",
+     "rca-investigator-1-ca",
+     "rca-investigator-1-global-ca",
+     "rca-investigator-1-sys-config",
+     "remediation-stage-src",
+     "remediation-train-data",
+     "remediation-train-src",
+     "risk-scorer-mcp-src",
+     "sample-config-dspa",
+     "sample-pipeline-dspa",
+     "scorer-mcp-src",
+     "sim-src",
+     "sustain-stage-src",
+     "sustain-train-src",
+     "sustainability-scorer-kube-rbac-proxy-sar-config",
+     "sustainability-scorer-metrics-dashboard",
+     "triage-agent-src",
+     "validate-smoke-src",
+     "validation-agent-src"
+    ],
+    "serviceaccounts": [
+     "anomaly-contamination-sweep-c4hnw-oauth-proxy-sa",
+     "builder",
+     "default",
+     "deployer",
+     "diagnostic-agent",
+     "ds-pipeline-dspa",
+     "ds-pipeline-metadata-envoy-dspa",
+     "ds-pipeline-metadata-grpc-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-workflow-controller-dspa",
+     "ds-pipelines-mariadb-sa-dspa",
+     "energy-optimizer",
+     "execution-agent",
+     "feast-fivegprod",
+     "fraud-serving",
+     "judge-agent",
+     "netops-gateway-data-science-gateway-class",
+     "noc-assistant",
+     "pipeline-runner-dspa",
+     "plan-judge-agent",
+     "planning-agent",
+     "playbook-actuator",
+     "rca-investigator",
+     "risk-scorer-tool",
+     "scorer-tool",
+     "validation-agent"
+    ],
+    "pvcs": [
+     "feast-fivegprod-online",
+     "feast-fivegprod-registry",
+     "mariadb-dspa"
+    ],
+    "deployments": [
+     "diagnostic-agent",
+     "ds-pipeline-dspa",
+     "ds-pipeline-metadata-envoy-dspa",
+     "ds-pipeline-metadata-grpc-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-workflow-controller-dspa",
+     "execution-agent",
+     "feast-fivegprod",
+     "fraud-detector-predictor",
+     "judge-agent",
+     "llama-stack",
+     "loop-state",
+     "mariadb-dspa",
+     "mcp-playbook",
+     "netops-gateway-data-science-gateway-class",
+     "netops-remediation-risk-predictor",
+     "plan-judge-agent",
+     "planning-agent",
+     "rca-rag",
+     "risk-scorer-mcp",
+     "scorer-mcp",
+     "sustainability-scorer-predictor",
+     "validation-agent"
+    ],
+    "jobs": [
+     "anomaly-contamination-sweep",
+     "genai-eval",
+     "optimize-episode",
+     "sim-556f27e635-r1",
+     "smoke-chain",
+     "stage-remediation-risk",
+     "stage-sustainability",
+     "train-remediation-risk",
+     "train-sustainability"
+    ],
+    "cronjobs": [
+     "feast-fivegprod",
+     "noc-sweep"
+    ],
+    "servingruntimes": [
+     "fraud-mlserver",
+     "remediation-mlserver",
+     "sustainability-mlserver"
+    ],
+    "inferenceservices": [
+     "fraud-detector",
+     "netops-remediation-risk",
+     "sustainability-scorer"
+    ],
+    "rayjobs": [
+     "anomaly-contamination-sweep"
+    ],
+    "localqueues": [
+     "agent-school-queue",
+     "default"
+    ],
+    "workloads": [
+     "job-genai-eval-3af7f",
+     "job-optimize-episode-06117",
+     "job-sim-556f27e635-r1-3c1b9",
+     "job-smoke-chain-b223e",
+     "job-stage-remediation-risk-4c107",
+     "job-stage-sustainability-dfadb",
+     "job-train-remediation-risk-31ee0",
+     "job-train-sustainability-941ae",
+     "rayjob-anomaly-contamination-sweep-44983"
+    ],
+    "featurestores": [
+     "fivegprod"
+    ],
+    "dspas": [
+     "dspa"
+    ],
+    "gateways": [
+     "netops-gateway"
+    ],
+    "httproutes": [
+     "mcp-playbook-route",
+     "plan-score-route",
+     "scorer-route"
+    ],
+    "authpolicies": [
+     "mcp-playbook-authn",
+     "plan-scorer-authn",
+     "scorer-authn"
+    ],
+    "ratelimitpolicies": [
+     "mcp-playbook-ratelimit",
+     "plan-scorer-ratelimit",
+     "scorer-ratelimit"
+    ],
+    "roles": [
+     "ds-pipeline-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-user-access-dspa",
+     "ds-pipeline-workflow-controller-role-dspa",
+     "dspa-api-access",
+     "feast-fivegprod-cronjob",
+     "pipeline-runner-dspa",
+     "sim-job-submitter"
+    ],
+    "rolebindings": [
+     "agent-school-serviceaccounts-mlflow",
+     "default-dspa-api-access",
+     "ds-pipeline-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-workflow-controller-rolebinding-dspa",
+     "energy-optimizer-sim-submitter",
+     "feast-fivegprod-cronjob",
+     "noc-assistant-mlflow",
+     "pipeline-runner-dspa",
+     "pipeline-runner-mlflow",
+     "rca-investigator-mlflow",
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ],
+    "workflows": [
+     "fraud-brf-training-bkcxf"
+    ]
+   },
+   "fiveg-core": {
+    "pods": [
+     "amf-76dc87574-897wt",
+     "amf-76dc87574-fjh87",
+     "smf-79958fc44b-jxg2q",
+     "upf-684d664dbd-clccd",
+     "upf-684d664dbd-h7x8x"
+    ],
+    "configmaps": [
+     "kube-root-ca.crt",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer"
+    ],
+    "deployments": [
+     "amf",
+     "smf",
+     "upf"
+    ],
+    "roles": [
+     "nf-actuator"
+    ],
+    "rolebindings": [
+     "playbook-actuator-nf-actuator",
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ]
+   },
+   "think-tank": {
+    "pods": [
+     "think-tank-d6447b7cd-4zdnl"
+    ],
+    "services": [
+     "think-tank"
+    ],
+    "configmaps": [
+     "kube-root-ca.crt",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt",
+     "think-tank-src"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer"
+    ],
+    "deployments": [
+     "think-tank"
+    ],
+    "rolebindings": [
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ]
+   },
+   "telco-aix": {
+    "pods": [
+     "kimi-linear-48b-a3b-predictor-7d7cb7cb8-7t6mk"
+    ],
+    "services": [
+     "kimi-linear-48b-a3b-predictor"
+    ],
+    "configmaps": [
+     "kimi-linear-48b-a3b-kube-rbac-proxy-sar-config",
+     "kimi-linear-48b-a3b-metrics-dashboard",
+     "kube-root-ca.crt",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer"
+    ],
+    "deployments": [
+     "kimi-linear-48b-a3b-predictor"
+    ],
+    "servingruntimes": [
+     "custom-vllm-tp1"
+    ],
+    "inferenceservices": [
+     "kimi-linear-48b-a3b"
+    ],
+    "rolebindings": [
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ]
+   },
+   "rhoai-model-registries": {
+    "pods": [
+     "model-catalog-69b867b4cb-hhkjh",
+     "model-catalog-postgres-859f674fdd-hvjtv",
+     "venice-registry-74f559cdb6-p99w5",
+     "venice-registry-postgres-5587bcf769-5kvnl"
+    ],
+    "services": [
+     "model-catalog",
+     "model-catalog-postgres",
+     "venice-registry",
+     "venice-registry-postgres"
+    ],
+    "configmaps": [
+     "default-catalog-sources",
+     "kube-root-ca.crt",
+     "mcp-catalog-sources",
+     "model-catalog-kube-rbac-proxy-config",
+     "model-catalog-sources",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt",
+     "venice-registry-kube-rbac-proxy-config"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer",
+     "model-catalog",
+     "registry-client",
+     "venice-registry"
+    ],
+    "pvcs": [
+     "model-catalog-postgres",
+     "venice-registry-postgres-storage"
+    ],
+    "deployments": [
+     "model-catalog",
+     "model-catalog-postgres",
+     "venice-registry",
+     "venice-registry-postgres"
+    ],
+    "roles": [
+     "model-catalog",
+     "model-catalog-admin",
+     "registry-user-venice-registry"
+    ],
+    "rolebindings": [
+     "model-catalog-admin-binding",
+     "model-catalog-authenticated",
+     "registry-client-user",
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers",
+     "venice-registry-users"
+    ],
+    "modelregistries": [
+     "venice-registry"
+    ]
+   },
+   "redhat-ods-applications": {
+    "deployments": [
+     "mlflow"
+    ]
+   }
+  },
+  "logs": [
+   "agent-school/anomaly-contamination-sweep-c4hnw-head-9wnnv/kube-rbac-proxy",
+   "agent-school/anomaly-contamination-sweep-c4hnw-head-9wnnv/ray-head",
+   "agent-school/anomaly-contamination-sweep-c4hnw-small-worker-v9vdx/ray-worker",
+   "agent-school/anomaly-contamination-sweep-d42vf/ray-job-submitter",
+   "agent-school/diagnostic-agent-b85477884-4fkvq/agent",
+   "agent-school/ds-pipeline-dspa-7c8879b6d7-97sxr/ds-pipeline-api-server",
+   "agent-school/ds-pipeline-dspa-7c8879b6d7-97sxr/kube-rbac-proxy",
+   "agent-school/ds-pipeline-metadata-envoy-dspa-664bd989f7-xb7r5/container",
+   "agent-school/ds-pipeline-metadata-envoy-dspa-664bd989f7-xb7r5/kube-rbac-proxy",
+   "agent-school/ds-pipeline-metadata-grpc-dspa-848cbb5d66-vjlpk/container",
+   "agent-school/ds-pipeline-persistenceagent-dspa-6577b4cd48-mwpxb/ds-pipeline-persistenceagent",
+   "agent-school/ds-pipeline-scheduledworkflow-dspa-67d8dc84b6-gzn4w/ds-pipeline-scheduledworkflow",
+   "agent-school/ds-pipeline-workflow-controller-dspa-7cbfc4c6c6-2vpcl/ds-pipeline-workflow-controller",
+   "agent-school/execution-agent-7bc9d957b-92sfr/agent",
+   "agent-school/feast-fivegprod-665dcd564c-wxq9d/online",
+   "agent-school/feast-fivegprod-665dcd564c-wxq9d/registry",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-1343655967/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-1343655967/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-1537045483/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-1537045483/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-3404964602/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-3404964602/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-3556579164/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-3556579164/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-3957448548/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-driver-3957448548/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-1278835828/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-1278835828/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-2477397277/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-2477397277/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-3295679857/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-3295679857/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-3923805586/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-3923805586/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-4286101546/main",
+   "agent-school/fraud-brf-training-bkcxf-system-container-impl-4286101546/wait",
+   "agent-school/fraud-brf-training-bkcxf-system-dag-driver-126450035/main",
+   "agent-school/fraud-brf-training-bkcxf-system-dag-driver-126450035/wait",
+   "agent-school/fraud-detector-predictor-745557d9f6-jdllj/kserve-container",
+   "agent-school/fraud-detector-predictor-745557d9f6-jdllj/kube-rbac-proxy",
+   "agent-school/genai-eval-gn4lb/eval",
+   "agent-school/judge-agent-666d8d6d58-ngnqr/agent",
+   "agent-school/llama-stack-c5f4cf968-pcjzn/server",
+   "agent-school/loop-state-574bfc999c-f6qvx/redis",
+   "agent-school/mariadb-dspa-8d54d66b8-f4lxp/mariadb",
+   "agent-school/mcp-playbook-576b8fb6df-9kkv6/mcp",
+   "agent-school/netops-gateway-data-science-gateway-class-9b795696d-r5v87/istio-proxy",
+   "agent-school/netops-remediation-risk-predictor-c76748786-vqbbn/kserve-container",
+   "agent-school/netops-remediation-risk-predictor-c76748786-vqbbn/kube-rbac-proxy",
+   "agent-school/noc-assistant-1-build/docker-build",
+   "agent-school/noc-assistant-2-build/docker-build",
+   "agent-school/optimize-episode-kbscn/optimizer",
+   "agent-school/plan-judge-agent-66c695499b-fh9hn/agent",
+   "agent-school/planning-agent-668c65945b-95knk/agent",
+   "agent-school/rca-investigator-1-build/docker-build",
+   "agent-school/rca-rag-764bc9bb8f-dk4nn/rag",
+   "agent-school/risk-scorer-mcp-5f7458796f-6tk5z/mcp",
+   "agent-school/scorer-mcp-5d8777c6f8-xjv6b/mcp",
+   "agent-school/sim-556f27e635-r1-5hfpm/sim",
+   "agent-school/smoke-chain-srrfc/smoke",
+   "agent-school/stage-remediation-risk-6zpfc/stage",
+   "agent-school/stage-sustainability-5dgtq/stage",
+   "agent-school/sustainability-scorer-predictor-69b5857b8c-lq68f/kserve-container",
+   "agent-school/sustainability-scorer-predictor-69b5857b8c-lq68f/kube-rbac-proxy",
+   "agent-school/train-remediation-risk-vvknj/train",
+   "agent-school/train-sustainability-wzq86/train",
+   "agent-school/validation-agent-7595446c49-bhgpj/agent",
+   "fiveg-core/amf-76dc87574-897wt/amf",
+   "fiveg-core/amf-76dc87574-fjh87/amf",
+   "fiveg-core/smf-79958fc44b-jxg2q/smf",
+   "fiveg-core/upf-684d664dbd-clccd/upf",
+   "fiveg-core/upf-684d664dbd-h7x8x/upf",
+   "redhat-ods-applications/mlflow-75f8f954ff-fzcr9/mlflow",
+   "telco-aix/kimi-linear-48b-a3b-predictor-7d7cb7cb8-7t6mk/kserve-container",
+   "think-tank/think-tank-d6447b7cd-4zdnl/mcp"
+  ],
+  "cluster_scoped": [
+   "clusterqueues",
+   "datascienceclusters",
+   "dscinitializations",
+   "dspFixCRB",
+   "dspFixClusterRole",
+   "gatewayclasses",
+   "imageregistryconfig",
+   "kueue-cr",
+   "mlflows",
+   "resourceflavors"
+  ],
+  "mlflow": {
+   "experiments": [
+    {
+     "name": "302-energy-optimizer",
+     "runs": 24
+    },
+    {
+     "name": "301-closed-loop",
+     "runs": 3
+    },
+    {
+     "name": "revassurance-fraud",
+     "runs": 13
+    },
+    {
+     "name": "201-rca-investigator",
+     "runs": 0
+    },
+    {
+     "name": "5gprod-anomaly-sweep",
+     "runs": 1
+    },
+    {
+     "name": "101-noc-assistant",
+     "runs": 0
+    }
+   ],
+   "registered_models": [
+    "netops-remediation-risk",
+    "revassurance-fraud-brf",
+    "sustainability-energy-efficiency"
+   ]
+  },
+  "model_registry": [
+   "kimi-linear-48b-a3b-instruct-awq-8bit",
+   "diffusiongemma-26b-a4b-it-fp8-dynamic",
+   "nex-n2-mini",
+   "inkling-975b-a41b",
+   "probe-test",
+   "5gprod-anomaly-isolationforest",
+   "revassurance-fraud-brf",
+   "sustainability-energy-efficiency",
+   "netops-remediation-risk"
+  ]
+ },
+ "rome": {
+  "cluster": "rome",
+  "capturedAt": "2026-07-28T20:05:00Z",
+  "namespaces": {
+   "agent-school": {
+    "pods": [
+     "anomaly-contamination-sweep-5-7cd5c",
+     "diagnostic-agent-f68db8cc4-dzmcx",
+     "ds-pipeline-dspa-7f77f7cff9-k9q88",
+     "ds-pipeline-metadata-envoy-dspa-664bd989f7-rs7bv",
+     "ds-pipeline-metadata-grpc-dspa-848cbb5d66-mscn2",
+     "ds-pipeline-persistenceagent-dspa-6577b4cd48-j2787",
+     "ds-pipeline-scheduledworkflow-dspa-67d8dc84b6-9gkc4",
+     "ds-pipeline-workflow-controller-dspa-7cbfc4c6c6-fqgrd",
+     "execution-agent-568c99cd-v5t9d",
+     "feast-fivegprod-5b88d4f7c5-tltdc",
+     "fraud-detector-predictor-596c444cf8-rsrzd",
+     "judge-agent-5bbfd4b86-7mdhp",
+     "llama-stack-85b9c494db-jbnl7",
+     "loop-state-677fd6c667-vfzgd",
+     "mariadb-dspa-8d54d66b8-6v7t4",
+     "mcp-playbook-768ddcbff-sdz4t",
+     "netops-gateway-data-science-gateway-class-5644746f95-swrl2",
+     "netops-remediation-risk-predictor-c76748786-zhxw8",
+     "noc-assistant-2-build",
+     "plan-judge-agent-66c695499b-gm77z",
+     "planning-agent-64794b85bb-blt9g",
+     "rca-investigator-2-build",
+     "rca-rag-5bdf9f5d87-rxmrk",
+     "risk-scorer-mcp-5f7458796f-vsb2n",
+     "scorer-mcp-5769cf544d-9kqdm",
+     "sustainability-scorer-predictor-69b5857b8c-twt8p",
+     "track1-live-qa2-vdzz4",
+     "validation-agent-78565c9dc9-7s524"
+    ],
+    "services": [
+     "diagnostic-agent",
+     "ds-pipeline-dspa",
+     "ds-pipeline-md-dspa",
+     "ds-pipeline-metadata-grpc-dspa",
+     "ds-pipeline-workflow-controller-metrics-dspa",
+     "execution-agent",
+     "feast-fivegprod-online",
+     "feast-fivegprod-registry",
+     "feast-fivegprod-registry-rest",
+     "feast-fivegprod-ui",
+     "fraud-detector-predictor",
+     "judge-agent",
+     "llama-stack",
+     "loop-state",
+     "mariadb-dspa",
+     "mcp-playbook",
+     "metadata-grpc-service",
+     "ml-pipeline",
+     "netops-gateway-data-science-gateway-class",
+     "netops-remediation-risk-predictor",
+     "plan-judge-agent",
+     "planning-agent",
+     "rca-rag",
+     "risk-scorer-mcp",
+     "scorer-mcp",
+     "sustainability-scorer-predictor",
+     "validation-agent"
+    ],
+    "configmaps": [
+     "agent-src-mlflow",
+     "chain-smoke-src",
+     "diagnostic-agent-src",
+     "diagnostic-smoke-src",
+     "ds-pipeline-metadata-envoy-config-dspa",
+     "ds-pipeline-server-config-dspa",
+     "ds-pipeline-workflow-controller-dspa",
+     "ds-pipelines-mariadb-tls-config-dspa",
+     "dsp-trusted-ca-dspa",
+     "execution-agent-src",
+     "feast-fivegprod-client",
+     "feast-fivegprod-client-ca",
+     "feast-fivegprod-intra-comm",
+     "feast-pipeline-src",
+     "feast-saveds-src",
+     "feature-store-client",
+     "fraud-detector-kube-rbac-proxy-sar-config",
+     "fraud-detector-metrics-dashboard",
+     "fraud-infer-test",
+     "fraud-pipeline-src",
+     "fraud-stage-src",
+     "genai-eval-src",
+     "genai-eval-src-v3",
+     "genai-eval-src-v4",
+     "genai-eval-src-v5",
+     "gw-smoke-src",
+     "istio-ca-crl",
+     "judge-agent-src",
+     "judge-smoke-src",
+     "kfp-launcher",
+     "kube-rbac-proxy-config-ds-pipeline-dspa",
+     "kube-rbac-proxy-metadata-config-dspa",
+     "kube-root-ca.crt",
+     "llama-stack-config",
+     "loop-smoke-src",
+     "mcp-playbook-src",
+     "metadata-grpc-configmap",
+     "mlflow-tracking",
+     "netops-remediation-risk-kube-rbac-proxy-sar-config",
+     "netops-remediation-risk-metrics-dashboard",
+     "nf-playbooks",
+     "noc-assistant-2-ca",
+     "noc-assistant-2-global-ca",
+     "noc-assistant-2-sys-config",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-gw-ca-root-cert",
+     "openshift-service-ca.crt",
+     "optimizer-src",
+     "plan-judge-agent-src",
+     "planning-agent-src",
+     "ray-sweep-src",
+     "rca-investigator-2-ca",
+     "rca-investigator-2-global-ca",
+     "rca-investigator-2-sys-config",
+     "remediation-stage-src",
+     "remediation-train-data",
+     "remediation-train-src",
+     "risk-scorer-mcp-src",
+     "sample-config-dspa",
+     "sample-pipeline-dspa",
+     "score-smoke-src",
+     "scorer-mcp-src",
+     "scorer-smoke-src",
+     "sim-src",
+     "sustain-stage-src",
+     "sustain-train-src",
+     "sustainability-scorer-kube-rbac-proxy-sar-config",
+     "sustainability-scorer-metrics-dashboard",
+     "triage-agent-src",
+     "validate-smoke-src",
+     "validation-agent-src"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer",
+     "diagnostic-agent",
+     "ds-pipeline-dspa",
+     "ds-pipeline-metadata-envoy-dspa",
+     "ds-pipeline-metadata-grpc-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-workflow-controller-dspa",
+     "ds-pipelines-mariadb-sa-dspa",
+     "energy-optimizer",
+     "execution-agent",
+     "feast-fivegprod",
+     "fraud-serving",
+     "judge-agent",
+     "mlflow-client",
+     "netops-gateway-data-science-gateway-class",
+     "noc-assistant",
+     "pipeline-runner-dspa",
+     "plan-judge-agent",
+     "planning-agent",
+     "playbook-actuator",
+     "rca-investigator",
+     "risk-scorer-tool",
+     "scorer-tool",
+     "validation-agent"
+    ],
+    "pvcs": [
+     "feast-fivegprod-online",
+     "feast-fivegprod-registry",
+     "mariadb-dspa"
+    ],
+    "deployments": [
+     "diagnostic-agent",
+     "ds-pipeline-dspa",
+     "ds-pipeline-metadata-envoy-dspa",
+     "ds-pipeline-metadata-grpc-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-workflow-controller-dspa",
+     "execution-agent",
+     "feast-fivegprod",
+     "fraud-detector-predictor",
+     "judge-agent",
+     "llama-stack",
+     "loop-state",
+     "mariadb-dspa",
+     "mcp-playbook",
+     "netops-gateway-data-science-gateway-class",
+     "netops-remediation-risk-predictor",
+     "plan-judge-agent",
+     "planning-agent",
+     "rca-rag",
+     "risk-scorer-mcp",
+     "scorer-mcp",
+     "sustainability-scorer-predictor",
+     "validation-agent"
+    ],
+    "jobs": [
+     "anomaly-contamination-sweep-5",
+     "track1-live-qa2"
+    ],
+    "cronjobs": [
+     "feast-fivegprod",
+     "noc-sweep"
+    ],
+    "servingruntimes": [
+     "fraud-mlserver",
+     "remediation-mlserver",
+     "sustainability-mlserver"
+    ],
+    "inferenceservices": [
+     "fraud-detector",
+     "netops-remediation-risk",
+     "sustainability-scorer"
+    ],
+    "rayjobs": [
+     "anomaly-contamination-sweep-5"
+    ],
+    "localqueues": [
+     "agent-school-queue",
+     "default"
+    ],
+    "workloads": [
+     "pod-fraud-detector-predictor-678484dc98-z2wqt-09456",
+     "rayjob-anomaly-contamination-sweep-5-96c13"
+    ],
+    "featurestores": [
+     "fivegprod"
+    ],
+    "dspas": [
+     "dspa"
+    ],
+    "gateways": [
+     "netops-gateway"
+    ],
+    "httproutes": [
+     "mcp-playbook-route",
+     "plan-score-route",
+     "scorer-route"
+    ],
+    "authpolicies": [
+     "mcp-playbook-authn",
+     "plan-scorer-authn",
+     "scorer-authn"
+    ],
+    "ratelimitpolicies": [
+     "mcp-playbook-ratelimit",
+     "plan-scorer-ratelimit",
+     "scorer-ratelimit"
+    ],
+    "roles": [
+     "ds-pipeline-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-user-access-dspa",
+     "ds-pipeline-workflow-controller-role-dspa",
+     "dspa-api-access",
+     "feast-fivegprod-cronjob",
+     "pipeline-runner-dspa",
+     "pod-log-reader",
+     "sim-job-submitter"
+    ],
+    "rolebindings": [
+     "agent-school-serviceaccounts-mlflow",
+     "default-dspa-api-access",
+     "ds-pipeline-dspa",
+     "ds-pipeline-persistenceagent-dspa",
+     "ds-pipeline-scheduledworkflow-dspa",
+     "ds-pipeline-workflow-controller-rolebinding-dspa",
+     "energy-optimizer-sim-submitter",
+     "feast-fivegprod-cronjob",
+     "log-exporter-rb",
+     "mlflow-client-edit",
+     "noc-assistant-mlflow",
+     "pipeline-runner-dspa",
+     "pipeline-runner-mlflow",
+     "rca-investigator-mlflow",
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ]
+   },
+   "fiveg-core": {
+    "pods": [
+     "amf-5746474b6d-7mw79",
+     "amf-5746474b6d-lwdfr",
+     "smf-558f45fb47-dcsk6",
+     "upf-56db4fbcf4-nwfzr",
+     "upf-56db4fbcf4-whnt2"
+    ],
+    "configmaps": [
+     "kube-root-ca.crt",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer"
+    ],
+    "deployments": [
+     "amf",
+     "smf",
+     "upf"
+    ],
+    "roles": [
+     "nf-actuator"
+    ],
+    "rolebindings": [
+     "playbook-actuator-nf-actuator",
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ]
+   },
+   "think-tank": {
+    "pods": [
+     "think-tank-78f768fb7b-vcntx"
+    ],
+    "services": [
+     "think-tank"
+    ],
+    "configmaps": [
+     "kube-root-ca.crt",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt",
+     "think-tank-src"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer"
+    ],
+    "deployments": [
+     "think-tank"
+    ],
+    "rolebindings": [
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ]
+   },
+   "telco-aix": {
+    "pods": [
+     "kimi-linear-48b-a3b-predictor-87dff7d74-gsww5",
+     "telco-aix-wb-0"
+    ],
+    "services": [
+     "kimi-linear-48b-a3b-predictor",
+     "telco-aix-wb",
+     "telco-aix-wb-kube-rbac-proxy"
+    ],
+    "configmaps": [
+     "diffusiongemma-26b-a4b-it-fp8-kube-rbac-proxy-sar-config",
+     "diffusiongemma-26b-a4b-it-fp8-metrics-dashboard",
+     "kimi-linear-48b-a3b-kube-rbac-proxy-sar-config",
+     "kimi-linear-48b-a3b-metrics-dashboard",
+     "kube-root-ca.crt",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt",
+     "pipeline-runtime-images",
+     "telco-aix-wb-kube-rbac-proxy-config",
+     "workbench-trusted-ca-bundle"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer",
+     "diffusiongemma-26b-a4b-it-fp8-dynamic-sa",
+     "diffusiongemma-26b-a4b-it-fp8-sa",
+     "telco-aix-wb"
+    ],
+    "pvcs": [
+     "telco-aix-wb-storage"
+    ],
+    "deployments": [
+     "kimi-linear-48b-a3b-predictor"
+    ],
+    "servingruntimes": [
+     "custom-vllm-runtime",
+     "custom-vllm-tp2",
+     "diffusiongemma-26b-a4b-it-fp8"
+    ],
+    "inferenceservices": [
+     "diffusiongemma-26b-a4b-it-fp8",
+     "kimi-linear-48b-a3b"
+    ],
+    "roles": [
+     "diffusiongemma-26b-a4b-it-fp8-view-role"
+    ],
+    "rolebindings": [
+     "admin",
+     "diffusiongemma-26b-a4b-it-fp8-view",
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers",
+     "telco-aix-wb-mlflow"
+    ]
+   },
+   "rhoai-model-registries": {
+    "pods": [
+     "model-catalog-69b867b4cb-glgk8",
+     "model-catalog-postgres-859f674fdd-k72sm",
+     "rome-registry-5c8df5b845-xfnng",
+     "rome-registry-postgres-5559d944b-5qvm4"
+    ],
+    "services": [
+     "model-catalog",
+     "model-catalog-postgres",
+     "rome-registry",
+     "rome-registry-postgres"
+    ],
+    "configmaps": [
+     "default-catalog-sources",
+     "kube-root-ca.crt",
+     "mcp-catalog-sources",
+     "model-catalog-kube-rbac-proxy-config",
+     "model-catalog-sources",
+     "odh-kserve-custom-ca-bundle",
+     "odh-trusted-ca-bundle",
+     "openshift-service-ca.crt",
+     "register-models-script",
+     "rome-registry-kube-rbac-proxy-config",
+     "update-registry-script"
+    ],
+    "serviceaccounts": [
+     "builder",
+     "default",
+     "deployer",
+     "model-catalog",
+     "registry-client",
+     "rome-registry"
+    ],
+    "pvcs": [
+     "model-catalog-postgres",
+     "rome-registry-postgres-storage"
+    ],
+    "deployments": [
+     "model-catalog",
+     "model-catalog-postgres",
+     "rome-registry",
+     "rome-registry-postgres"
+    ],
+    "roles": [
+     "model-catalog",
+     "model-catalog-admin",
+     "registry-user-rome-registry"
+    ],
+    "rolebindings": [
+     "model-catalog-admin-binding",
+     "model-catalog-authenticated",
+     "registry-client-user",
+     "rome-registry-users",
+     "system:deployers",
+     "system:image-builders",
+     "system:image-pullers"
+    ],
+    "modelregistries": [
+     "rome-registry"
+    ]
+   },
+   "redhat-ods-applications": {
+    "deployments": [
+     "mlflow"
+    ]
+   }
+  },
+  "logs": [
+   "agent-school/anomaly-contamination-sweep-5-7cd5c/ray-job-submitter",
+   "agent-school/diagnostic-agent-f68db8cc4-dzmcx/agent",
+   "agent-school/ds-pipeline-dspa-7f77f7cff9-k9q88/ds-pipeline-api-server",
+   "agent-school/ds-pipeline-dspa-7f77f7cff9-k9q88/kube-rbac-proxy",
+   "agent-school/ds-pipeline-metadata-envoy-dspa-664bd989f7-rs7bv/container",
+   "agent-school/ds-pipeline-metadata-envoy-dspa-664bd989f7-rs7bv/kube-rbac-proxy",
+   "agent-school/ds-pipeline-metadata-grpc-dspa-848cbb5d66-mscn2/container",
+   "agent-school/ds-pipeline-persistenceagent-dspa-6577b4cd48-j2787/ds-pipeline-persistenceagent",
+   "agent-school/ds-pipeline-scheduledworkflow-dspa-67d8dc84b6-9gkc4/ds-pipeline-scheduledworkflow",
+   "agent-school/ds-pipeline-workflow-controller-dspa-7cbfc4c6c6-fqgrd/ds-pipeline-workflow-controller",
+   "agent-school/execution-agent-568c99cd-v5t9d/agent",
+   "agent-school/feast-fivegprod-5b88d4f7c5-tltdc/online",
+   "agent-school/feast-fivegprod-5b88d4f7c5-tltdc/registry",
+   "agent-school/feast-fivegprod-5b88d4f7c5-tltdc/ui",
+   "agent-school/fraud-detector-predictor-596c444cf8-rsrzd/kserve-container",
+   "agent-school/fraud-detector-predictor-596c444cf8-rsrzd/kube-rbac-proxy",
+   "agent-school/judge-agent-5bbfd4b86-7mdhp/agent",
+   "agent-school/llama-stack-85b9c494db-jbnl7/server",
+   "agent-school/loop-state-677fd6c667-vfzgd/redis",
+   "agent-school/mariadb-dspa-8d54d66b8-6v7t4/mariadb",
+   "agent-school/mcp-playbook-768ddcbff-sdz4t/mcp",
+   "agent-school/netops-gateway-data-science-gateway-class-5644746f95-swrl2/istio-proxy",
+   "agent-school/netops-remediation-risk-predictor-c76748786-zhxw8/kserve-container",
+   "agent-school/netops-remediation-risk-predictor-c76748786-zhxw8/kube-rbac-proxy",
+   "agent-school/noc-assistant-2-build/docker-build",
+   "agent-school/plan-judge-agent-66c695499b-gm77z/agent",
+   "agent-school/planning-agent-64794b85bb-blt9g/agent",
+   "agent-school/rca-investigator-2-build/docker-build",
+   "agent-school/rca-rag-5bdf9f5d87-rxmrk/rag",
+   "agent-school/risk-scorer-mcp-5f7458796f-vsb2n/mcp",
+   "agent-school/scorer-mcp-5769cf544d-9kqdm/mcp",
+   "agent-school/sustainability-scorer-predictor-69b5857b8c-twt8p/kserve-container",
+   "agent-school/sustainability-scorer-predictor-69b5857b8c-twt8p/kube-rbac-proxy",
+   "agent-school/track1-live-qa2-vdzz4/qa",
+   "agent-school/validation-agent-78565c9dc9-7s524/agent",
+   "fiveg-core/amf-5746474b6d-7mw79/amf",
+   "fiveg-core/amf-5746474b6d-lwdfr/amf",
+   "fiveg-core/smf-558f45fb47-dcsk6/smf",
+   "fiveg-core/upf-56db4fbcf4-nwfzr/upf",
+   "fiveg-core/upf-56db4fbcf4-whnt2/upf",
+   "telco-aix/kimi-linear-48b-a3b-predictor-87dff7d74-gsww5/kserve-container",
+   "think-tank/think-tank-78f768fb7b-vcntx/mcp"
+  ],
+  "cluster_scoped": [
+   "clusterqueues",
+   "datascienceclusters",
+   "dscinitializations",
+   "gatewayclasses",
+   "imageregistryconfig",
+   "kueue-cr",
+   "mlflows",
+   "resourceflavors"
+  ],
+  "mlflow": {
+   "experiments": [
+    {
+     "name": "302-energy-optimizer",
+     "runs": 82
+    },
+    {
+     "name": "301-closed-loop",
+     "runs": 29
+    },
+    {
+     "name": "5gprod-anomaly-sweep",
+     "runs": 1
+    },
+    {
+     "name": "revassurance-fraud",
+     "runs": 14
+    },
+    {
+     "name": "KFP-Default",
+     "runs": 5
+    },
+    {
+     "name": "5gprod-anomaly",
+     "runs": 6
+    },
+    {
+     "name": "201-rca-investigator",
+     "runs": 0
+    },
+    {
+     "name": "101-noc-assistant",
+     "runs": 0
+    }
+   ],
+   "registered_models": [
+    "5gprod-anomaly-isolationforest",
+    "netops-remediation-risk",
+    "revassurance-fraud-brf",
+    "sustainability-energy-efficiency"
+   ]
+  },
+  "model_registry": [
+   "kimi-linear-48b-a3b-instruct-awq-8bit",
+   "diffusiongemma-26b-a4b-it-fp8-dynamic",
+   "nex-n2-mini",
+   "inkling-975b-a41b",
+   "probe-test",
+   "5gprod-anomaly-isolationforest",
+   "revassurance-fraud-brf",
+   "sustainability-energy-efficiency",
+   "netops-remediation-risk"
+  ]
+ }
+}
