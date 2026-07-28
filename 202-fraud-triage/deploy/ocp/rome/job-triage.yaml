@@ -1,0 +1,59 @@
+# One-shot: the 202 fraud-triage agent over real dataset cases, on Rome.
+#
+# Two proof runs, mirroring 301's negative-then-positive gate discipline:
+#   1. apply as-is (no APPROVE_TOKEN): escalations hit the LangGraph
+#      interrupt and PARK — outcome awaiting_approval, audited. The
+#      negative path is the proof the gate is real.
+#   2. re-apply with APPROVE_TOKEN set (uncomment): escalations resume
+#      with the approver identity and complete as escalated.
+#
+# Prereq ConfigMap:
+#   oc create configmap triage-agent-src -n agent-school \
+#     --from-file=triage_agent.py=../../../agent/triage_agent.py
+# Uses the shared mlflow-tracking ConfigMap + llm-credentials Secret.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fraud-triage
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 1200
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: triage-agent-src}
+      containers:
+        - name: agent
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          imagePullPolicy: IfNotPresent  # EA: registry.access flaked mid-run; node cache is authoritative
+          envFrom:
+            - configMapRef: {name: mlflow-tracking}
+            - secretRef: {name: llm-credentials}
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - {name: MLFLOW_EXPERIMENT, value: revassurance-fraud}
+            - name: SCORER_URL
+              value: http://fraud-detector-predictor.agent-school.svc.cluster.local:8080
+            - {name: CASES, value: "6"}
+            - {name: APPROVER, value: revass-oncall@agent-school}
+            # - {name: APPROVE_TOKEN, value: "approved-by-human"}  # run 2
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q langgraph langchain-openai mlflow==3.4.0 &&
+              python3 /src/triage_agent.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

@@ -41,6 +41,12 @@ Closes rows 7, 8, 9 — the **price/performance** theme. Replaces 201's agent-si
 ### 303 — Constrained & Identified *(proposed, 3xx)*
 Closes rows 3, 12, and deepens 13 — the **security** theme, and the biggest integrity gap. Gives an agent a SPIFFE/SPIRE SVID, runs it under a sandbox supervisor (Kata or K8s agent-sandbox) that constrains files, network, and syscalls, and has the MCP gateway authorize tool calls by that cryptographic identity. Turns Conventions #1–3 from assertions into a demonstrated, auditable property.
 
+## Next build item (committed): the 202 triage agent — DONE (July 2026)
+
+**Delivered.** The agent is live on Rome: LangGraph score → context → decide → gate → audit, `fraud-detector` consumed as a KServe tool, the approval gate (`interrupt()`) proven in both directions on the cluster, cases audited to the `revassurance-fraud` experiment, offline mode + QA pack in the repo, and the root README's 202 row now reads working, live on Rome. Original scope kept below for the record.
+
+The one real build gap inside the existing curriculum, surfaced by the July 2026 status audit: 202's model factory and serving are live on Rome, but the LangGraph triage agent itself (score, context, decide, with the human-approval gate) exists in the architecture and walkthrough, not yet as code in the repo. Building it closes the course: the agent consumes `fraud-detector` on KServe as a tool, grounds case context in the Feast billing features, enforces the approval gate in code on the escalate path, audits every case to MLflow, ships an `--offline` mode, and fills the `QA/` pack to the 101 bar. When it lands, the root README's 202 row flips from "model factory live on Rome; agent next" to working, and 202 becomes the fifth fully-closed course. This item precedes the proposed courses below.
+
 ## Housekeeping note
 
 The names NemoClaw and OpenShell appear in `101-noc-assistant/harness-tracks/openclaw.md` as "the 301 track." They trace to Table 1's blueprint/sandbox rows, where the article lists them as *(planned)* options — so they are forward-references, not invented stacks. The only correction owed is tense: they are planned article options, not an implemented 301 track. A one-line edit when 303 is scoped will settle it.

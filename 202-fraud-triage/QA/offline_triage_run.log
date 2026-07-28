@@ -1,0 +1,33 @@
+--- case-06f7a6d9 (true_label=0) ---
+[score]   case-06f7a6d9 p=0.02 (offline-stub)
+[context] case-06f7a6d9 usage_vs_avg=1.34 roaming=False prepaid=False
+[decide]  case-06f7a6d9 -> clear (policy-rail)
+[audit]   {"case_id": "case-06f7a6d9", "score": {"fraud_probability": 0.02, "fraud_flag": 0, "source": "offline-stub"}, "context": {"usage_vs_avg": 1.34, "cost_vs_avg": 0.8, "call_vs_avg": 3.21, "roaming": false, "prepaid": false, "mobile_wallet": false, "pin_used": false, "location_distance": 3.63}, "decision": "clear", "rationale": "fraud_probability 0.02 <= clear ceiling 0.1 and no context flag contradicts it", "decided_by": "policy-rail", "approval": {"required": false}, "outcome": "clear", "true_label": 0, "ts": "2026-07-28T02:25:04Z"}
+--- case-9f7ee14e (true_label=0) ---
+[score]   case-9f7ee14e p=0.17 (offline-stub)
+[context] case-9f7ee14e usage_vs_avg=1.5 roaming=False prepaid=False
+[decide]  case-9f7ee14e -> hold (band-policy)
+[audit]   {"case_id": "case-9f7ee14e", "score": {"fraud_probability": 0.17, "fraud_flag": 0, "source": "offline-stub"}, "context": {"usage_vs_avg": 1.5, "cost_vs_avg": 2.56, "call_vs_avg": 0.98, "roaming": false, "prepaid": false, "mobile_wallet": false, "pin_used": false, "location_distance": 3.65}, "decision": "hold", "rationale": "band policy: fraud_probability 0.17 in (0.1, 0.6); no aggravating pattern -> hold", "decided_by": "band-policy", "approval": {"required": false}, "outcome": "hold", "true_label": 0, "ts": "2026-07-28T02:25:04Z"}
+--- case-ef562146 (true_label=0) ---
+[score]   case-ef562146 p=0.02 (offline-stub)
+[context] case-ef562146 usage_vs_avg=0.03 roaming=False prepaid=False
+[decide]  case-ef562146 -> clear (policy-rail)
+[audit]   {"case_id": "case-ef562146", "score": {"fraud_probability": 0.02, "fraud_flag": 0, "source": "offline-stub"}, "context": {"usage_vs_avg": 0.03, "cost_vs_avg": 2.35, "call_vs_avg": 0.97, "roaming": false, "prepaid": false, "mobile_wallet": false, "pin_used": false, "location_distance": 2.51}, "decision": "clear", "rationale": "fraud_probability 0.02 <= clear ceiling 0.1 and no context flag contradicts it", "decided_by": "policy-rail", "approval": {"required": false}, "outcome": "clear", "true_label": 0, "ts": "2026-07-28T02:25:04Z"}
+--- case-17defdaf (true_label=0) ---
+[score]   case-17defdaf p=0.02 (offline-stub)
+[context] case-17defdaf usage_vs_avg=1.3 roaming=False prepaid=False
+[decide]  case-17defdaf -> clear (policy-rail)
+[audit]   {"case_id": "case-17defdaf", "score": {"fraud_probability": 0.02, "fraud_flag": 0, "source": "offline-stub"}, "context": {"usage_vs_avg": 1.3, "cost_vs_avg": 0.24, "call_vs_avg": 1.14, "roaming": false, "prepaid": false, "mobile_wallet": false, "pin_used": false, "location_distance": 0.1}, "decision": "clear", "rationale": "fraud_probability 0.02 <= clear ceiling 0.1 and no context flag contradicts it", "decided_by": "policy-rail", "approval": {"required": false}, "outcome": "clear", "true_label": 0, "ts": "2026-07-28T02:25:04Z"}
+--- case-293edbdf (true_label=1) ---
+[score]   case-293edbdf p=0.47 (offline-stub)
+[context] case-293edbdf usage_vs_avg=1.05 roaming=True prepaid=True
+[decide]  case-293edbdf -> escalate (band-policy)
+[gate]    case-293edbdf AWAITING_APPROVAL (checkpointed): {"case_id": "case-293edbdf", "fraud_probability": 0.47, "rationale": "band policy: fraud_probability 0.47 in (0.1, 0.6); roaming prepaid pattern -> escalate", "ask": "approve escalation to fraud ops?"}
+[audit]   {"case_id": "case-293edbdf", "score": {"fraud_probability": 0.47, "fraud_flag": 0, "source": "offline-stub"}, "context": {"usage_vs_avg": 1.05, "cost_vs_avg": 1.11, "call_vs_avg": 1.0, "roaming": true, "prepaid": true, "mobile_wallet": true, "pin_used": false, "location_distance": 9.12}, "decision": "escalate", "rationale": "band policy: fraud_probability 0.47 in (0.1, 0.6); roaming prepaid pattern -> escalate", "decided_by": "band-policy", "approval": {"required": true, "approved": true, "approver": "revass-oncall@example.com"}, "outcome": "escalated", "true_label": 1, "ts": "2026-07-28T02:25:04Z"}
+--- case-bbbaff6b (true_label=1) ---
+[score]   case-bbbaff6b p=0.47 (offline-stub)
+[context] case-bbbaff6b usage_vs_avg=0.96 roaming=True prepaid=True
+[decide]  case-bbbaff6b -> escalate (band-policy)
+[gate]    case-bbbaff6b AWAITING_APPROVAL (checkpointed): {"case_id": "case-bbbaff6b", "fraud_probability": 0.47, "rationale": "band policy: fraud_probability 0.47 in (0.1, 0.6); roaming prepaid pattern -> escalate", "ask": "approve escalation to fraud ops?"}
+[audit]   {"case_id": "case-bbbaff6b", "score": {"fraud_probability": 0.47, "fraud_flag": 0, "source": "offline-stub"}, "context": {"usage_vs_avg": 0.96, "cost_vs_avg": 0.94, "call_vs_avg": 0.17, "roaming": true, "prepaid": true, "mobile_wallet": false, "pin_used": false, "location_distance": 2.17}, "decision": "escalate", "rationale": "band policy: fraud_probability 0.47 in (0.1, 0.6); roaming prepaid pattern -> escalate", "decided_by": "band-policy", "approval": {"required": true, "approved": false, "approver": "revass-oncall@example.com"}, "outcome": "released_to_hold", "true_label": 1, "ts": "2026-07-28T02:25:04Z"}
+TRIAGE_OK {"clear": 3, "hold": 1, "escalated": 1, "released_to_hold": 1}

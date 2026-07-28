@@ -1,11 +1,11 @@
 # 202 · Fraud Triage
 
-> **Build status:** pipeline and serving are live on Rome.
-> `fraud-brf-training` runs green end-to-end on RHOAI Data Science
-> Pipelines, registers `revassurance-fraud-brf`, and the registered
-> version now serves on KServe as `fraud-detector` — live V2 inference
-> verified (evidence below). The LangGraph agent that consumes it is
-> the next stage.
+> **Build status: complete — all three stages live on Rome.**
+> `fraud-brf-training` runs green on RHOAI Data Science Pipelines,
+> registers `revassurance-fraud-brf`, the registered version serves on
+> KServe as `fraud-detector`, and the LangGraph triage agent consumes
+> it live — approval gate proven in both directions, every case
+> audited (evidence below).
 
 A decision agent that consumes a trained fraud model as a tool, gathers
 billing context, and routes each case to clear, hold, or escalate, with a
@@ -21,7 +21,7 @@ human-approval pattern.
 
 ## Walkthrough video
 
-A narrated walkthrough (3:40) — the problem, then the step-by-step agentic
+A narrated walkthrough (5:12) — the problem, then the step-by-step agentic
 solution over the live RHOAI portal on our DevOps cluster called Rome.
 Click the poster to play or download:
 
@@ -127,6 +127,47 @@ uploads) are documented in [pipeline/](./pipeline/) and
 5. Every outcome writes an externalized audit record: model score, context
    gathered, decision, and approver identity.
 
+## The agent, live on Rome
+
+The LangGraph triage agent ([agent/](./agent/)) is the course's final
+stage, and it runs on the cluster. Its graph is exactly the solution
+flow above — score → context → decide → gate → audit — with the
+decision discipline the whole series teaches: the served model gives
+the number, the LLM reasons only inside the band, and the rails are
+code. A case at or above the escalate floor (0.60) escalates no matter
+what; at or below the clear ceiling (0.10) it may clear; in between,
+the cluster's own LLM chooses hold vs escalate from the score and the
+billing context — and it may never clear.
+
+The human-approval gate is LangGraph's `interrupt()`, not a prompt:
+the graph checkpoints mid-case and resumes only with a person's
+decision. Both directions are proven live, mirroring 301's negative
+test. Run one (no approve token): the served model cleared the four
+legitimate cases at probability 0.0 and escalated both true-fraud
+cases at 1.0 — and both escalations **parked**,
+`TRIAGE_OK {"clear": 4, "awaiting_approval": 2}`. Run two (approval
+supplied): the gate resumed with the approver's identity and the same
+cases completed as escalated, `TRIAGE_OK {"clear": 4, "escalated": 2}`.
+
+Every case is an audit run in the `revassurance-fraud` experiment —
+the same experiment that trained the model now holds the decisions it
+powers:
+
+![Triage case audits](./images/rhoai/triage-cases.png)
+
+Open one and the decision is reconstructable from platform data alone:
+the fraud probability as a metric; decision, outcome, decided-by,
+approval-required, and the approver's identity as parameters; the full
+case record as an artifact:
+
+![Triage case detail](./images/rhoai/triage-case-detail.png)
+
+Offline first, like every course: `python3 agent/triage_agent.py
+--offline` replays six real dataset rows (four legit, two fraud)
+through the full graph with a clearly-labeled stub scorer, exercising
+both gate arms with no cluster and no endpoints. The `QA/` pack
+carries the deterministic log and the live-run results.
+
 ## Blueprint mapping
 
 | Blueprint component | Here |
@@ -151,14 +192,16 @@ uploads) are documented in [pipeline/](./pipeline/) and
 
 ## Status
 
-**Model factory and serving live on Rome; the triage agent is the
-remaining stage.** The repeatable pipeline (`fraud-brf-training` on
-Data Science Pipelines) trains and registers `revassurance-fraud-brf`
-with full lineage, the registry promotion to `rome-registry` governs
-the handoff, and the promoted version serves on KServe as
-`fraud-detector` (custom MLServer runtime, staged MLflow to MinIO,
-proven with a live V2 inference smoke test). The LangGraph triage
-agent (score, context, decide, with the human-approval gate) is
-designed in the architecture and walkthrough but its code is not yet
-in the repo; it lands next, and the `QA/` pack fills with it. Nothing
-here is a mockup, and nothing is claimed beyond what runs.
+**Complete — all three stages live on Rome.** The repeatable pipeline
+(`fraud-brf-training`) trains and registers `revassurance-fraud-brf`
+with full lineage; the registry promotion to `rome-registry` governs
+the handoff; the promoted version serves on KServe as `fraud-detector`
+(custom MLServer runtime, proven with a live V2 smoke test); and the
+LangGraph triage agent consumes it live as a tool — approval gate
+(`interrupt()`) proven in both directions on the cluster (escalations
+park without a human, resume with the approver's identity), every case
+audited as a run in `revassurance-fraud` with the full case record
+attached. Offline mode replays the whole graph with no endpoints. The
+`QA/` pack carries deterministic and live evidence. The Feast online
+billing store for case context remains the one planned item, stated as
+such in the blueprint table. No mockups.
