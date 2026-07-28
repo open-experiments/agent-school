@@ -58,6 +58,7 @@ td .sub{color:var(--muted);font-size:11.5px;margin-top:2px}
 .lbl.ok{background:#1c2f1a;color:#7fc379;border:1px solid #2f4d2c}
 .lbl.blue{background:#12293d;color:#73bcf7;border:1px solid #1e4666}
 .lbl.live{background:#1c2f1a;color:#7fc379;border:1px solid #2f4d2c}
+.lbl.warn{background:#3d2e12;color:#f0ab00;border:1px solid #66511e}
 .empty{color:var(--muted);padding:38px;text-align:center;border:1px dashed var(--line);border-radius:8px;font-size:13px}
 .mono{font-family:var(--mono);font-size:12px}
 .pagefoot{color:var(--muted);font-size:12px;margin-top:8px;text-align:right}
@@ -143,7 +144,8 @@ const qs=new URLSearchParams(location.search);
 const tapeName=qs.get('tape')||'101-venice';
 let TAPE=null,cur=0,ran=new Set(),found=new Set(),revealed=new Set(),playing=false,page='home',modelsTab='registry';
 const $=id=>document.getElementById(id);
-const PANEL2PAGE={resources:'projects',featurestore:'fs-views',experiments:'experiments',workloads:'metrics',registry:'models'};
+const PANEL2PAGE={resources:'projects',featurestore:'fs-views',experiments:'experiments',workloads:'metrics',registry:'models',deployments:'models',pipelines:'pipelines',jobs:'jobs'};
+const PANEL2TAB={registry:'registry',deployments:'deployments'};
 const PAGEPATH={home:['Home'],projects:['Data science projects'],models:['AI hub','Models'],
   'fs-overview':['Develop & train','Feature store','Overview'],'fs-entities':['Develop & train','Feature store','Entities'],
   'fs-sources':['Develop & train','Feature store','Data sources'],'fs-datasets':['Develop & train','Feature store','Datasets'],
@@ -198,11 +200,15 @@ let fsOpen=false;
 function toggleFs(force){fsOpen=(force!==undefined)?force:!fsOpen;
   NAV.forEach(n=>{if(n.grp!=='Develop & train')return;n.items.forEach(it=>{if(it.fs)$('nav-'+it.id).classList.toggle('visible',fsOpen);});});}
 function target(i){return PANEL2PAGE[(TAPE.steps[i].playback.dashboard||{}).panel]||'projects';}
+function targetTab(i){return PANEL2TAB[(TAPE.steps[i].playback.dashboard||{}).panel]||null;}
+function tryFound(){if(ran.has(cur)&&page===target(cur)&&(!targetTab(cur)||modelsTab===targetTab(cur))){found.add(cur);renderGuide();refreshDots();}}
+function setTab(t){modelsTab=t;tryFound();render();}
 function md(s){s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
   s=s.replace(/```([\s\S]*?)```/g,(_,c)=>'<span class="cb">'+c.trim()+'</span>');
   return s.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 const dt=()=>TAPE.capturedAt.slice(0,10);
+const fsEmpty=()=>TAPE.course==='101'?'It appears after Step 4.':'The feature store belongs to the course 101 lab. Open the 101 lab to explore it.';
 
 function setStep(i){
   cur=i;const s=TAPE.steps[i];
@@ -215,7 +221,7 @@ function setStep(i){
 function renderGuide(){
   const s=TAPE.steps[cur];
   const didRun=ran.has(cur),didFind=found.has(cur);
-  const t=target(cur),path=PAGEPATH[t].join(' → ');
+  const tb=targetTab(cur),t=target(cur),path=PAGEPATH[t].join(' → ')+(tb?' → '+tb.charAt(0).toUpperCase()+tb.slice(1)+' tab':'');
   let h='<h5>Why this step</h5><p>'+md(s.why)+'</p>';
   h+='<div class="task'+(didRun?' done':'')+'"><span class="tt">'+(didRun?'✓ DONE':'TASK 1')+'</span><p style="margin-top:4px">Open the <b>&gt;_ Terminal</b> and run the step\'s <code>oc</code> commands ('+s.cmds.length+' commands, real repo paths).</p></div>';
   h+='<div class="task'+(didFind?' done':'')+'"><span class="tt">'+(didFind?'✓ VERIFIED':'TASK 2')+'</span><p style="margin-top:4px">Find the result in the portal: <b>'+path+'</b></p></div>';
@@ -239,7 +245,7 @@ async function runStep(){
   const term=$('tout');term.innerHTML='';
   for(const c of s.cmds){
     const pd=document.createElement('div');pd.className='p';
-    pd.innerHTML='$ '+esc(c.cmd).replace(/(101-noc-assistant\/[^\s\\]+|\d{3}-[a-z-]+\/deploy\/[^\s\\]+)/g,'<span class="path">$1</span>');
+    pd.innerHTML='$ '+esc(c.cmd).replace(/((?:\d{3}-[a-z-]+|shared)\/[^\s\\'"]+)/g,'<span class="path">$1</span>');
     term.appendChild(pd);term.scrollTop=term.scrollHeight;
     const lines=c.log?TAPE.assets.logs[c.log]:c.out;
     let last=0;
@@ -265,12 +271,13 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function go(p){
   page=p;document.querySelectorAll('nav .item').forEach(d=>d.classList.remove('on'));
   const nd=$('nav-'+p);if(nd){nd.classList.add('on');nd.classList.remove('glow');}
-  if(ran.has(cur)&&p===target(cur)){found.add(cur);renderGuide();refreshDots();}
+  tryFound();
   render();
 }
 /* pages */
 function crumb(p){return '<div class="crumb">'+PAGEPATH[p].join(' / ')+'</div>';}
 function note(p){const s=TAPE.steps[cur],d=s.playback.dashboard||{};
+  if(PANEL2TAB[d.panel]&&modelsTab!==PANEL2TAB[d.panel])return '';
   return (ran.has(cur)&&PANEL2PAGE[d.panel]===p&&d.note)?'<div class="card" style="border-color:var(--blue)"><p style="font-size:13px">'+md(d.note)+'</p></div>':'';}
 const vis=k=>revealed.has(k);
 function render(){
@@ -285,48 +292,53 @@ function render(){
       h+=names.length?names.join('<br>'):'(objects appear as you run steps)';h+='</td></tr></table><div class="pagefoot">1 - 1 of 1</div>';}}
   if(page==='models'){
     h='<h1><span class="picon">⧉</span>Models</h1>'+crumb(page)+note(page);
-    h+='<div class="tabs"><div id="mt-catalog" '+(modelsTab==='catalog'?'class="on"':'')+' onclick="modelsTab=\'catalog\';render()">Catalog</div><div id="mt-registry" '+(modelsTab==='registry'?'class="on"':'')+' onclick="modelsTab=\'registry\';render()">Registry</div><div id="mt-deployments" '+(modelsTab==='deployments'?'class="on"':'')+' onclick="modelsTab=\'deployments\';render()">Deployments</div></div>';
+    h+='<div class="tabs"><div id="mt-catalog" '+(modelsTab==='catalog'?'class="on"':'')+' onclick="setTab(\'catalog\')">Catalog</div><div id="mt-registry" '+(modelsTab==='registry'?'class="on"':'')+' onclick="setTab(\'registry\')">Registry</div><div id="mt-deployments" '+(modelsTab==='deployments'?'class="on"':'')+' onclick="setTab(\'deployments\')">Deployments</div></div>';
     if(modelsTab==='registry'){
       h+='<div class="lede">Select a model registry to view and manage your registered models. Model registries provide a structured and organized way to store, share, version, deploy, and track models.</div>';
-      h+='<div class="toolbar"><span>Model registry:</span><span class="sel">venice-registry ▾</span></div>';
+      h+='<div class="toolbar"><span>Model registry:</span><span class="sel">'+TAPE.cluster+'-registry ▾</span></div>';
       if(!(A.registry||[]).length)h+='<div class="empty">No models registered for this course yet.</div>';
       else{h+='<table><tr><th>Model name</th><th>Latest version</th><th>Last modified</th><th>Status</th></tr>';
         for(const m of A.registry||[]){h+='<tr><td><b>'+m.m.name+'</b><div class="sub">'+(m.m.description||'').slice(0,180)+'</div></td><td class="mono">'+(m.vs[0]?m.vs[0].v.name:'—')+'</td><td>'+dt()+'</td><td><span class="lbl live">'+m.m.state+'</span></td></tr>';}
         h+='</table><div class="pagefoot">1 - '+(A.registry||[]).length+' of '+(A.registry||[]).length+'</div>';}}
     if(modelsTab==='deployments'){
-      const k=A.resources['kimi-isvc'];
       h+='<div class="lede">Model deployments served by KServe across your projects.</div>';
       h+='<table><tr><th>Model deployment name</th><th>Project</th><th>Serving runtime</th><th>Inference endpoint</th><th>Status</th></tr>';
-      if(k)h+='<tr><td><b>'+k.metadata.name+'</b><div class="sub">the course LLM every agent calls</div></td><td>'+k.metadata.namespace+'</td><td class="mono">'+(k.spec.predictor.model.runtime||'')+'</td><td class="mono">…-predictor.'+k.metadata.namespace+'.svc:8080/v1</td><td><span class="lbl ok">Ready</span></td></tr>';
-      h+='</table>';}
+      let dn=0;
+      const row=(r,sub,ready)=>'<tr><td><b>'+r.metadata.name+'</b>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</td><td>'+r.metadata.namespace+'</td><td class="mono">'+((((r.spec||{}).predictor||{}).model||{}).runtime||'')+'</td><td class="mono">'+r.metadata.name+'-predictor.'+r.metadata.namespace+'.svc:8080</td><td><span class="lbl '+(ready?'ok':'warn')+'">'+(ready?'Ready':'Pending')+'</span></td></tr>';
+      const k=A.resources['kimi-isvc'];
+      if(k){h+=row(k,'the course LLM every agent calls',true);dn++;}
+      for(const[key,r]of Object.entries(A.resources))if(r.kind==='InferenceService'&&key!=='kimi-isvc'&&vis(key)){h+=row(r,'',(r.status||{}).ready!==false);dn++;}
+      h+='</table>';
+      if(!dn)h+='<div class="empty">Model deployments appear here as you run the serving steps.</div>';}
     if(modelsTab==='catalog'){h+='<div class="empty">The model catalog is outside this course tape. Explore it on a live cluster.</div>';}}
   if(page==='fs-overview'){h='<h1>Feature store</h1>'+crumb(page)+note('fs-views');
-    if(!vis('featurestore'))h+='<div class="empty">No feature store in this project yet. It appears after Step 4.</div>';
+    if(!vis('featurestore'))h+='<div class="empty">No feature store in this project yet. '+fsEmpty()+'</div>';
     else{const fs=A.resources['featurestore'];const conds=(fs.status&&fs.status.conditions||[]).map(c=>c.type+'='+c.status).join(' · ');
       h+='<div class="card"><h3>fivegprod <span class="lbl ok">'+((fs.status||{}).phase||'Ready')+'</span></h3><p class="mono" style="color:var(--muted)">'+conds+'</p><p class="mono" style="color:var(--muted);margin-top:6px">project: fivegprod · entity: nf · registry + online store on dedicated PVCs</p></div>';
       h+='<div class="card"><h3>Resource counts</h3><table style="border:none"><tr><th>Entities</th><th>Data sources</th><th>Feature views</th><th>Feature services</th><th>Saved datasets</th></tr><tr><td>1</td><td>3</td><td>'+(A.featureViews||[]).length+'</td><td>1</td><td>'+(A.savedDatasets||[]).length+'</td></tr></table></div>';}}
   if(page==='fs-entities'){h='<h1>Entities</h1>'+crumb(page);
-    h+=vis('featurestore')?'<table><tr><th>Name</th><th>Join key</th><th>Feature store</th><th>Feature views</th></tr><tr><td><b>nf</b><div class="sub">network function (amf | smf | upf)</div></td><td class="mono">nf_id</td><td>fivegprod</td><td>3</td></tr></table>':'<div class="empty">Appears after Step 4.</div>';}
+    h+=vis('featurestore')?'<table><tr><th>Name</th><th>Join key</th><th>Feature store</th><th>Feature views</th></tr><tr><td><b>nf</b><div class="sub">network function (amf | smf | upf)</div></td><td class="mono">nf_id</td><td>fivegprod</td><td>3</td></tr></table>':'<div class="empty">'+fsEmpty()+'</div>';}
   if(page==='fs-sources'){h='<h1>Data sources</h1>'+crumb(page);
-    h+=vis('featurestore')?'<table><tr><th>Name</th><th>Type</th><th>Feature store</th></tr>'+['amf','smf','upf'].map(n=>'<tr><td><b>'+n+'_features</b><div class="sub">offline parquet · engineered 1h rolling KPIs</div></td><td>FileSource</td><td>fivegprod</td></tr>').join('')+'</table>':'<div class="empty">Appears after Step 4.</div>';}
+    h+=vis('featurestore')?'<table><tr><th>Name</th><th>Type</th><th>Feature store</th></tr>'+['amf','smf','upf'].map(n=>'<tr><td><b>'+n+'_features</b><div class="sub">offline parquet · engineered 1h rolling KPIs</div></td><td>FileSource</td><td>fivegprod</td></tr>').join('')+'</table>':'<div class="empty">'+fsEmpty()+'</div>';}
   if(page==='fs-features'){h='<h1>Features</h1>'+crumb(page);
-    h+=vis('featurestore')?'<div class="lede">118 features across 3 feature views: raw per-minute KPIs + 1h rolling mean/min/max + anomaly_score / anomaly_flag per NF.</div><table><tr><th>Feature view</th><th>Features</th></tr>'+(A.featureViews||[]).map(f=>'<tr><td class="mono">'+f.name+'</td><td>'+f.features+'</td></tr>').join('')+'</table>':'<div class="empty">Appears after Step 4.</div>';}
+    h+=vis('featurestore')?'<div class="lede">118 features across 3 feature views: raw per-minute KPIs + 1h rolling mean/min/max + anomaly_score / anomaly_flag per NF.</div><table><tr><th>Feature view</th><th>Features</th></tr>'+(A.featureViews||[]).map(f=>'<tr><td class="mono">'+f.name+'</td><td>'+f.features+'</td></tr>').join('')+'</table>':'<div class="empty">'+fsEmpty()+'</div>';}
   if(page==='fs-views'){h='<h1>Feature views</h1>'+crumb(page)+note(page);
-    if(!vis('featurestore'))h+='<div class="empty">No feature store in this project yet. It appears after Step 4.</div>';
+    if(!vis('featurestore'))h+='<div class="empty">No feature store in this project yet. '+fsEmpty()+'</div>';
     else{h+='<div class="lede">Select a feature view to view and manage its features. A feature view defines how to retrieve a logical group of features from a specific data source. It binds a data source to one or more entities and contains the logic for transforming the raw data into feature values.</div>';
       h+='<div class="toolbar"><span>Feature store:</span><span class="sel">All feature stores ▾</span><a>View connected workbenches</a></div>';
       h+='<table><tr><th>Name</th><th>Feature store</th><th>Tags</th><th>Features</th><th>Created</th><th>Updated</th><th>Owner</th><th>Store type</th></tr>';
       for(const f of A.featureViews||[])h+='<tr><td><b>'+f.name+'</b></td><td>'+f.store+'</td><td>-</td><td><a>'+f.features+' features</a></td><td>'+dt()+'</td><td>'+dt()+'</td><td>-</td><td><span class="lbl ok">✓ '+f.storeType+'</span></td></tr>';
       h+='</table><div class="pagefoot">1 - '+(A.featureViews||[]).length+' of '+(A.featureViews||[]).length+'</div>';}}
   if(page==='fs-services'){h='<h1>Feature services</h1>'+crumb(page);
-    h+=vis('featurestore')?'<table><tr><th>Name</th><th>Feature views</th><th>Feature store</th></tr><tr><td><b>noc_telemetry</b><div class="sub">what get_kpi_summary / detect_anomalies read over REST</div></td><td>amf_kpis, smf_kpis, upf_kpis</td><td>fivegprod</td></tr></table>':'<div class="empty">Appears after Step 4.</div>';}
+    h+=vis('featurestore')?'<table><tr><th>Name</th><th>Feature views</th><th>Feature store</th></tr><tr><td><b>noc_telemetry</b><div class="sub">what get_kpi_summary / detect_anomalies read over REST</div></td><td>amf_kpis, smf_kpis, upf_kpis</td><td>fivegprod</td></tr></table>':'<div class="empty">'+fsEmpty()+'</div>';}
   if(page==='fs-datasets'){h='<h1>Datasets</h1>'+crumb(page)+note(page);
-    if(!ran.has(4))h+='<div class="empty">SavedDatasets appear after Step 5 (feast-save-datasets).</div>';
+    if(!ran.has(4))h+='<div class="empty">'+(TAPE.course==='101'?'SavedDatasets appear after Step 5 (feast-save-datasets).':'The feature store belongs to the course 101 lab.')+'</div>';
     else{h+='<table><tr><th>Saved dataset</th><th>Source</th><th>Created</th></tr>';
       for(const d of A.savedDatasets||[])h+='<tr><td><b>'+d+'</b></td><td class="mono">point-in-time join · offline parquet (fivegprod)</td><td>'+dt()+'</td></tr>';h+='</table>';}}
   if(page==='experiments'){h='<h1>Experiments</h1>'+crumb(page)+note(page);
-    const show=ran.has(5)||ran.has(6)||cur>=5;
-    if(!show)h+='<div class="empty">Runs land here when the agent runs (Step 6) and the Ray sweep completes (Step 7).</div>';
+    const expIdx=TAPE.steps.map((s,i)=>(s.playback.dashboard||{}).panel==='experiments'?i:-1).filter(i=>i>=0);
+    const show=expIdx.some(i=>ran.has(i)||cur>=i);
+    if(!show)h+='<div class="empty">Runs land here as the course\'s agent and training steps execute.</div>';
     else{h+='<div class="lede">Workspace <b>agent-school</b> · tracked in the managed MLflow. Every agent run and training job in the course lands here.</div>';
       for(const e of A.mlflow.experiments||[]){
       h+='<div class="card"><h3>'+e.meta.name+' <span class="lbl blue">'+e.runs.length+' runs</span></h3>';
@@ -336,17 +348,25 @@ function render(){
         h+='</table>';}
       else h+='<p style="color:var(--muted);font-size:12.5px">This experiment holds the agent\'s LLM traces (tool calls + reasoning), flushed at the end of each run.</p>';
       h+='</div>';}}}
-  if(page==='jobs'){h='<h1>Jobs</h1>'+crumb(page);
-    const rows=[];
-    if(ran.has(4)){rows.push(['feast-bootstrap','Succeeded']);rows.push(['feast-save-datasets','Succeeded']);}
-    if(ran.has(5))rows.push(['noc-ask-jb2qw','Succeeded']);
-    if(ran.has(6))rows.push(['anomaly-contamination-sweep','Succeeded (RayJob)']);
-    h+=rows.length?'<table><tr><th>Name</th><th>Project</th><th>Status</th></tr>'+rows.map(r=>'<tr><td class="mono">'+r[0]+'</td><td>agent-school</td><td><span class="lbl ok">'+r[1]+'</span></td></tr>').join('')+'</table>':'<div class="empty">One-shot Jobs appear here as you run the course steps.</div>';}
-  if(page==='pipelines'){h='<h1>Pipelines</h1>'+crumb(page)+'<div class="empty">Course 101 does not use Data Science Pipelines.<br>Course 202\'s lab configures a pipeline server here and runs fraud-brf-training end to end.</div>';}
+  if(page==='jobs'){h='<h1>Jobs</h1>'+crumb(page)+note(page);
+    const rows=(A.jobsTimeline||[]).filter(j=>ran.has(j.after-1));
+    h+=rows.length?'<table><tr><th>Name</th><th>Project</th><th>Status</th></tr>'+rows.map(j=>'<tr><td class="mono">'+j.name+'</td><td>agent-school</td><td><span class="lbl ok">'+j.status+'</span></td></tr>').join('')+'</table>':'<div class="empty">One-shot Jobs appear here as you run the course steps.</div>';}
+  if(page==='pipelines'){h='<h1>Pipelines</h1>'+crumb(page)+note(page);
+    const dspa=A.resources['dspa'];
+    if(dspa&&vis('dspa')){
+      const conds=(((dspa.status||{}).conditions)||[]).map(c=>c.type+'='+c.status).join(' · ');
+      h+='<div class="card"><h3>Pipeline server: dspa <span class="lbl ok">Ready</span></h3><p class="mono" style="color:var(--muted)">'+conds+'</p><p class="mono" style="color:var(--muted);margin-top:6px">project-scoped stack: api-server · persistence agent · workflow controller · mariadb · object store: dspa-agent-school</p></div>';}
+    if(vis('pipelineRuns')&&(A.pipelineRuns||[]).length){
+      for(const pr of A.pipelineRuns){
+        h+='<div class="card"><h3>'+pr.name+' <span class="lbl ok">'+pr.phase+'</span> <span class="lbl blue">'+(pr.progress||'')+'</span></h3><p class="mono" style="color:var(--muted)">run: '+pr.run+'</p>';
+        h+='<table style="border:none"><tr><th>Task</th><th>Type</th><th>Status</th></tr>'+pr.nodes.map(n=>'<tr><td class="mono">'+esc(n.name||'')+'</td><td>'+n.type+'</td><td><span class="lbl ok">'+n.phase+'</span></td></tr>').join('')+'</table></div>';}}
+    else if(!(dspa&&vis('dspa')))h+='<div class="empty">'+(A.pipelineRuns!==undefined?'No pipeline server configured yet. It appears when you run the DSPA step.':'Course '+TAPE.course+' does not use Data Science Pipelines.<br>Course 202\'s lab configures a pipeline server here and runs fraud-brf-training end to end.')+'</div>';
+    else h+='<div class="empty">Pipeline runs appear after the import-and-run step.</div>';}
   if(page==='metrics'){h='<h1>Workload metrics</h1>'+crumb(page)+note(page);
     h+='<div class="toolbar"><span>Project:</span><span class="sel">agent-school ▾</span></div>';
     const rj=A.resources['rayjob'],wl=A.resources['kueue-workload'];
-    if(!vis('rayjob'))h+='<div class="empty">Kueue-admitted workloads appear after Step 7.</div>';
+    if(!rj)h+='<div class="empty">This course\'s workloads run as one-shot Jobs (see Develop &amp; train → Jobs).<br>Kueue queue metrics are exercised by course 101\'s Ray sweep.</div>';
+    else if(!vis('rayjob'))h+='<div class="empty">Kueue-admitted workloads appear after Step 7.</div>';
     else{h+='<table><tr><th>Workload</th><th>Type</th><th>Local queue</th><th>Cluster queue</th><th>Status</th></tr>';
       if(wl)h+='<tr><td class="mono">'+wl.metadata.name+'</td><td>RayJob</td><td>agent-school-queue</td><td>default</td><td><span class="lbl ok">Admitted</span></td></tr>';
       h+='</table>';
