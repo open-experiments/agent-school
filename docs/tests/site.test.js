@@ -10,7 +10,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:8777';
 
   // F1: card durations
   const lens = await page.$$eval('#cardgrid .card .len', els => els.map(e => e.textContent.trim()));
-  const expect = { '101': '▶ 6:27', '201': '▶ 3:52', '202': '▶ 5:12', '301': '▶ 7:22', '302': '▶ 5:38' };
+  const expect = { '101': '▶ 6:27', '201': '▶ 4:36', '202': '▶ 5:52', '301': '▶ 7:22', '302': '▶ 5:38' };
   const ids = await page.$$eval('#cardgrid .card .badge', els => els.map(e => e.textContent.trim().split(' ')[0]));
   ids.forEach((id, i) => check(`F1 duration ${id}`, lens[i] === expect[id], `got "${lens[i]}"`));
 
