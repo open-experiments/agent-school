@@ -134,7 +134,7 @@ oc create configmap feast-saveds-src -n agent-school \
 
 **Console:** Import YAML, paste `101-noc-assistant/deploy/ocp/rome/job-feast-bootstrap.yaml`, then `job-feast-save-datasets.yaml`.
 
-**Expect:** Job `feast-bootstrap` completes in 2 to 4 minutes. Its pod log ends with three `[push] ... -> online store` lines. `feast-save-datasets` completes and the dashboard Feature store, Datasets tab shows the three SavedDatasets.
+**Expect:** Job `feast-bootstrap` completes in 2 to 4 minutes. Its pod log ends with three `[push] ... -> online store` lines (the pushed vectors carry January 2025 timestamps — that is the dataset's own clock, not staleness). `feast-save-datasets` completes and the dashboard Feature store, Datasets tab shows the three SavedDatasets.
 
 ## Step 6: Ask the agent something
 
@@ -142,7 +142,7 @@ oc create configmap feast-saveds-src -n agent-school \
 
 **Do (Console):** Import YAML, paste `101-noc-assistant/deploy/ocp/job-ask.yaml` and add `namespace: agent-school`. (It uses `generateName`, so the console will accept it once; to re-run, paste it again. With a terminal: `oc create -f 101-noc-assistant/deploy/ocp/job-ask.yaml`.)
 
-**Expect:** the `noc-ask-...` pod completes in about a minute. Read its log: a structured NOC answer that cites live KPI and alert data. Then open RHOAI dashboard, Experiments: the run appears with full LLM traces.
+**Expect:** the `noc-ask-...` pod completes in about a minute. Read its log: a structured NOC answer that cites live KPI and alert data. Then open RHOAI dashboard, Experiments: the agent's episode is flushed to the `101-noc-assistant` experiment as an MLflow **trace** (Traces tab), not a run — the runs list stays empty, and that is expected. In the replay portal you see the experiment card; browse the trace itself on a live cluster.
 
 ## Step 7: The distributed sweep (Ray + Kueue)
 
@@ -157,7 +157,7 @@ oc create configmap ray-sweep-src -n agent-school \
 
 **Console:** Import YAML, paste `101-noc-assistant/deploy/ocp/rome/rayjob-anomaly-sweep.yaml`.
 
-**Expect:** head and worker pods start (image pull can take a few minutes the first time), the RayJob reaches `SUCCEEDED`, results land in Experiments under `5gprod-anomaly-sweep`, and Observe & monitor, Workload metrics shows the admitted workload. Head and worker pods stay around until the 24h TTL; that is by design.
+**Expect:** head and worker pods start (image pull can take a few minutes the first time), the RayJob reaches `SUCCEEDED`, results land in Experiments under `5gprod-anomaly-sweep` (`f1` prints 0.000 on this unlabeled sweep — `rate_gap` is the tuning signal, not f1), and Observe & monitor, Workload metrics shows the admitted workload. Head and worker pods stay around until the 24h TTL; that is by design.
 
 Optionally register the trained detector in the model registry: AI hub, Models, Registry, register model `5gprod-anomaly-isolationforest` from the MLflow model (see the live Rome/Venice registry entry for the metadata fields we fill in). The registry is where a model stops being an experiment artifact and becomes a named, versioned, promotable asset other courses can reference.
 

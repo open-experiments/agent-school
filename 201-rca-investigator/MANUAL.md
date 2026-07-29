@@ -44,7 +44,7 @@ The big ideas of 201 are **skills as services** (heavy capabilities live behind 
 
 **Do (Console):** Import YAML, paste `201-rca-investigator/deploy/ocp/job-rca.yaml`, add `namespace: agent-school`. (Uses `generateName`; with a terminal: `oc create -f 201-rca-investigator/deploy/ocp/job-rca.yaml`.)
 
-**Expect:** the `rca-run-...` pod completes in 2 to 4 minutes. Its log shows the tool-calling investigation followed by a written RCA whose findings cite evidence ids like `[alert-5]` and `[amf-796]`. RHOAI dashboard, Experiments now shows the run with traces for both phases.
+**Expect:** the `rca-run-...` pod completes in 2 to 4 minutes. Its log shows the tool-calling investigation followed by a written RCA whose findings cite evidence ids like `[alert-5]` and `[amf-796]`. Both phases are flushed to the `201-rca-investigator` experiment as MLflow **traces** (Traces tab), not runs — the runs list stays empty, and that is expected. In the replay portal you see the experiment card; browse the traces themselves on a live cluster.
 
 The report also lands in `REPORT_DIR` (an emptyDir by default; mount a PVC in the Job if you want reports to outlive the pod).
 
@@ -61,9 +61,11 @@ oc create configmap rca-eval-src -n agent-school \
 
 **Console:** Import YAML, paste `201-rca-investigator/deploy/ocp/rome/job-judge.yaml`.
 
-**Expect:** Job `rca-judge` completes in 2 to 3 minutes and its log ends with `logged feedback for 3 traces`. Open Experiments and inspect any judged trace: the evidence-grounding assessment is attached as feedback.
+**Expect:** Job `rca-judge` completes in 2 to 3 minutes and its log ends with `logged feedback for 3 traces`. On a live cluster, open Experiments, Traces tab and inspect any judged trace: the evidence-grounding assessment is attached as feedback (traces, not runs — the runs list stays empty).
 
 ## Step 4 (optional): Small-vs-large model routing
+
+*The interactive lab tape covers Steps 1–3; this optional step runs on a live cluster only.*
 
 **Why:** the two phases have different quality needs: investigation is many cheap tool-calling turns, the report is one careful long-form generation. The agent supports routing each phase to a different endpoint (`LLM_MODEL_SMALL` / `LLM_MODEL_LARGE`), and the overlay leaves both unset so a single Kimi serves everything. Wiring a second model in makes the cost/quality tradeoff a config decision, which is where it belongs.
 

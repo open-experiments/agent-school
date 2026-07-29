@@ -192,13 +192,15 @@ function init(){
   });
   $('gdots').innerHTML=TAPE.steps.map((_,i)=>'<i id="dot'+i+'"></i>').join('');
   $('gnext').onclick=()=>{if(cur<TAPE.steps.length-1)setStep(cur+1);};
-  $('gnav').onclick=()=>{const t=target(cur);openPathTo(t);go(t);};
+  $('gnav').onclick=()=>{const t=target(cur);openPathTo(t);go(t);const tb=targetTab(cur);if(tb)setTab(tb);};
   $('gaction').onclick=()=>{if(!$('drawer').classList.contains('open'))toggleDrawer();};
+  TAPE.steps.forEach(s=>((s.playback||{}).reveal||[]).forEach(r=>{if(r.startsWith('exp:'))expGated.add(r.slice(4));}));
   setStep(0);go('home');
 }
 let fsOpen=false;
 function toggleFs(force){fsOpen=(force!==undefined)?force:!fsOpen;
   NAV.forEach(n=>{if(n.grp!=='Develop & train')return;n.items.forEach(it=>{if(it.fs)$('nav-'+it.id).classList.toggle('visible',fsOpen);});});}
+let expGated=new Set();
 function target(i){return PANEL2PAGE[(TAPE.steps[i].playback.dashboard||{}).panel]||'projects';}
 function targetTab(i){return PANEL2TAB[(TAPE.steps[i].playback.dashboard||{}).panel]||null;}
 function tryFound(){if(ran.has(cur)&&page===target(cur)&&(!targetTab(cur)||modelsTab===targetTab(cur))){found.add(cur);renderGuide();refreshDots();}}
@@ -341,6 +343,7 @@ function render(){
     if(!show)h+='<div class="empty">Runs land here as the course\'s agent and training steps execute.</div>';
     else{h+='<div class="lede">Workspace <b>agent-school</b> · tracked in the managed MLflow. Every agent run and training job in the course lands here.</div>';
       for(const e of A.mlflow.experiments||[]){
+      if(expGated.has(e.meta.name)&&!revealed.has('exp:'+e.meta.name))continue;
       h+='<div class="card"><h3>'+e.meta.name+' <span class="lbl blue">'+e.runs.length+' runs</span></h3>';
       if(e.runs.length){h+='<table style="border:none"><tr><th>Run</th><th>Status</th><th>Metrics</th></tr>';
         for(const r of e.runs.slice(0,8)){const m=(r.data&&r.data.metrics||[]).slice(0,4).map(x=>x.key+'='+(+x.value).toFixed(3)).join('  ');
