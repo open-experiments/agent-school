@@ -1,52 +1,59 @@
 {
-  "output": "201-rca-investigator/images/201-rca-investigator.mp4",
-  "course": {
-    "banner": "201 · RCA Investigator — Evidence-Grounded Root-Cause Analysis"
+ "output": "201-rca-investigator/images/201-rca-investigator.mp4",
+ "course": {
+  "banner": "201 · RCA Investigator — Evidence-Grounded Root-Cause Analysis",
+  "footer": "Agentic AI Stack · captured live on the Venice reference cluster · Red Hat OpenShift AI 3.5 EA"
+ },
+ "scenes": [
+  {
+   "type": "title",
+   "title": "The problem: the war-room is the expensive half",
+   "subtitle": "Detecting an anomaly is the easy half. The expensive half is the war-room: hours of senior-engineer time arguing about root cause while MTTR runs and SLA credits accrue. Closing it takes a defensible root-cause explanation grounded in actual evidence — not a plausible-sounding guess.",
+   "say": "Detecting an anomaly is the easy half. The expensive half is the war-room: hours of senior-engineer time arguing about root cause while the mean time to repair keeps running and S L A credits accrue. Closing that war-room takes a defensible root-cause explanation, grounded in the actual evidence — not a plausible-sounding guess. This is course two-oh-one: an investigator agent that gathers correlated evidence, writes a cited root-cause report, and then gets graded on whether its reasoning actually holds."
   },
-  "scenes": [
-    {
-      "type": "title",
-      "title": "The problem: an anomaly is not an answer",
-      "subtitle": "Course 101's assistant can tell you the AMF looks anomalous. But a network operations team needs the why · a root-cause report backed by evidence, where every claim points to a specific log or metric record. Ungrounded assertions from a language model are worse than useless in a NOC; they're a liability. So how do we get an agent to investigate, and then prove its work?",
-      "say": "In course one-oh-one we built an assistant that can tell you the A M F looks anomalous. But an anomaly is not an answer. A network operations team needs the why — a root-cause report, backed by evidence, where every single claim points to a specific log or metric record. An ungrounded assertion from a language model, confidently stated but unsupported, is worse than useless in a live network operations center; it is a liability. So the problem for course two-oh-one is this: how do we get an agent to genuinely investigate an incident, and then prove its work? Let's build it."
-    },
-    {
-      "type": "tab",
-      "step": 1,
-      "tab": "Solution shape · a two-phase agent over a retrieval service",
-      "image": "201-rca-investigator/images/architecture.png",
-      "caption": "An ephemeral two-phase agent (investigate → write) over a separately-deployed RAG service. The same vLLM serves the agent and its judge; MLflow receives both the traces and the verdicts.",
-      "say": "Here is the shape of the solution. The agent is an ephemeral job with two phases. In the investigate phase it retrieves correlated logs and metrics; in the write phase it composes the analysis. Crucially, the search index it depends on does not live inside the agent — it is a separately deployed retrieval service, the R A G backend, so re-indexing or swapping retrievers never touches the agent. That is the pattern-two lesson. One more elegant detail: the very same v L L M endpoint that powers the agent's reasoning also powers the judge that grades it afterward, and M L flow receives both the agent's traces and the judge's verdicts. Quality is measured on the same platform, with the same model, no external grading service. Now let's watch it work."
-    },
-    {
-      "type": "tab",
-      "step": 2,
-      "tab": "GenAI · Observability overview · traces, latency, tokens",
-      "image": "201-rca-investigator/images/rhoai/genai-overview.png",
-      "caption": "No bespoke telemetry code: mlflow.openai.autolog() plus the workspace shim turns every LLM call into a trace · 17 traces, 2.32s latency, zero errors, full token accounting.",
-      "say": "The agent needs almost no observability code of its own. One line — m l flow's OpenAI autolog — plus the workspace shim, and every single language-model call becomes a trace. This is the GenAI overview for the investigator on our DevOps cluster called Rome: seventeen traces, an average latency of two-point-three seconds, a zero-percent error rate, and full token accounting — nearly forty-seven thousand tokens across the run. This is what it means to treat an agent as a first-class, observable workload: you get the operational picture for free."
-    },
-    {
-      "type": "tab",
-      "step": 3,
-      "tab": "GenAI · Traces · the two-phase economics, visible",
-      "image": "201-rca-investigator/images/rhoai/traces-list.png",
-      "caption": "The trace list shows the cost-aware routing directly: many small investigate calls (297, 1144, 2224 tokens) and one large, cited write-up (3760 tokens).",
-      "say": "And the trace list shows the economics of the design directly. Read the token counts down the right side. There are many small investigate calls — two hundred, a thousand, two thousand tokens — as the agent gathers evidence cheaply. And then there is one large call, thirty-seven hundred tokens, that produces the finished, cited root-cause analysis. That is cost-aware model routing inside a single agent task: spend little to investigate, spend more only to write the one thing that matters. You are seeing the agent's strategy, not just its output."
-    },
-    {
-      "type": "tab",
-      "step": 4,
-      "tab": "GenAI · Trace detail · the evidence-grounding judge verdict",
-      "image": "201-rca-investigator/images/rhoai/trace-assessments.png",
-      "caption": "The write-up trace carries its judge verdict as an assessment. The system prompt forces citations; the 'evidence-grounding' judge (on the cluster's own Kimi) scores whether it obeyed.",
-      "say": "Now open that write-up trace, and here is the heart of course two-oh-one. On the left, the system prompt is uncompromising: use only the evidence records provided, and every factual claim must cite a record id in brackets. On the right, in the Assessments panel, is the verdict — the evidence-grounding judge, running on the cluster's own Kimi model, has scored this report. A cited report scores yes; a tool-loop trace with no report scores no. Evidence discipline is not a hope pinned to a prompt; it is measured, on the trace, by the platform. Ungrounded sentences become visible bugs — exactly what a network operations team needs before it trusts a machine's root-cause."
-    },
-    {
-      "type": "title",
-      "title": "201, solved: the agent investigates, and proves it",
-      "subtitle": "RAG as a skill backend, cost-aware routing inside one task, and evidence-grounding measured as platform data · the judge verdict lives on the very trace it scores, produced by the same model the agent uses. Next: 202 moves from investigation to a full train-and-serve classic-ML pipeline for fraud triage.",
-      "say": "So that's two-oh-one, solved. The agent investigates an incident using retrieval as a proper skill backend, routes its spending intelligently within a single task, and — most importantly — proves its work, with an evidence-grounding judge whose verdict lives on the very trace it scores, produced by the same model the agent itself uses. No external grader, no unverified claims. From here, course two-oh-two moves from investigation to production: a full train-and-serve classic machine-learning pipeline for fraud triage. Thanks for watching."
-    }
-  ]
+  {
+   "type": "title",
+   "title": "Inside the machine: evidence, investigation, judgment",
+   "subtitle": "Build the searchable truth: a real retrieval service, not an in-process shim. Use it: a two-phase agent — bounded investigation, then a report where every claim cites evidence ids. Grade it: a judge writes verdicts back onto the traces.",
+   "say": "Three loops again. First, the evidence backend: a real retrieval service builds its index at startup and serves it over H T T P — a skill the agent consumes, scaled and swapped independently. Second, the investigation: a two-phase agent runs a bounded tool-calling investigation, then writes the report, and every finding must cite evidence i-ds. Third, judgment: a judge job pulls the traces and writes pass-or-flag verdicts back onto them, turning reasoning quality into queryable platform data."
+  },
+  {
+   "type": "tab",
+   "step": 1,
+   "tab": "Solution shape · a two-phase agent over a retrieval service",
+   "image": "201-rca-investigator/images/architecture.png",
+   "caption": "An ephemeral two-phase agent (investigate → write) over a separately-deployed RAG service. The same vLLM serves the agent and its judge; MLflow receives both the traces and the verdicts.",
+   "say": "Here is the shape of the solution. The agent is an ephemeral job with two phases. In the investigate phase it retrieves correlated logs and metrics; in the write phase it composes the analysis. Crucially, the search index it depends on does not live inside the agent — it is a separately deployed retrieval service, the R A G backend, so re-indexing or swapping retrievers never touches the agent. That is the pattern-two lesson. One more elegant detail: the very same v L L M endpoint that powers the agent's reasoning also powers the judge that grades it afterward, and M L flow receives both the agent's traces and the judge's verdicts. Quality is measured on the same platform, with the same model, no external grading service. Now let's watch it work."
+  },
+  {
+   "type": "tab",
+   "step": 2,
+   "tab": "GenAI · Observability overview · traces, latency, tokens",
+   "image": "201-rca-investigator/images/rhoai/genai-overview.png",
+   "caption": "No bespoke telemetry code: mlflow.openai.autolog() plus the workspace shim turns every LLM call into a trace · 17 traces, 2.32s latency, zero errors, full token accounting.",
+   "say": "The agent needs almost no observability code of its own. One line — m l flow's OpenAI autolog — plus the workspace shim, and every single language-model call becomes a trace. This is the GenAI overview for the investigator on our reference cluster, Venice: four traces from the reference run, an average latency of two point three seconds, a zero-percent error rate, and full token accounting — nearly forty-seven thousand tokens across the run. This is what it means to treat an agent as a first-class, observable workload: you get the operational picture for free."
+  },
+  {
+   "type": "tab",
+   "step": 3,
+   "tab": "GenAI · Traces · the two-phase economics, visible",
+   "image": "201-rca-investigator/images/rhoai/traces-list.png",
+   "caption": "The trace list shows the cost-aware routing directly: many small investigate calls (297, 1144, 2224 tokens) and one large, cited write-up (3760 tokens).",
+   "say": "And the trace list shows the economics of the design directly. Read the token counts down the right side. There are many small investigate calls — two hundred, a thousand, two thousand tokens — as the agent gathers evidence cheaply. And then there is one large call, thirty-seven hundred tokens, that produces the finished, cited root-cause analysis. That is cost-aware model routing inside a single agent task: spend little to investigate, spend more only to write the one thing that matters. You are seeing the agent's strategy, not just its output."
+  },
+  {
+   "type": "tab",
+   "step": 4,
+   "tab": "GenAI · Trace detail · the evidence-grounding judge verdict",
+   "image": "201-rca-investigator/images/rhoai/trace-assessments.png",
+   "caption": "The write-up trace carries its judge verdict as an assessment. The system prompt forces citations; the 'evidence-grounding' judge (on the cluster's own Kimi) scores whether it obeyed.",
+   "say": "Now open that write-up trace, and here is the heart of course two-oh-one. On the left, the system prompt is uncompromising: use only the evidence records provided, and every factual claim must cite a record id in brackets. On the right, in the Assessments panel, is the verdict — the evidence-grounding judge, running on the cluster's own Kimi model, has scored this report. A cited report scores yes; a tool-loop trace with no report scores no. Evidence discipline is not a hope pinned to a prompt; it is measured, on the trace, by the platform. Ungrounded sentences become visible bugs — exactly what a network operations team needs before it trusts a machine's root-cause."
+  },
+  {
+   "type": "title",
+   "title": "201, solved: the agent investigates, and proves it",
+   "subtitle": "RAG as a skill backend, cost-aware routing inside one task, and evidence-grounding measured as platform data · the judge verdict lives on the very trace it scores, produced by the same model the agent uses. Next: 202 moves from investigation to a full train-and-serve classic-ML pipeline for fraud triage. Replay every step yourself in the self-service interactive lab — a time-snapshotted capture of this same cluster — linked from the course page.",
+   "say": "So that's two-oh-one, solved. The agent investigates an incident using retrieval as a proper skill backend, routes its spending intelligently within a single task, and — most importantly — proves its work, with an evidence-grounding judge whose verdict lives on the very trace it scores, produced by the same model the agent itself uses. No external grader, no unverified claims. From here, course two-oh-two moves from investigation to production: a full train-and-serve classic machine-learning pipeline for fraud triage. Thanks for watching. And you do not have to take this video's word for any of it: the course page links a self-service interactive lab, a time-snapshotted replay of this very cluster, where you run every step and verify every value yourself."
+  }
+ ]
 }

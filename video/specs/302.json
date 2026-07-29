@@ -1,76 +1,83 @@
 {
-  "output": "302-energy-optimizer/images/302-energy-optimizer.mp4",
-  "course": {
-    "banner": "302 · Energy Optimizer · Quant + Qual Co-Decision"
+ "output": "302-energy-optimizer/images/302-energy-optimizer.mp4",
+ "course": {
+  "banner": "302 · Energy Optimizer · Quant + Qual Co-Decision",
+  "footer": "Agentic AI Stack · captured live on the Venice reference cluster · Red Hat OpenShift AI 3.5 EA"
+ },
+ "scenes": [
+  {
+   "type": "title",
+   "title": "The problem: RAN energy is an OPEX line, and sleeping wrong burns customers",
+   "subtitle": "RAN energy is one of a telco's largest OPEX lines, and idle cells burn it all night — but sleeping the wrong cells burns customers instead. A calibrated model scores the trade-off precisely yet is blind to context; a reasoning agent sees context yet hallucinates numbers. Trusting either alone is unsafe for the bill and the network alike.",
+   "say": "Radio access network energy is one of a telco's largest operating-expense lines, and idle cells burn it all night. But putting the wrong cells to sleep burns customers instead. A calibrated model scores the energy versus quality-of-service trade-off precisely, yet is blind to context. A reasoning agent sees context, yet hallucinates numbers. Trusting either one alone is unsafe — for the bill and for the network alike. This is course three-oh-two: they decide together, a simulation checks them before anything acts, and then we measure the judge itself."
   },
-  "scenes": [
-    {
-      "type": "title",
-      "title": "The problem: a calibrated model is blind; a reasoning agent is uncalibrated",
-      "subtitle": "A RAN energy optimizer proposes putting cells to sleep to save power. A classic ML model can score the trade-off precisely · but it can't explain itself, and it can't see context a number misses. A GenAI agent can reason about context, but it hallucinates numbers. The two fail in opposite ways. 302 makes them decide together · and then measures the judge.",
-      "say": "A radio-access-network energy optimizer proposes putting cells to sleep overnight to save power, without dropping calls. Now, a classic machine-learning model can score that trade-off precisely — energy saved, quality-of-service risk, efficiency. But it is blind and mute: it cannot explain itself, and it cannot see context that a single number misses, like a stadium event under those cells. A GenAI agent is the opposite: it can reason about context, but it will confidently hallucinate a number. They fail in opposite ways. So course three-oh-two does something interesting — it makes the calibrated model and the reasoning agent decide together, and then it measures the judge to keep it honest. Let's see how."
-    },
-    {
-      "type": "tab",
-      "step": 1,
-      "tab": "Solution shape · quant + qual co-decision, governed and measured",
-      "image": "302-energy-optimizer/images/architecture.png",
-      "caption": "An optimizer proposes; a Kueue-run simulation tests; the classic scorer gives the quant signal; a GenAI judge gives the qual verdict · grounded on the same governed scorer · and an arbiter co-decides with one hard safety rail.",
-      "say": "Here is the shape. A Llama-Stack optimizer proposes cell-sleep windows. A simulation, run as a queued job, tests them. Then two signals meet. The quantitative signal is the classic sustainability model, a calibrated regressor, reached only through a governed gateway. The qualitative signal is a GenAI judge agent that grounds itself on that very same scorer, then renders a verdict — accept, revise, or reject — with a cited rationale. An arbiter combines them: the judge is a full co-decider, its decision stands, except for one non-negotiable rail — a proposal that would breach a hard quality-of-service floor is rejected no matter what either signal says. Co-decide never means cause an outage."
-    },
-    {
-      "type": "tab",
-      "step": 2,
-      "tab": "Develop & train · Experiments · the optimizer episodes",
-      "image": "302-energy-optimizer/images/rhoai/optimizer-runs.png",
-      "caption": "Each episode is tracked: accepted plans, rejected proposals, and audited overrides where the judge overturned the quant gate · every disagreement recorded with its rationale.",
-      "say": "Here are the optimizer episodes, tracked on our DevOps cluster called Rome. In one episode, the model and the judge agree: a clean plan saving seven-point-seven percent of energy with zero dropped traffic is accepted. In another, they disagree — the judge overturns the quant gate — and that override is recorded, deliberately, with the judge's own rationale attached. This is the crucial discipline of giving an agent decision authority: every disagreement between the calibrated number and the reasoning agent is captured as an audited override, so a human can always see exactly what the model claimed and why."
-    },
-    {
-      "type": "tab",
-      "step": 3,
-      "tab": "Model serving · KServe · the classic scorer, served",
-      "image": "302-energy-optimizer/images/rhoai/scorer-deployment.png",
-      "caption": "The quant signal is a real regressor (r² ≈ 0.878) trained, registered, promoted, and served on KServe · the same develop-and-train lifecycle as 101 and 202.",
-      "say": "The quantitative half is not a toy. It is a genuine regressor, trained on real five-G network K P Is, with an r-squared of about nought-point-eight-eight, and it went through the exact same lifecycle you saw in the earlier courses: tracked in M L flow, registered, promoted, and served here on K-Serve. This is the classic-machine-learning outcome — precise, calibrated, trustworthy math — and it stays exactly that. The GenAI layer complements it; it does not replace it."
-    },
-    {
-      "type": "tab",
-      "step": 4,
-      "tab": "Governance for evaluation, too · the governed /score gateway",
-      "image": "302-energy-optimizer/images/architecture.png",
-      "caption": "The scorer is reached only through the Kuadrant /score gateway (AuthPolicy: energy-optimizer + judge, plus a rate cap) · the same East-West governance 301 puts on actuation, now applied to evaluation.",
-      "say": "And here is an elegant reuse of the pattern from course three-oh-one. The judge and the optimizer do not call the scoring model directly. As the architecture shows, they reach it only through a Kuadrant-governed gateway, on a dedicated score route. Only the optimizer and the judge identities may score, and the rate is capped by a rate-limit policy. Governance is not only for actions that change the network; here it wraps evaluation itself, who is allowed to ask the model a question, and how often."
-    },
-    {
-      "type": "tab",
-      "step": 5,
-      "tab": "GenAI · Datasets · measuring the judge, not just running it",
-      "image": "302-energy-optimizer/images/rhoai/genai-eval-datasets.jpg",
-      "caption": "A curated evaluation dataset of eight cases · consensus accepts, consensus rejects, an override replica, QoS breaches, outage territory · with the decisions a grounded judge could defensibly reach.",
-      "say": "Now, if a GenAI judge has real decision authority, it is itself a model that must be evaluated. So we built it an evaluation dataset, shown here on the datasets tab: eight carefully chosen cases spanning easy consensus accepts, clear rejects, an outage-territory proposal, and — importantly — a replica of that earlier override, where accepting the plan requires an ungrounded claim. Each case carries the set of decisions a competent, grounded judge could defensibly reach. This is how you turn a one-time anecdote about a hallucinating judge into a repeatable test."
-    },
-    {
-      "type": "tab",
-      "step": 6,
-      "tab": "GenAI · Judges · an LLM-as-judge on the cluster's own model",
-      "image": "302-energy-optimizer/images/rhoai/genai-judges.jpg",
-      "caption": "verdict-groundedness: an LLM-as-a-judge registered to the experiment, backed by the cluster's own Kimi endpoint · no external grading service.",
-      "say": "And here is the judge of the judge, registered right on the experiment: verdict-groundedness, an L-L-M-as-a-judge whose only job is to check whether the optimizer judge's numeric claims are actually consistent with the numbers it was given. It runs on the cluster's own Kimi model — the same endpoint that powers the agents themselves. No external grading A P I, no data leaving the platform. The system evaluates its own reasoning, on its own infrastructure."
-    },
-    {
-      "type": "tab",
-      "step": 7,
-      "tab": "GenAI · Evaluation run · the judge, scored",
-      "image": "302-energy-optimizer/images/rhoai/genai-eval-run.jpg",
-      "caption": "decision-correctness 0.75, groundedness 0.875, qos-safety 0.875 · and the two failures are exactly the defects worth catching: the ungrounded override and an unsafe QoS acceptance, both flagged automatically.",
-      "say": "And here is the payoff — the evaluation run, with the judge scored. Decision-correctness nought-point-seven-five, groundedness nought-point-eight-seven-five, quality-of-service safety nought-point-eight-seven-five. But the numbers matter less than what the two failures were. The suite automatically caught the override case, where the judge accepted a proposal on a factually false claim, and it caught an outage-territory acceptance that the hard safety rail was there to stop. In other words, the evaluation found the exact two failure modes the design predicted — on its first real run. That is what it means to complement a classic model with GenAI responsibly: co-decide, audit every disagreement, keep a hard safety rail, and measure the judge continuously."
-    },
-    {
-      "type": "title",
-      "title": "302, solved: classic ML and GenAI, deciding together · and measured",
-      "subtitle": "The calibrated regressor gives the number; the GenAI judge gives the grounded reasoning; an arbiter co-decides with a hard safety rail and full override auditing; the scorer is governed like an action; and the judge itself is evaluated as platform data. Quant and qual, each doing what it's good at, neither trusted to do the other's job.",
-      "say": "So that's three-oh-two, and the whole agent-school series, brought to a point. The calibrated regressor gives the number. The GenAI judge gives the grounded reasoning. An arbiter co-decides, with a hard safety rail no signal can override, and every disagreement audited. The scorer is governed like an action, and the judge itself is measured as platform data, continuously. Quantitative and qualitative, each doing exactly what it is good at, and neither one trusted to do the other's job. That is applied agentic A I — not a language model bolted onto a dashboard, but reasoning and classical machine learning, governed and observable, working together on a real platform. Thanks for watching."
-    }
-  ]
+  {
+   "type": "title",
+   "title": "Inside the machine: scorer, episode, evaluation",
+   "subtitle": "Build: a sustainability scorer served behind a governed /score route. Run: propose → simulate → score → co-decide, with explicit env-config gates and a hard QoS rail. Measure: a GenAI evaluation suite grades the judge itself, next to the episodes it graded.",
+   "say": "Three loops one last time. First, the scorer: a sustainability regressor served behind a governed scoring route, two identities only. Second, the episode: the optimizer proposes cell-sleep windows, simulates them before anything acts, scores the outcome through the governed route, and a code arbiter co-decides with the judge under explicit numeric gates — minimum savings, maximum quality drop, a hard floor no one overrides, bounded rounds. Third, the evaluation: a gen A I eval suite replays the episodes and grades the judge itself — agents grading agents, with the grades stored as platform data."
+  },
+  {
+   "type": "tab",
+   "step": 1,
+   "tab": "Solution shape · quant + qual co-decision, governed and measured",
+   "image": "302-energy-optimizer/images/architecture.png",
+   "caption": "An optimizer proposes; a Kueue-run simulation tests; the classic scorer gives the quant signal; a GenAI judge gives the qual verdict · grounded on the same governed scorer · and an arbiter co-decides with one hard safety rail.",
+   "say": "Here is the shape. A Llama-Stack optimizer proposes cell-sleep windows. A simulation, run as a queued job, tests them. Then two signals meet. The quantitative signal is the classic sustainability model, a calibrated regressor, reached only through a governed gateway. The qualitative signal is a GenAI judge agent that grounds itself on that very same scorer, then renders a verdict — accept, revise, or reject — with a cited rationale. An arbiter combines them: the judge is a full co-decider, its decision stands, except for one non-negotiable rail — a proposal that would breach a hard quality-of-service floor is rejected no matter what either signal says. Co-decide never means cause an outage."
+  },
+  {
+   "type": "tab",
+   "step": 2,
+   "tab": "Develop & train · Experiments · the optimizer episodes",
+   "image": "302-energy-optimizer/images/rhoai/optimizer-runs.png",
+   "caption": "Each episode is tracked: accepted plans, rejected proposals, and audited overrides where the judge overturned the quant gate · every disagreement recorded with its rationale.",
+   "say": "Here are the optimizer episodes, tracked on our reference cluster, Venice. In one episode, the model and the judge agree: a clean plan saving seven-point-seven percent of energy with zero dropped traffic is accepted. In another, they disagree — the judge overturns the quant gate — and that override is recorded, deliberately, with the judge's own rationale attached. This is the crucial discipline of giving an agent decision authority: every disagreement between the calibrated number and the reasoning agent is captured as an audited override, so a human can always see exactly what the model claimed and why."
+  },
+  {
+   "type": "tab",
+   "step": 3,
+   "tab": "Model serving · KServe · the classic scorer, served",
+   "image": "302-energy-optimizer/images/rhoai/scorer-deployment.png",
+   "caption": "The quant signal is a real regressor (r² ≈ 0.878) trained, registered, promoted, and served on KServe · the same develop-and-train lifecycle as 101 and 202.",
+   "say": "The quantitative half is not a toy. It is a genuine regressor, trained on real five-G network K P Is, with an r-squared of about nought-point-eight-eight, and it went through the exact same lifecycle you saw in the earlier courses: tracked in M L flow, registered, promoted, and served here on K-Serve. This is the classic-machine-learning outcome — precise, calibrated, trustworthy math — and it stays exactly that. The GenAI layer complements it; it does not replace it."
+  },
+  {
+   "type": "tab",
+   "step": 4,
+   "tab": "Governance for evaluation, too · the governed /score gateway",
+   "image": "302-energy-optimizer/images/architecture.png",
+   "caption": "The scorer is reached only through the Kuadrant /score gateway (AuthPolicy: energy-optimizer + judge, plus a rate cap) · the same East-West governance 301 puts on actuation, now applied to evaluation.",
+   "say": "And here is an elegant reuse of the pattern from course three-oh-one. The judge and the optimizer do not call the scoring model directly. As the architecture shows, they reach it only through a Kuadrant-governed gateway, on a dedicated score route. Only the optimizer and the judge identities may score, and the rate is capped by a rate-limit policy. Governance is not only for actions that change the network; here it wraps evaluation itself, who is allowed to ask the model a question, and how often."
+  },
+  {
+   "type": "tab",
+   "step": 5,
+   "tab": "GenAI · Datasets · measuring the judge, not just running it",
+   "image": "302-energy-optimizer/images/rhoai/genai-eval-datasets.jpg",
+   "caption": "A curated evaluation dataset of eight cases · consensus accepts, consensus rejects, an override replica, QoS breaches, outage territory · with the decisions a grounded judge could defensibly reach.",
+   "say": "Now, if a GenAI judge has real decision authority, it is itself a model that must be evaluated. So we built it an evaluation dataset, shown here on the datasets tab: eight carefully chosen cases spanning easy consensus accepts, clear rejects, an outage-territory proposal, and — importantly — a replica of that earlier override, where accepting the plan requires an ungrounded claim. Each case carries the set of decisions a competent, grounded judge could defensibly reach. This is how you turn a one-time anecdote about a hallucinating judge into a repeatable test."
+  },
+  {
+   "type": "tab",
+   "step": 6,
+   "tab": "GenAI · Judges · an LLM-as-judge on the cluster's own model",
+   "image": "302-energy-optimizer/images/rhoai/genai-judges.jpg",
+   "caption": "verdict-groundedness: an LLM-as-a-judge registered to the experiment, backed by the cluster's own Kimi endpoint · no external grading service.",
+   "say": "And here is the judge of the judge, registered right on the experiment: verdict-groundedness, an L-L-M-as-a-judge whose only job is to check whether the optimizer judge's numeric claims are actually consistent with the numbers it was given. It runs on the cluster's own Kimi model — the same endpoint that powers the agents themselves. No external grading A P I, no data leaving the platform. The system evaluates its own reasoning, on its own infrastructure."
+  },
+  {
+   "type": "tab",
+   "step": 7,
+   "tab": "GenAI · Evaluation run · the judge, scored",
+   "image": "302-energy-optimizer/images/rhoai/genai-eval-run.jpg",
+   "caption": "decision-correctness 0.75, groundedness 0.875, qos-safety 0.875 · and the two failures are exactly the defects worth catching: the ungrounded override and an unsafe QoS acceptance, both flagged automatically.",
+   "say": "And here is the payoff — the evaluation run, with the judge scored. Decision-correctness nought-point-seven-five, groundedness nought-point-eight-seven-five, quality-of-service safety nought-point-eight-seven-five. But the numbers matter less than what the two failures were. The suite automatically caught the override case, where the judge accepted a proposal on a factually false claim, and it caught an outage-territory acceptance that the hard safety rail was there to stop. In other words, the evaluation found the exact two failure modes the design predicted — on its first real run. That is what it means to complement a classic model with GenAI responsibly: co-decide, audit every disagreement, keep a hard safety rail, and measure the judge continuously."
+  },
+  {
+   "type": "title",
+   "title": "302, solved: classic ML and GenAI, deciding together · and measured",
+   "subtitle": "The calibrated regressor gives the number; the GenAI judge gives the grounded reasoning; an arbiter co-decides with a hard safety rail and full override auditing; the scorer is governed like an action; and the judge itself is evaluated as platform data. Quant and qual, each doing what it's good at, neither trusted to do the other's job. Replay every step yourself in the self-service interactive lab — a time-snapshotted capture of this same cluster — linked from the course page.",
+   "say": "So that's three-oh-two, and the whole agent-school series, brought to a point. The calibrated regressor gives the number. The GenAI judge gives the grounded reasoning. An arbiter co-decides, with a hard safety rail no signal can override, and every disagreement audited. The scorer is governed like an action, and the judge itself is measured as platform data, continuously. Quantitative and qualitative, each doing exactly what it is good at, and neither one trusted to do the other's job. That is applied agentic A I — not a language model bolted onto a dashboard, but reasoning and classical machine learning, governed and observable, working together on a real platform. Thanks for watching. And you do not have to take this video's word for any of it: the course page links a self-service interactive lab, a time-snapshotted replay of this very cluster, where you run every step and verify every value yourself."
+  }
+ ]
 }

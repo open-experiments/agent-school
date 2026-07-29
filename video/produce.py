@@ -89,14 +89,15 @@ def frame_title(scene, course, idx, total):
         d.text((120, y), line, font=sf, fill=(205, 208, 215))
         y += 58
     # footer chip
-    d.text((120, H - 90), "Agentic AI Stack · live on our DevOps cluster called Rome (RHOAI 3.5 EA · OpenShift 4.22 SNO)",
+    d.text((120, H - 90), course.get("footer",
+           "Agentic AI Stack · live on our DevOps cluster called Rome (RHOAI 3.5 EA · OpenShift 4.22 SNO)"),
            font=font(FONT, 28), fill=SUBINK)
     d.text((W - 240, H - 90), "%d / %d" % (idx, total),
            font=font(FONT_B, 30), fill=SUBINK)
     return img
 
 
-def frame_tab(scene, course, idx, total):
+def frame_tab(scene, course, idx, total, tab_total=None):
     """Two-column explainer: the portal capture fills the LEFT panel
     (tall captures fit here without side letterboxing), and the RIGHT
     panel — previously wasted margin — carries the step, tab name, and
@@ -136,7 +137,7 @@ def frame_tab(scene, course, idx, total):
     tw = rx1 - rx0 - pad * 2
 
     # step chip
-    chip = "STEP %s / %d" % (scene.get("step", idx), total)
+    chip = "STEP %s / %d" % (scene.get("step", idx), tab_total or total)
     cf = font(FONT_B, 24)
     cwid = d.textlength(chip, font=cf)
     d.rounded_rectangle([tx, top + 34, tx + cwid + 34, top + 82],
@@ -205,8 +206,9 @@ def main(spec_path):
         png = str(BUILD / ("f%02d.png" % i))
         wav = str(BUILD / ("a%02d.wav" % i))
         mp4 = str(BUILD / ("c%02d.mp4" % i))
+        tab_total = sum(1 for x in scenes if x["type"] != "title")
         fr = frame_title(sc, course, i, total) if sc["type"] == "title" \
-            else frame_tab(sc, course, i, total)
+            else frame_tab(sc, course, i, total, tab_total)
         fr.save(png)
         synth(sc["say"], wav)
         clip(png, wav, mp4)
