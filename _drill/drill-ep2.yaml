@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: quantqual-drill-2
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 1200
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: quantqual-drill-src}
+      containers:
+        - name: drill
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - name: STATE_PASSWORD
+              valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
+            - name: STATE_STORE_URL
+              value: redis://:$(STATE_PASSWORD)@loop-state.agent-school.svc.cluster.local:6379/0
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q "a2a-sdk==0.3.22" httpx redis &&
+              python3 /src/drive_loop.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

@@ -46,6 +46,13 @@ def main():
             drift = True
             print(f'{p}: {c} {m.group(2)} -> {v}')
             if not check: s = pat.sub(r'\g<1>%s\g<3>' % v, s)
+    # the 301 detail-view literal (F1 walkthrough button check)
+    pat = re.compile(r"(walk\.includes\(')([0-9:]+)('\))")
+    m = pat.search(s)
+    if m and m.group(2) != durs['301']:
+        drift = True
+        print(f"{p}: 301 button literal {m.group(2)} -> {durs['301']}")
+        if not check: s = pat.sub(r'\g<1>%s\g<3>' % durs['301'], s)
     if not check: open(p, 'w').write(s)
 
     if check and drift: sys.exit('DRIFT: site/tests out of sync with mp4 durations')

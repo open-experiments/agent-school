@@ -240,7 +240,7 @@ const COURSES=[
   tags:["LangGraph","ML Pipelines","KServe","Human-in-the-loop","Model Registry"],
   problem:"Revenue leakage hides in millions of billing events — at telco scale, even the 1.7% fraud rate in this course's real dataset quietly drains millions. A model can flag a transaction, but a flag nobody acts on is unrecovered revenue: acting needs judgment, evidence-gathering, and for anything consequential a human in the loop.",
   solution:"A Balanced Random Forest is trained through a cloud-native ML pipeline, registered in the shared model registry, and served on KServe as a V2 inference service. A LangGraph agent consumes that served model as one tool among several, assembles the case, and stops at a human-approval gate before any consequential action, keeping the classic model and the agent each in their lane."},
- {id:"301",dir:"301-closed-loop-netops",title:"Closed-Loop NetOps",len:"7:22",flag:true,
+ {id:"301",dir:"301-closed-loop-netops",title:"Closed-Loop NetOps",len:"8:56",flag:true,
   desc:"The flagship: Diagnostic, Planning, Execution and Validation agents run an autonomous remediation loop over A2A, with Kuadrant-governed actuation. The plan is now grounded in a quant + qual co-decision.",
   tags:["LangGraph","A2A","Kuadrant gateway","MCP","quant+qual","MLflow"],
   problem:"Every minute of a degraded 5G core burns money — SLA penalties, escalations, churn — so the ROI of closing the remediation loop is measured in MTTR. It is also where agentic AI gets dangerous: an agent that can run playbooks against a live core is the highest-scrutiny component in the system, and a plan approved on a language model's fluent-but-uncalibrated say-so is not enough.",

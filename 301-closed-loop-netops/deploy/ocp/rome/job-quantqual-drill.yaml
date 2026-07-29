@@ -1,0 +1,64 @@
+# One-shot: actionable-scenario drill (RUNBOOK-quantqual step 6) — seeds a
+# synthetic diagnosed record (AMF registration storm, marked
+# synthetic_drill=true) into the loop-state store, then drives Planning over
+# A2A so the full quant + qual co-decision runs for real: served risk scores
+# through the governed /plan-score route, judge verdict, arbiter, MLflow
+# episode record. See ../../../agents/planning/drive_loop.py.
+#
+# Prereq ConfigMap:
+#   oc create configmap quantqual-drill-src -n agent-school \
+#     --from-file=drive_loop.py=../../../agents/planning/drive_loop.py
+#
+# Episode 1 — consensus path (default ceiling 0.66):
+#   oc apply -f job-quantqual-drill.yaml
+#   oc logs -f job/quantqual-drill -n agent-school
+#   # expect: DRILL_SEEDED ... PLAN_OK ... CODECISION ... DRILL_OK
+#
+# Episode 2 — quant-override path (tighten the rail, rerun, restore):
+#   oc set env deploy/planning-agent -n agent-school QUANT_RISK_CEILING=0.3
+#   oc rollout status deploy/planning-agent -n agent-school
+#   oc delete job quantqual-drill -n agent-school
+#   oc apply -f job-quantqual-drill.yaml
+#   oc logs -f job/quantqual-drill -n agent-school
+#   # expect: codecision quant_ok=false, override recorded, approval_required
+#   oc set env deploy/planning-agent -n agent-school QUANT_RISK_CEILING=0.66
+#   oc rollout status deploy/planning-agent -n agent-school
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: quantqual-drill
+  namespace: agent-school
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 7200
+  activeDeadlineSeconds: 1200
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: src
+          configMap: {name: quantqual-drill-src}
+      containers:
+        - name: drill
+          image: registry.access.redhat.com/ubi9/python-311:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: PIP_NO_CACHE_DIR, value: "1"}
+            - name: STATE_PASSWORD
+              valueFrom: {secretKeyRef: {name: loop-state-auth, key: password}}
+            - name: STATE_STORE_URL
+              value: redis://:$(STATE_PASSWORD)@loop-state.agent-school.svc.cluster.local:6379/0
+          command:
+            - /bin/sh
+            - -c
+            - >
+              pip install -q "a2a-sdk==0.3.22" httpx redis &&
+              python3 /src/drive_loop.py
+          volumeMounts:
+            - {name: src, mountPath: /src}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}

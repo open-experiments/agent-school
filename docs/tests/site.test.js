@@ -10,7 +10,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:8777';
 
   // F1: card durations
   const lens = await page.$$eval('#cardgrid .card .len', els => els.map(e => e.textContent.trim()));
-  const expect = { '101': '▶ 6:27', '201': '▶ 4:36', '202': '▶ 5:52', '301': '▶ 7:22', '302': '▶ 5:38' };
+  const expect = { '101': '▶ 6:27', '201': '▶ 4:36', '202': '▶ 5:52', '301': '▶ 8:56', '302': '▶ 5:38' };
   const ids = await page.$$eval('#cardgrid .card .badge', els => els.map(e => e.textContent.trim().split(' ')[0]));
   ids.forEach((id, i) => check(`F1 duration ${id}`, lens[i] === expect[id], `got "${lens[i]}"`));
 
@@ -28,7 +28,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:8777';
 
   // walkthrough button duration matches F1
   const walk = await page.$eval('#detailbody a:has-text("Open walkthrough")', e => e.textContent.trim());
-  check('F1 walkthrough button 301', walk.includes('7:22'), walk);
+  check('F1 walkthrough button 301', walk.includes('8:56'), walk);
 
   // F9: page scrolled to detail (not top)
   const scrollY = await page.evaluate(() => window.scrollY);
