@@ -25,6 +25,86 @@ The agent is a plain Kubernetes workload (Job or CronJob) that answers NOC quest
 
 The big idea of 101 is **Agent-as-a-Workload**: an agent is not a special platform object. It is a container with an identity, config, and an LLM endpoint, so everything Kubernetes already gives you (RBAC, quotas, audit, scheduling) applies to it unchanged.
 
+## Inner mechanics — the three loops
+
+Before touching the steps, it helps to see the machine from the inside. 101 is three loops sharing one platform: a **data & training loop** that builds the truth, a **serving loop** that uses it, and a **resolution path** that acts on it. Every stage below names the repo file or platform object that implements it, and one stage is honestly marked as a stand-in.
+
+### Loop 1 · Data & training — build the truth
+
+In production, the telemetry is born inside the network functions: PNFs, VNFs and CNFs (AMF, SMF, UPF and friends) expose metrics via OpenTelemetry exporters, an OTel Collector scrapes them into Prometheus, and a feature-engineering job periodically materializes them into the Feast offline store. **In this course, the published 5G-core dataset ([`data/`](./data/), one real KPI row per NF per minute) stands in for the OTel → Prometheus harvest** — everything downstream of Feast runs live on the cluster, unchanged from the production shape.
+
+```mermaid
+flowchart LR
+  subgraph NET["5G Core (PNF/VNF/CNF)"]
+    AMF["AMF"] --> OTEL["OTel exporters + Collector"]
+    SMF["SMF"] --> OTEL
+    UPF["UPF"] --> OTEL
+  end
+  OTEL --> PROM["Prometheus (metrics TSDB)"]
+  PROM -. "stand-in: data/*.csv (published 5gprod dataset)" .-> ENG
+  subgraph RHOAI["RHOAI · Develop & train"]
+    ENG["feature engineering<br/>feature_repo/ingest.py<br/>1h rolling mean/min/max per KPI"] --> OFF["Feast offline store<br/>parquet per NF (PVC)"]
+    OFF --> TRAIN["IsolationForest training<br/>training/train_anomaly.py"]
+    OFF --> SWEEP["contamination sweep<br/>training/ray_contamination_sweep.py<br/>Ray cluster, Kueue-admitted"]
+    TRAIN --> EXP["MLflow Experiments<br/>5gprod-anomaly-sweep"]
+    SWEEP --> EXP
+    EXP --> REG["Model Registry<br/>5gprod-anomaly-isolationforest (versioned)"]
+  end
+```
+
+The engineering step ([`feature_repo/ingest.py`](./feature_repo/ingest.py)) turns raw per-minute KPIs into 118 features across three feature views (`amf_kpis` 46, `smf_kpis` 34, `upf_kpis` 38): raw values plus 1-hour rolling mean/min/max plus an anomaly score and flag per NF. [`feature_repo/save_training_datasets.py`](./feature_repo/save_training_datasets.py) then persists three named SavedDatasets via point-in-time joins, so training data is a referenceable, versioned artifact instead of a loose file. Training sweeps IsolationForest contamination settings on a throwaway Ray cluster (admitted through the shared Kueue ClusterQueue), every run lands in MLflow, and the winning detector is registered as `5gprod-anomaly-isolationforest`. Note the honest detail visible in the sweep logs: `f1` prints 0.000 because the sweep is unlabeled — `rate_gap` is the tuning signal.
+
+### Loop 2 · Serving — use the truth
+
+Fresh network data rides the **same** harvest path — that is the entire argument for putting Feast in the middle: the online store serves the exact features the model was trained on (train/serve parity), so the agent never re-implements feature logic.
+
+```mermaid
+flowchart LR
+  NET2["5G core telemetry<br/>(same harvest path)"] --> ON["Feast online store<br/>latest vector per NF<br/>feature service: noc_telemetry"]
+  subgraph POD["Agent pod (Job / noc-sweep CronJob, CPU-only)"]
+    LOOP["custom tool-calling loop<br/>agent/noc_agent.py"]
+    T1["get_kpi_summary"] & T2["detect_anomalies<br/>(loads registry model)"] & T3["check_alerts"] --> LOOP
+    RB["runbook MCP<br/>tools/runbook_mcp.py"] --> LOOP
+  end
+  ON --> T1
+  ON --> T2
+  REG2["Model Registry<br/>5gprod-anomaly-isolationforest"] --> T2
+  LOOP <--> LLM["vLLM on RHOAI (KServe)<br/>kimi-linear-48b-a3b, stateless"]
+  LOOP --> ANS["structured NOC answer<br/>cites KPIs + alerts + runbook"]
+  LOOP --> TR["MLflow Traces<br/>experiment 101-noc-assistant<br/>every tool call + reasoning span"]
+```
+
+One agent run is one Job: the pod wakes, reads the live vectors through MCP tools ([`tools/lib.py`](./tools/lib.py), served by [`tools/telemetry_mcp.py`](./tools/telemetry_mcp.py)), scores them with the registry model, reasons via the in-cluster vLLM endpoint, prints its answer, and exits — no server, no session, no state left behind. The suspended `noc-sweep` CronJob is the same image on a 15-minute schedule. **Score control lives in the traces:** every run flushes its full tool-call and reasoning trace to the `101-noc-assistant` experiment, so anomaly scores and the evidence behind every answer are queryable platform data. In 101 this is the observability surface; course 201 adds the judge that grades those traces for evidence grounding, and 302 turns judging itself into a measured suite.
+
+### Loop 3 · Resolution — act on the truth
+
+Detection without resolution is just better alarms. When the agent flags an anomaly, it consults the matching runbook ([`runbooks/`](./runbooks/): registration storm, resource exhaustion, session-management failure) and emits a structured recommendation — immediate actions first, medium-term actions second, with the affected NFs named.
+
+```mermaid
+flowchart LR
+  DET["anomaly flagged<br/>(detect_anomalies)"] --> MATCH["runbook matched<br/>runbooks/*.md"]
+  MATCH --> REC["structured recommendation<br/>immediate (0-15 min) + medium-term (15-60 min)"]
+  REC --> HUM["human executes<br/>(advisory by design in 101)"]
+  HUM -.-> A201["201: evidence-judged RCA"] -.-> A301["301: closed loop, governed actuation"]
+```
+
+101 stops at advice **on purpose**: the agent has read-only reach, and the human stays the actuator. That is the course's ROI story — minutes of buried-signal confusion become one traced, evidenced answer, protecting MTTR and NPS — and it sets up the series arc: 201 makes the reasoning defensible, 301 lets agents act under Kuadrant-governed rails.
+
+### Stage-to-code map
+
+| Stage | Production component | In this course |
+|---|---|---|
+| Harvest | OTel exporters → Collector → Prometheus | **stand-in:** published 5gprod dataset in [`data/`](./data/) |
+| Feature engineering | scheduled pipeline job | `feast-bootstrap` Job → [`feature_repo/ingest.py`](./feature_repo/ingest.py) |
+| Feature store | Feast offline (parquet, PVC) + online (latest vectors) | FeatureStore CR `fivegprod`, feature service `noc_telemetry` |
+| Training | IsolationForest per NF + Ray sweep | [`training/train_anomaly.py`](./training/train_anomaly.py), [`training/ray_contamination_sweep.py`](./training/ray_contamination_sweep.py) |
+| Tracking / registry | MLflow Experiments → Model Registry | experiments `5gprod-anomaly-sweep`, registered model `5gprod-anomaly-isolationforest` |
+| Serving (model) | registry model loaded as a tool | `detect_anomalies` in [`tools/lib.py`](./tools/lib.py) |
+| Serving (LLM) | stateless vLLM endpoint on KServe | `kimi-linear-48b-a3b` via the `llm-credentials` Secret |
+| Agent runtime | one run = one Job; scheduled = CronJob | [`deploy/ocp/job-ask.yaml`](./deploy/ocp/job-ask.yaml), `noc-sweep` CronJob |
+| Score control | traces per run, judged downstream | MLflow Traces in `101-noc-assistant` (judge arrives in course 201) |
+| Resolution | runbook-guided advisory | [`runbooks/`](./runbooks/), human executes |
+
 ## Prerequisites (verify before you start)
 
 Work through this list in the dashboards. Every item must be true before Step 1.
