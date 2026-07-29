@@ -228,7 +228,7 @@ const COURSES=[
  {id:"101",dir:"101-noc-assistant",title:"NOC Assistant",len:"5:39",flag:false,
   desc:"A single agent that inspects 5G-core telemetry, detects anomalies, and consults runbooks before answering. The hello-world of agentic telco AI that already does real work.",
   tags:["Custom loop","MCP tools","Feast","vLLM","MLflow","IsolationForest"],
-  problem:"A 5G core NOC drowns in per-minute KPIs across AMF, SMF and UPF. When a registration storm or resource exhaustion hits, the signal is buried, the runbook lives in another system, and every minute of confusion costs live subscriber sessions.",
+  problem:"The Network Operations Center (NOC) team drowns in thousands of KPIs across PNFs, VNFs and CNFs — AMF, SMF, UPF and others. When a registration storm or resource exhaustion hits, the signal is buried, the runbook lives in another system, and every second of confusion makes the Net Promoter Score (NPS) plummet and drives customer churn.",
   solution:"A disposable, CPU-only agent pod carries only the reasoning loop, two MCP skill servers, and the runbooks. Everything stateful lives behind platform services it consumes: live network state from a Feast online store, reasoning from vLLM, traces in MLflow. The classic pipeline that keeps those services truthful (feature engineering in Feast, training as an Experiment, a versioned IsolationForest in the registry, traced inference) is the platform's job rather than a notebook cell."},
  {id:"201",dir:"201-rca-investigator",title:"RCA Investigator",len:"3:53",flag:false,
   desc:"A research agent that turns an anomaly into an evidenced root-cause report. It retrieves correlated logs and metrics from a RAG backend, then reasons, while an LLM judge scores its evidence grounding.",
