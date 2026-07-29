@@ -1,6 +1,6 @@
 # Agent School — Roadmap & Stack Alignment
 
-This document maps Agent School against Table 1 of our article *Agentic AI Stack Insideout* — the canonical taxonomy of solution components, roles, and implementation options — and lays out where the curriculum goes next. It is the honest ledger: what the courses already exercise, what they only gesture at, and what is not yet touched. No row is claimed as covered unless code in the repo exercises it.
+This document maps Agent School against Table 1 of our article [*Architect an open blueprint for cloud-native AI agents*](https://developers.redhat.com/articles/2026/07/20/architect-open-blueprint-cloud-native-ai-agents) — the canonical taxonomy of solution components, roles, and implementation options — and lays out where the curriculum goes next. It is the honest ledger: what the courses already exercise, what they only gesture at, and what is not yet touched. No row is claimed as covered unless code in the repo exercises it.
 
 ## Coverage against the article's Table 1
 

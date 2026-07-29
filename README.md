@@ -6,7 +6,7 @@
 
 Agentic AI solution implementation examples for telco, built to run on Red Hat OpenShift AI (RHOAI).
 
-Each example takes a proven experiment from [Telco-AIX](https://github.com/open-experiments/Telco-AIX) and rebuilds it as a governed agent workload, following the solution architecture from our article *Agentic AI Stack Insideout*: the model is a stateless inference service, the harness owns the loop and the tool calls, and the sandbox runtime decides what the agent may touch.
+Each example takes a proven experiment from [Telco-AIX](https://github.com/open-experiments/Telco-AIX) and rebuilds it as a governed agent workload, following the solution architecture from our article [*Architect an open blueprint for cloud-native AI agents*](https://developers.redhat.com/articles/2026/07/20/architect-open-blueprint-cloud-native-ai-agents): the model is a stateless inference service, the harness owns the loop and the tool calls, and the sandbox runtime decides what the agent may touch.
 
 ## Quickstart
 
