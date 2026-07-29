@@ -57,9 +57,21 @@ def slim(obj, keep_status=True):
         o['status'] = obj.get('status')
     return o
 
+KIND_MAP = {
+    'configmaps': 'ConfigMap', 'pods': 'Pod', 'pvcs': 'PersistentVolumeClaim',
+    'persistentvolumeclaims': 'PersistentVolumeClaim', 'serviceaccounts': 'ServiceAccount',
+    'cronjobs': 'CronJob', 'deployments': 'Deployment', 'services': 'Service',
+    'secrets': 'Secret', 'jobs': 'Job', 'rayjobs': 'RayJob', 'localqueues': 'LocalQueue',
+    'featurestores': 'FeatureStore', 'inferenceservices': 'InferenceService',
+    'workloads': 'Workload', 'authpolicies': 'AuthPolicy', 'httproutes': 'HTTPRoute',
+    'ratelimitpolicies': 'RateLimitPolicy',
+}
+
 def find(raw, ns, kind, name_prefix):
     for it in raw['resources'].get(ns, {}).get(kind, []):
         if it['metadata']['name'].startswith(name_prefix):
+            if not it.get('kind') and kind in KIND_MAP:
+                it['kind'] = KIND_MAP[kind]  # raw k8s list items omit kind; QA F13
             return it
     return None
 

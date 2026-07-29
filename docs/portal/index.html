@@ -290,7 +290,7 @@ function render(){
     +'<div class="lede">Projects allow you and your team to organize and collaborate on resources within separate namespaces.</div>';
     if(!ran.has(0))h+='<div class="empty">No data science projects yet. Run Step 1 in the terminal.</div>';
     else{h+='<table><tr><th>Name</th><th>Created</th><th>Owner</th><th>Course objects</th></tr><tr><td><b>agent-school</b><div class="sub">kueue-managed · dashboard workspace · feast enabled</div></td><td>'+dt()+'</td><td>kube:admin</td><td class="mono">';
-      const names=Object.entries(A.resources).filter(([k])=>vis(k)&&k!=='kimi-isvc').map(([,r])=>r.kind+'/'+r.metadata.name);
+      const names=Object.entries(A.resources).filter(([k])=>vis(k)&&k!=='kimi-isvc').map(([,r])=>(r.kind?r.kind+'/':'')+r.metadata.name);
       h+=names.length?names.join('<br>'):'(objects appear as you run steps)';h+='</td></tr></table><div class="pagefoot">1 - 1 of 1</div>';}}
   if(page==='models'){
     h='<h1><span class="picon">⧉</span>Models</h1>'+crumb(page)+note(page);
