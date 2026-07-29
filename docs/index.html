@@ -57,6 +57,7 @@
   .metric span{color:var(--muted);font-size:14px}
 
   section.pad{padding:52px 0}
+  #coursedetail{scroll-margin-top:86px}
   .view{display:none}
   .view.active{display:block}
   .sec-head{margin:0 0 6px;font-size:13px;font-family:var(--mono);letter-spacing:.08em;
@@ -220,6 +221,7 @@
 <script>
 const RAW="https://raw.githubusercontent.com/open-experiments/agent-school/main";
 const REPO="https://github.com/open-experiments/agent-school/tree/main";
+const BLOB="https://github.com/open-experiments/agent-school/blob/main";
 const LABS=["101","201","202","301","302"]; // courses with a portal tape (interactive lab)
 
 const COURSES=[
@@ -228,22 +230,22 @@ const COURSES=[
   tags:["Custom loop","MCP tools","Feast","vLLM","MLflow","IsolationForest"],
   problem:"A 5G core NOC drowns in per-minute KPIs across AMF, SMF and UPF. When a registration storm or resource exhaustion hits, the signal is buried, the runbook lives in another system, and every minute of confusion costs live subscriber sessions.",
   solution:"A disposable, CPU-only agent pod carries only the reasoning loop, two MCP skill servers, and the runbooks. Everything stateful lives behind platform services it consumes: live network state from a Feast online store, reasoning from vLLM, traces in MLflow. The classic pipeline that keeps those services truthful (feature engineering in Feast, training as an Experiment, a versioned IsolationForest in the registry, traced inference) is the platform's job rather than a notebook cell."},
- {id:"201",dir:"201-rca-investigator",title:"RCA Investigator",len:"4:20",flag:false,
+ {id:"201",dir:"201-rca-investigator",title:"RCA Investigator",len:"3:53",flag:false,
   desc:"A research agent that turns an anomaly into an evidenced root-cause report. It retrieves correlated logs and metrics from a RAG backend, then reasons, while an LLM judge scores its evidence grounding.",
   tags:["LangGraph","RAG backend","A2A","MLflow judge","vLLM"],
   problem:"Detecting an anomaly is the easy half. The hard half is producing a defensible root-cause explanation, one grounded in the actual evidence rather than a plausible-sounding guess.",
   solution:"A two-phase agent retrieves correlated evidence from a pattern-2 RAG skill backend (a real service, not an in-process shim), reasons over it, and emits a cited RCA report. An LLM-as-judge then scores how well the conclusion is grounded in the retrieved evidence. This is the first appearance of the evaluate-the-reasoning discipline that 302 turns into a full suite, and it adds no new data infrastructure, amortizing 101's platform investment."},
- {id:"202",dir:"202-fraud-triage",title:"Fraud Triage",len:"3:40",flag:false,
+ {id:"202",dir:"202-fraud-triage",title:"Fraud Triage",len:"5:12",flag:false,
   desc:"A decision agent that consumes a trained fraud model as a tool, gathers evidence, and routes to a human-approval gate. Classic ML and an agent, each doing what it does best.",
   tags:["LangGraph","ML Pipelines","KServe","Human-in-the-loop","Model Registry"],
   problem:"A fraud model can flag a transaction, but acting on the flag needs judgment, evidence-gathering, and for anything consequential a human in the loop.",
   solution:"A Balanced Random Forest is trained through a cloud-native ML pipeline, registered in the shared model registry, and served on KServe as a V2 inference service. A LangGraph agent consumes that served model as one tool among several, assembles the case, and stops at a human-approval gate before any consequential action, keeping the classic model and the agent each in their lane."},
- {id:"301",dir:"301-closed-loop-netops",title:"Closed-Loop NetOps",len:"4:49",flag:true,
+ {id:"301",dir:"301-closed-loop-netops",title:"Closed-Loop NetOps",len:"7:22",flag:true,
   desc:"The flagship: Diagnostic, Planning, Execution and Validation agents run an autonomous remediation loop over A2A, with Kuadrant-governed actuation. The plan is now grounded in a quant + qual co-decision.",
   tags:["LangGraph","A2A","Kuadrant gateway","MCP","quant+qual","MLflow"],
   problem:"A closed remediation loop is where agentic AI gets dangerous. An agent that can run playbooks against a live core is the highest-scrutiny component in the system, and a plan approved on a language model's fluent-but-uncalibrated say-so is not enough.",
   solution:"Four ephemeral workers run in a strict hierarchy. Everything they know lives in an external state store, and everything they say crosses A2A. Execution can touch the core only through the Kuadrant MCP gateway and audited playbooks, and both safety-critical ends of the loop are deterministic code. The Planning decision is now a quant + qual co-decision: a calibrated remediation-risk model (301's own train, serve and govern track, reached through the governed /plan-score tool) and a GenAI judge co-decide the plan, with one hard rail no signal can override and every disagreement audited."},
- {id:"302",dir:"302-energy-optimizer",title:"Energy Optimizer",len:"5:43",flag:true,
+ {id:"302",dir:"302-energy-optimizer",title:"Energy Optimizer",len:"5:39",flag:true,
   desc:"An agent that proposes RAN cell-sleep windows, simulates them before acting, and emits a change plan only when a quant + qual co-decision clears the gate. Then it measures the GenAI judge itself.",
   tags:["OGX","JAX + Kueue","KServe","Kuadrant","MLflow GenAI eval"],
   problem:"A calibrated model scores a trade-off precisely but is blind to context. A reasoning agent sees context but hallucinates numbers. Trusting either alone to decide when to put cells to sleep is unsafe.",
@@ -294,7 +296,7 @@ function openCourse(id){
     <button class="back" onclick="closeCourse()">← All courses</button>
     <div class="detail">
       <div class="detail-head">
-        <span class="badge ${c.flag?'flag':''}">${c.id}</span>
+        <span class="badge ${c.flag?'flag':''}">${c.id}${c.flag?' · flagship':''}</span>
         <h2>${c.title}</h2>
       </div>
       <p class="lede">${c.desc}</p>
@@ -311,7 +313,7 @@ function openCourse(id){
       <div class="detail-links">
         <a class="btn primary" href="${REPO}/${c.dir}" target="_blank" rel="noopener">Code &amp; docs on GitHub ↗</a>
         <a class="btn ghost" href="${vid}" target="_blank" rel="noopener">Open walkthrough (${c.len})</a>
-        <a class="btn ghost" href="${REPO}/${c.dir}/MANUAL.md" target="_blank" rel="noopener">Course Manual</a>
+        <a class="btn ghost" href="${BLOB}/${c.dir}/MANUAL.md" target="_blank" rel="noopener">Course Manual</a>
         ${LABS.includes(c.id)?`<a class="btn ghost" href="portal/index.html?tape=${c.id}-venice" target="_blank" rel="noopener">Open interactive lab <span style="font-size:11px;color:var(--muted)">beta</span></a>`:''}
       </div>
       <figure class="arch">
@@ -320,8 +322,8 @@ function openCourse(id){
       </figure>
     </div>`;
   document.getElementById('courselist').style.display='none';
-  document.getElementById('coursedetail').style.display='block';
-  window.scrollTo({top:0,behavior:'smooth'});
+  const cd=document.getElementById('coursedetail');cd.style.display='block';
+  cd.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function closeCourse(){
   document.getElementById('coursedetail').style.display='none';

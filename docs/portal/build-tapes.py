@@ -8,6 +8,11 @@ per-course tape format described in shared/tapes/TAPE-SCHEMA.md. Steps mirror th
 course MANUAL.md exactly (parsed from it). Terminal playback uses captured pod
 logs where the pod survived to capture time; short excerpts reconstructed from
 session transcripts are marked "reconstructed".
+
+NOTE (QA 2026-07-28): build_101 still emits the pre-cmds step format and does not
+add kimi-isvc; the shipped tapes/101-venice.json was hand-finished after generation.
+Do NOT regenerate 101 until build_101 is ported to the cmds format (201-302 are
+faithful: they regenerate byte-identical, modulo intended changes).
 """
 import json, gzip, re, sys
 
@@ -193,10 +198,17 @@ def C(cmd, *out_lines, log=None):
     if log: return {'cmd': cmd, 'log': log}
     return {'cmd': cmd, 'out': [[i*260, l] for i, l in enumerate(out_lines)]}
 
+
+def add_kimi(raw, A):
+    """Course LLM: the Kimi InferenceService every course calls (telco-aix ns)."""
+    it = find(raw, 'telco-aix', 'inferenceservices', 'kimi-linear')
+    if it: A['resources']['kimi-isvc'] = isvc_slim(it)
+
 # ---------------------------------------------------------------- 201
 def build_201(raw, S):
     ns = 'agent-school'
     A = {'resources': {}, 'logs': {}, 'mlflow': {}, 'registry': [], 'jobsTimeline': []}
+    add_kimi(raw, A)
     dep = find(raw, ns, 'deployments', 'rca-rag')
     if dep: A['resources']['rca-rag'] = slim_dep(dep)
     sa = find(raw, ns, 'serviceaccounts', 'rca-investigator')
@@ -252,6 +264,7 @@ def build_201(raw, S):
 def build_202(raw, S):
     ns = 'agent-school'
     A = {'resources': {}, 'logs': {}, 'mlflow': {}, 'registry': [], 'jobsTimeline': [], 'pipelineRuns': []}
+    add_kimi(raw, A)
     dspa = find(raw, ns, 'dspas', 'dspa')
     if dspa:
         A['resources']['dspa'] = {'kind':'DataSciencePipelinesApplication','metadata':{'name':'dspa','namespace':ns},
@@ -334,6 +347,7 @@ def build_202(raw, S):
 def build_301(raw, S):
     ns = 'agent-school'
     A = {'resources': {}, 'logs': {}, 'mlflow': {}, 'registry': [], 'jobsTimeline': []}
+    add_kimi(raw, A)
     for key, kind, pref, nns in [
         ('loop-state','deployments','loop-state',ns),('mcp-playbook','deployments','mcp-playbook',ns),
         ('llama-stack','deployments','llama-stack',ns),('diag','deployments','diagnostic-agent',ns),
@@ -408,6 +422,7 @@ def build_301(raw, S):
 def build_302(raw, S):
     ns = 'agent-school'
     A = {'resources': {}, 'logs': {}, 'mlflow': {}, 'registry': [], 'jobsTimeline': []}
+    add_kimi(raw, A)
     for key, pref in [('scorer-mcp','scorer-mcp'),('judge','judge-agent')]:
         it = find(raw, ns, 'deployments', pref)
         if it: A['resources'][key] = slim_dep(it)
