@@ -88,4 +88,4 @@ A small generator script (`docs/portal/build-tapes.py`, to be written with the p
 - Raw snapshots: captured and committed (this directory), both clusters, July 28, 2026.
 - Next: build `101-venice.json` by hand-running the generator steps once, then the player MVP against it; then generalize to the other four courses.
 
-> **Maintenance note (QA 2026-07-28):** `docs/portal/build-tapes.py` regenerates courses 201–302 byte-identical to the shipped tapes. Course 101's shipped tape was hand-finished after generation (cmds-format steps, `kimi-isvc` asset, `exp:` reveal gating); port `build_101` to the cmds format before regenerating it.
+> **Maintenance note (updated 2026-07-28):** `docs/portal/build-tapes.py` regenerates **all five** course tapes byte-identical to the shipped files (`build_101` was ported to the cmds step format under QA F12). To rebuild any tape: `python3 docs/portal/build-tapes.py <course> venice shared/tapes/venice-tape-raw.json.gz <course-dir>/MANUAL.md docs/portal/tapes/<course>-venice.json`.

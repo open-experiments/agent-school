@@ -161,7 +161,7 @@ const NAV=[
  {id:'home',label:'Home',top:1},
  {id:'projects',label:'Projects',top:1},
  {grp:'AI hub',items:[{id:'models',label:'Models',lvl:1}]},
- {grp:'Gen AI studio',items:[{id:'playground',label:'Playground',lvl:1}]},
+ {grp:'Gen AI studio',items:[{id:'playground',label:'API keys',lvl:1}]},
  {grp:'Develop & train',open:true,items:[
    {id:'fs-overview',label:'Feature store',lvl:1,grp2:'fs'},
    {id:'fs-entities',label:'Entities',lvl:2,fs:1},{id:'fs-sources',label:'Data sources',lvl:2,fs:1},
@@ -375,7 +375,8 @@ function render(){
       h+='</table>';
       if(rj)h+='<div class="card" style="margin-top:12px"><h3>'+rj.metadata.name+' <span class="lbl ok">'+((rj.status||{}).jobStatus||'')+'</span></h3><p class="mono" style="color:var(--muted)">entrypoint: '+esc(rj.spec.entrypoint||'')+' · head + 1 worker · torn down at TTL</p></div>';}}
   if(['playground','learning','applications','settings'].includes(page)){
-    h='<h1>'+page.charAt(0).toUpperCase()+page.slice(1)+'</h1><div class="empty">Outside this course tape. Explore it on a live cluster.</div>';}
+    const OUTSIDE={playground:'API keys',learning:'Learning resources',applications:'Applications',settings:'Settings'};
+    h='<h1>'+OUTSIDE[page]+'</h1><div class="empty">Outside this course tape. Explore it on a live cluster.</div>';}
   el.innerHTML=h;
 }
 function dirFor(c){return {101:'101-noc-assistant',201:'201-rca-investigator',202:'202-fraud-triage',301:'301-closed-loop-netops',302:'302-energy-optimizer'}[c];}
