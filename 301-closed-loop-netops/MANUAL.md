@@ -21,6 +21,67 @@ Twelve-Factor agents: every agent holds zero local state and reads/writes loop r
 
 The big idea of 301 is that **autonomy is earned through governance**: every capability an agent gains (touching the network, scoring a plan, deciding alone) is matched by an identity check, a policy, or a second opinion that is enforced by the platform, not promised by the prompt.
 
+## Inner mechanics — the three loops
+
+301 is where agentic AI gets dangerous, so the mechanics are mostly about what the agents **cannot** do. Three loops: **build the trust domains and the quant signal**, **run the closed loop**, and **govern and audit every decision**.
+
+### Loop 1 · Trust domains + the quant signal
+
+The namespaces are the architecture: `agent-school` holds the agents, `fiveg-core` is the actuation target (the only thing the loop may touch), and `think-tank` models an external reasoning provider — separate ServiceAccounts, separate secrets, no shared objects. The infrastructure tier externalizes everything: loop state lives in the `loop-state` Redis (agents stay ephemeral), and the `mcp-playbook` gateway is the **only** door to the core. The quantitative half of the co-decision is 301's own model track: [`training/train_remediation_risk.py`](./training/train_remediation_risk.py) fits a GradientBoostingRegressor on 8,646 rows of real 5gprod KPIs (r² 0.9714, MAE 0.0235), registers `netops-remediation-risk`, and serves it on KServe behind the governed `/plan-score` route — Kuadrant AuthPolicy admits exactly two identities (`planning-agent`, `plan-judge-agent`), RateLimitPolicy caps the throughput. LLM judges are persuasive; a calibrated regressor trained on the real KPI series is not, and that is the point.
+
+```mermaid
+flowchart LR
+  subgraph TD1["agent-school (agents)"]
+    D["Diagnostic"] --> R["loop-state Redis"]
+    P["Planning"] ---> R
+    V["Validation"] --> R
+    J["plan-judge"]
+  end
+  subgraph TD2["fiveg-core (actuation target)"]
+    CORE["5G core workloads"]
+  end
+  subgraph TD3["think-tank (external reasoner)"]
+    TT["think-tank MCP"]
+  end
+  KPI["real 5gprod KPIs (8646 rows)"] --> TRN["train_remediation_risk.py<br/>GBR · r2 0.9714"] --> REG["registry: netops-remediation-risk"] --> ISV["KServe scorer"]
+  ISV --> GS["governed /plan-score<br/>Kuadrant AuthPolicy: planning-agent + plan-judge only"]
+  P --> TT
+  P --> GS
+  J --> GS
+  E["Execution"] -->|"only door"| GW["mcp-playbook gateway<br/>Kuadrant AuthPolicy + RateLimit"] --> PB["audited playbooks<br/>scale_amf · restart_smf · rebalance_upf · rollback"] --> CORE
+```
+
+### Loop 2 · The closed loop — Diagnostic → Planning → Execution → Validation
+
+Five A2A servers (each exposing the standard agent card at `/.well-known/agent.json`, each under its own ServiceAccount, each a separate Deployment that scales and fails independently). **Diagnostic** reads the live feature store and writes its incident record to Redis. **Planning** pulls that record, consults the think-tank, scores **every step** of the remediation flow through `/plan-score`, and co-decides with the judge: the quant gate (`QUANT_RISK_CEILING`) and the qualitative verdict must agree, and `HARD_RISK_FLOOR` is the rail no signal can override — above it, a human approves, full stop. **Execution** can only act through the gateway's audited playbooks. **Validation** then verifies what actually happened rather than trusting the plan. The chain Job proves the loop end to end and asserts `STATE_OK` / `CHAIN_OK` from the record in Redis.
+
+```mermaid
+flowchart LR
+  FS["feature store<br/>(101's live views)"] --> DG["Diagnostic<br/>writes record to Redis"]
+  DG --> PLN["Planning<br/>think-tank + /plan-score<br/>quant + qual co-decision"]
+  PLN -->|"QUANT_RISK_CEILING gate<br/>HARD_RISK_FLOOR rail"| EXE["Execution<br/>playbooks via governed gateway"]
+  EXE --> VAL["Validation<br/>verifies actual outcome"]
+  VAL --> REC["loop record → Redis<br/>STATE_OK · CHAIN_OK"]
+  REC --> XP["MLflow experiment 301-closed-loop<br/>judge_decision · quant_ok · override · hard_risk_rail as params"]
+```
+
+### Loop 3 · Governance & audit — disagreement is data
+
+With clean telemetry the correct plan is "no remediation needed," and the co-decision stays quiet — an honest loop does nothing when nothing is wrong. The drill afterward is the negative-then-positive discipline: tighten the quant gate (`QUANT_RISK_CEILING`) until it holds a plan the judge clears, and watch the disagreement produce an **audited override record** instead of silent autonomy. Autonomy, consensus, override, and the hard rail all become parameters in the experiment record, which is what makes the loop reviewable — and reviewable is what makes it deployable.
+
+### Stage-to-code map
+
+| Stage | Component | Where |
+|---|---|---|
+| Trust domains | 3 namespaces, no shared objects | [`deploy/ocp/rome/fiveg-core.yaml`](./deploy/ocp/rome/fiveg-core.yaml), [`think-tank.yaml`](./deploy/ocp/rome/think-tank.yaml) |
+| Loop state | externalized in Redis | [`deploy/ocp/rome/state-store.yaml`](./deploy/ocp/rome/state-store.yaml) |
+| Quant signal | GBR risk scorer, trained on real KPIs | [`training/train_remediation_risk.py`](./training/train_remediation_risk.py), registry `netops-remediation-risk` |
+| Governed scoring | `/plan-score`, two identities only | [`agents/scorer-mcp/server.py`](./agents/scorer-mcp/server.py), [`deploy/ocp/rome/scorer-gateway-policies.yaml`](./deploy/ocp/rome/scorer-gateway-policies.yaml) |
+| The agents | D/P/E/V + judge over A2A | [`agents/diagnostic/`](./agents/diagnostic/), [`planning/`](./agents/planning/), [`execution/`](./agents/execution/), [`validation/`](./agents/validation/), [`judge/`](./agents/judge/) |
+| Actuation | gateway + audited playbooks only | [`agents/mcp-playbook/server.py`](./agents/mcp-playbook/server.py), [`agents/execution/playbooks/`](./agents/execution/playbooks/), [`deploy/ocp/rome/mcp-gateway-policies.yaml`](./deploy/ocp/rome/mcp-gateway-policies.yaml) |
+| Proof of loop | smoke chain, STATE_OK / CHAIN_OK | [`agents/planning/smoke_chain.py`](./agents/planning/smoke_chain.py), [`deploy/ocp/rome/job-smoke-chain.yaml`](./deploy/ocp/rome/job-smoke-chain.yaml) |
+| Audit | co-decision params in experiment | MLflow experiment `301-closed-loop`, [`RUNBOOK-quantqual.md`](./deploy/ocp/rome/RUNBOOK-quantqual.md) |
+
 ## Prerequisites (verify before you start)
 
 1. Courses 101 and 202 environments in place: project `agent-school` with `llm-credentials`, `mlflow-tracking`, `feature-store-client`, the SA-group MLflow binding, `dspa-minio-creds`, and the `fraud-serving` SA + `aws-connection-minio-models` data connection (202 Step 6; the 301 serving reuses both).

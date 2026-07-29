@@ -22,6 +22,52 @@ A LinearRegression scorer (energy efficiency as a function of 11 network KPIs, r
 
 The big idea of 302 is **simulate before you act, and grade after you decide**: the agent's freedom is bounded by explicit numeric gates, its experiments run as disposable platform workloads, and its judgment is itself judged.
 
+## Inner mechanics — the three loops
+
+302 closes the series with the hardest question: not "did the agent act safely" but "did it **decide well**." Three loops: a **governed scorer**, a **simulate-before-act episode**, and a **GenAI evaluation** that measures the judge itself.
+
+### Loop 1 · The scorer — quantitative truth behind a governed route
+
+A calibrated model scores the energy/QoS trade-off precisely but is blind to context; a reasoning agent sees context but hallucinates numbers. So the quantitative signal gets the same treatment as 301's risk model: [`training/train_sustainability.py`](./training/train_sustainability.py) trains the sustainability regressor, the registry versions it, KServe serves it (`sustainability-scorer`, MLServer, V2), and [`scorer-mcp`](./agent/scorer-mcp/server.py) wraps it as an MCP tool behind the governed `/score` route — Kuadrant AuthPolicy admits exactly two identities (`energy-optimizer`, `judge-agent`). Every efficiency score in every episode passes a policy enforcement point with an identity attached; the agent never talks to the predictor directly.
+
+```mermaid
+flowchart LR
+  TRN["train_sustainability.py"] --> REG["registry: energy-efficiency v1"] --> ISV["KServe sustainability-scorer<br/>MLServer · V2"]
+  ISV --> MCP["scorer-mcp"] --> RT["governed /score<br/>AuthPolicy: energy-optimizer + judge-agent only"]
+```
+
+### Loop 2 · The episode — propose, simulate, score, co-decide
+
+The optimizer ([`agent/energy_optimizer.py`](./agent/energy_optimizer.py), driven through OGX / Llama Stack, [`agent/run.yaml`](./agent/run.yaml)) proposes RAN cell-sleep windows — then **simulates before acting**: it submits its own JAX simulation Jobs ([`sim/cell_sleep_sim.py`](./sim/cell_sleep_sim.py)) under the narrowly-scoped `energy-optimizer` ServiceAccount (create/watch Jobs and read pod logs in this one namespace, nothing else — delegation, not abdication), reads their logs, scores the outcome through the governed `/score`, and iterates. The gates are explicit env-config numbers, not prompt language: `MIN_SAVINGS_PCT` (the plan must be worth it), `MAX_QOS_DROP_PCT` (it must not hurt users), `HARD_QOS_FLOOR_PCT` (the rail nothing overrides), `MAX_ROUNDS` (bounded iteration, bounded spend). The judge grounds its qualitative verdict on the **same scorer number**, a code arbiter co-decides, and a `CHANGE_PLAN` is emitted only when the gate clears — the whole episode is one auditable MLflow record in `302-energy-optimizer`.
+
+```mermaid
+flowchart LR
+  OPT["optimizer proposes<br/>cell-sleep windows (OGX / Llama Stack)"] --> SIM["JAX sim Jobs<br/>sim/cell_sleep_sim.py<br/>scoped SA · Kueue-admitted"]
+  SIM --> RES["SIM_RESULT<br/>savings_kwh · qos_dropped_pct · co2"]
+  RES --> SC["governed /score"]
+  SC --> ARB["code arbiter co-decision<br/>MIN_SAVINGS_PCT · MAX_QOS_DROP_PCT<br/>HARD_QOS_FLOOR_PCT rail · MAX_ROUNDS"]
+  JDGE["judge-agent<br/>grounds on the same score"] --> ARB
+  ARB -->|"gate clears"| CP["CHANGE_PLAN<br/>episode + accepted_round + windows"]
+  ARB -->|"else"| ITR["iterate or stop"]
+  CP --> XP["MLflow experiment 302-energy-optimizer<br/>one episode = one auditable record"]
+```
+
+### Loop 3 · Measure the judge — agents grading agents
+
+The optimizer's own gates say a plan passed; the eval asks whether the agent **decided well**. [`eval/genai_eval.py`](./eval/genai_eval.py) replays recent episodes and scores them on independent axes: decision correctness (did accept/reject match what the sim numbers justified), numeric groundedness (are claimed figures actually in the sim outputs), QoS safety, and an LLM-judged groundedness pass using the cluster's own model. The scores land as an eval run **next to the episodes they grade** (reference from the Venice run: decision_correctness 0.75, groundedness 0.875, qos_safety 0.875). The suite caught real defects on its first run — which is the series' closing statement: judges are workloads too, and they get measured. ROI: kWh and CO₂ saved with QoS protected by a rail, not a promise.
+
+### Stage-to-code map
+
+| Stage | Component | Where |
+|---|---|---|
+| Scorer training | sustainability regressor | [`training/train_sustainability.py`](./training/train_sustainability.py) |
+| Scorer serving | KServe + governed /score | [`deploy/ocp/rome/serving.yaml`](./deploy/ocp/rome/serving.yaml), [`agent/scorer-mcp/server.py`](./agent/scorer-mcp/server.py), [`deploy/ocp/rome/scorer-gateway-policies.yaml`](./deploy/ocp/rome/scorer-gateway-policies.yaml) |
+| Optimizer | OGX / Llama Stack episode loop | [`agent/energy_optimizer.py`](./agent/energy_optimizer.py), [`agent/run.yaml`](./agent/run.yaml) |
+| Simulation | JAX cell-sleep sim, scoped SA, Kueue | [`sim/cell_sleep_sim.py`](./sim/cell_sleep_sim.py), [`deploy/ocp/rome/sim-rbac.yaml`](./deploy/ocp/rome/sim-rbac.yaml), [`job-sim-template.yaml`](./deploy/ocp/rome/job-sim-template.yaml) |
+| Co-decision | code arbiter + judge, env-config gates | `MIN_SAVINGS_PCT` · `MAX_QOS_DROP_PCT` · `HARD_QOS_FLOOR_PCT` · `MAX_ROUNDS`, [`agent/judge/agent.py`](./agent/judge/agent.py) |
+| Episode audit | one episode = one record | MLflow experiment `302-energy-optimizer` |
+| Judge measured | GenAI evaluation suite | [`eval/genai_eval.py`](./eval/genai_eval.py), [`deploy/ocp/rome/job-genai-eval.yaml`](./deploy/ocp/rome/job-genai-eval.yaml) |
+
 ## Prerequisites (verify before you start)
 
 1. Project `agent-school` with `llm-credentials`, `mlflow-tracking`, the SA-group MLflow binding, `dspa-minio-creds`, the `fraud-serving` SA and `aws-connection-minio-models` data connection (202 Step 6; the serving stack reuses them).

@@ -21,6 +21,55 @@ Pattern 2 of the course series: the skill (the retrieval index) lives in its own
 
 The big ideas of 201 are **skills as services** (heavy capabilities live behind a Service boundary, not inside the agent) and **evaluation as a first-class workload** (you do not trust an agent's report, you grade it, and the grades attach to the traces).
 
+## Inner mechanics — the three loops
+
+201 keeps 101's platform and adds one discipline: reasoning you can defend. Three loops: an **evidence backend** that builds the searchable truth, a **two-phase investigation** that uses it, and a **judgment loop** that grades the result.
+
+### Loop 1 · Evidence backend — build the searchable truth
+
+The investigator works the same incident data the NOC assistant watches: 101's telemetry and alerts are baked into the image at build time (the build uses the repo root as context), which is exactly what lets a judge later check the evidence. At startup the [`rca-rag` Deployment](./backend/rag_service.py) builds its retrieval index and serves it over HTTP on 8201 — a **pattern-2 skill backend**: a real Service, not an in-process shim. It can scale to three replicas, be re-indexed, or be swapped for a vector database without the agent changing a line.
+
+```mermaid
+flowchart LR
+  DATA["incident telemetry + logs<br/>(101's 5gprod data, baked at build)"] --> IDX["retrieval index<br/>backend/rag_service.py"]
+  IDX --> SVC["rca-rag Service :8201<br/>Deployment, own identity, scalable"]
+  SVC --> E1["search_evidence"]
+  SVC --> E2["get_metric_window"]
+```
+
+### Loop 2 · Investigation — two phases, every claim cited
+
+One investigation is one Job. **Phase 1** is a bounded tool-calling loop ([`agent/rca_agent.py`](./agent/rca_agent.py), capped by `RCA_MAX_TURNS`, because unbounded agent loops are a cost and safety bug): the agent reaches its skill at `http://rca-rag:8201` through plain in-cluster service discovery and gathers correlated evidence. **Phase 2** writes the RCA report, and every finding must cite evidence ids like `[alert-5]` and `[amf-796]` — uncited claims are exactly what the judge exists to catch. The report lands in `REPORT_DIR` (an emptyDir by default; mount a PVC to keep it), and both phases are flushed to the `201-rca-investigator` experiment as MLflow traces, so the report's provenance is inspectable turn by turn.
+
+```mermaid
+flowchart LR
+  TRIG["anomaly / incident question"] --> P1["phase 1: investigation<br/>bounded tool-calling loop<br/>RCA_MAX_TURNS"]
+  P1 -->|"search_evidence / get_metric_window<br/>tools/retrieval_mcp.py"| SVC2["rca-rag :8201"]
+  P1 --> P2["phase 2: report write-up<br/>every claim cites evidence ids"]
+  P2 --> REP["cited RCA report<br/>REPORT_DIR"]
+  P1 --> TRC["MLflow Traces<br/>experiment 201-rca-investigator"]
+  P2 --> TRC
+  P2 --> JDG["rca-judge Job<br/>eval/judge_evidence_grounding.py"]
+  TRC --> JDG
+  JDG -->|"PASS / FLAG per trace"| FB["feedback attached to traces<br/>quality = queryable platform data"]
+```
+
+### Loop 3 · Judgment — grade the grounding
+
+Confident prose is worthless if it is not grounded, and no human reads every RCA. The [`rca-judge` Job](./eval/judge_evidence_grounding.py) pulls the latest traces from the workspace, asks the cluster's own Kimi (via LiteLLM's `hosted_vllm` provider — no external API, no data leaving the cluster) whether each claim is supported by its cited evidence, and writes the verdicts back as **feedback attached to the traces**. Evaluation results live next to the thing they evaluate. This is the first appearance of the evaluate-the-reasoning discipline: 302 turns it into a measured suite, and the resolution path stays human — a defensible, cited report is the deliverable, and 301 is where agents start acting on findings.
+
+### Stage-to-code map
+
+| Stage | Component | Where |
+|---|---|---|
+| Evidence base | retrieval index, built at startup | [`backend/rag_service.py`](./backend/rag_service.py), `rca-rag` Deployment + Service :8201 |
+| Skill access | MCP retrieval tools over HTTP | [`tools/retrieval_mcp.py`](./tools/retrieval_mcp.py), [`tools/lib.py`](./tools/lib.py) |
+| Investigation | two-phase bounded loop, one run = one Job | [`agent/rca_agent.py`](./agent/rca_agent.py), [`deploy/ocp/job-rca.yaml`](./deploy/ocp/job-rca.yaml) |
+| Reasoning | in-cluster vLLM (Kimi), stateless | `llm-credentials` Secret |
+| Report | cited RCA artifact | `REPORT_DIR` (emptyDir; see [`reports/`](./reports/) for QA examples) |
+| Score control | both phases traced | MLflow Traces, experiment `201-rca-investigator` |
+| Judgment | evidence-grounding judge, verdicts as trace feedback | [`eval/judge_evidence_grounding.py`](./eval/judge_evidence_grounding.py), [`deploy/ocp/rome/job-judge.yaml`](./deploy/ocp/rome/job-judge.yaml) |
+
 ## Prerequisites (verify before you start)
 
 1. Everything from the 101 manual's prerequisites (RHOAI 3.5 EA2 stack, internal image registry configured, Kimi-Linear Ready in `telco-aix`, managed MLflow running).

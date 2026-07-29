@@ -232,7 +232,7 @@ const COURSES=[
   solution:"A disposable, CPU-only agent pod carries only the reasoning loop, two MCP skill servers, and the runbooks. Everything stateful lives behind platform services it consumes: live network state from a Feast online store, reasoning from vLLM, traces in MLflow. The classic pipeline that keeps those services truthful (feature engineering in Feast, training as an Experiment, a versioned IsolationForest in the registry, traced inference) is the platform's job rather than a notebook cell."},
  {id:"201",dir:"201-rca-investigator",title:"RCA Investigator",len:"3:53",flag:false,
   desc:"A research agent that turns an anomaly into an evidenced root-cause report. It retrieves correlated logs and metrics from a RAG backend, then reasons, while an LLM judge scores its evidence grounding.",
-  tags:["LangGraph","RAG backend","A2A","MLflow judge","vLLM"],
+  tags:["Two-phase loop","RAG backend","A2A","MLflow judge","vLLM"],
   problem:"Detecting an anomaly is the easy half. The hard half is producing a defensible root-cause explanation, one grounded in the actual evidence rather than a plausible-sounding guess.",
   solution:"A two-phase agent retrieves correlated evidence from a pattern-2 RAG skill backend (a real service, not an in-process shim), reasons over it, and emits a cited RCA report. An LLM-as-judge then scores how well the conclusion is grounded in the retrieved evidence. This is the first appearance of the evaluate-the-reasoning discipline that 302 turns into a full suite, and it adds no new data infrastructure, amortizing 101's platform investment."},
  {id:"202",dir:"202-fraud-triage",title:"Fraud Triage",len:"5:12",flag:false,

@@ -20,6 +20,59 @@ A KFP v2 pipeline trains a BalancedRandomForest on the published 1M-row billing 
 
 The big ideas of 202 are the **full MLOps chain** (pipeline to registry to object store to serving, each stage a named platform artifact) and **human-in-the-loop as an engineered control**, not a promise: the gate is code that provably stops the workflow.
 
+## Inner mechanics — the three loops
+
+202 splits the work the way production fraud systems do: a **pipeline** builds the model, **KServe** serves it, and a **LangGraph agent** decides with a human gate on anything consequential. Classic ML and an agent, each in their lane.
+
+### Loop 1 · Train — the pipeline builds the model
+
+One million real telecom billing records (hf.co/datasets/fenar/revenue_assurance, 1.7% fraud — naive training on that imbalance produces a useless model) flow through a Data Science Pipeline owned by this project's own DSPA stack: [`pipeline/fraud_train_pipeline.py`](./pipeline/fraud_train_pipeline.py) runs `load_data → preprocess → train → evaluate → register` as separate containers with artifacts in the pipeline bucket. `train` fits a BalancedRandomForest, `evaluate` prints fraud-class precision/recall near 0.996/0.999, and `register` turns the result into a named MLflow model version — lineage from dataset to registered model, every step inspectable in the dashboard. The stage Job ([`serving/stage_model.py`](./serving/stage_model.py)) then copies the registered version's artifact tree to MinIO at `s3://models/revassurance-fraud-brf/1/`, making "which bytes is production running" a one-line answer.
+
+```mermaid
+flowchart LR
+  DS["1M billing records<br/>hf.co/datasets/fenar/revenue_assurance<br/>1.7% fraud"] --> PL["DS Pipeline (DSPA, project-scoped)<br/>load_data → preprocess → train → evaluate → register"]
+  PL --> MLF["MLflow model version"]
+  MLF --> REG["Model Registry<br/>revassurance-fraud-brf v1"]
+  REG --> STG["stage Job<br/>serving/stage_model.py"]
+  STG --> S3["MinIO<br/>s3://models/revassurance-fraud-brf/1/"]
+  S3 --> ISVC["KServe InferenceService<br/>fraud-detector (MLServer, V2 protocol)"]
+```
+
+### Loop 2 · Serve + decide — the model becomes a tool
+
+KServe pulls the staged artifacts through its storage initializer and serves them behind a stable predictor Service — V2 inference protocol, dashboard visibility, probes, no custom Flask pod to babysit. The [`triage agent`](./agent/triage_agent.py) is a small LangGraph state machine that consumes that served model as **one tool among several**: score the case over V2, gather account context, decide the route. The agent never holds the model weights and the model never guesses about context — that separation is the course.
+
+```mermaid
+flowchart LR
+  CASE["billing case"] --> SCORE["score<br/>V2 call to fraud-detector"]
+  ISVC2["fraud-detector predictor"] --> SCORE
+  SCORE --> CTX["gather context"] --> DEC["decide route"]
+  DEC -->|"clear"| CLR["cleared · audited"]
+  DEC -->|"consequential"| GATE["human-approval gate<br/>LangGraph interrupt()"]
+  GATE -->|"no APPROVE_TOKEN"| PARK["PARKED as awaiting_approval"]
+  GATE -->|"APPROVE_TOKEN + APPROVER identity"| ESC["resumed → escalated"]
+  CLR --> AUD["MLflow Experiments<br/>revassurance-fraud · triage-case-* runs"]
+  PARK --> AUD
+  ESC --> AUD
+```
+
+### Loop 3 · The gate, proven both directions
+
+The escalate path hits LangGraph's `interrupt()` — a checkpoint that stops the graph cold. Run without an approval token and the consequential cases **park** as `awaiting_approval`; that parked outcome is the evidence the gate is real code, not narrative. Re-run with `APPROVE_TOKEN` (and an `APPROVER` identity), and the same cases resume and complete as `escalated`, with the approver recorded. Both episodes land as runs in the `revassurance-fraud` experiment, so the audit trail shows exactly who approved what. A gate you have only ever seen open is not a gate — and the ROI is revenue leakage caught with human accountability intact.
+
+### Stage-to-code map
+
+| Stage | Component | Where |
+|---|---|---|
+| Training data | published billing dataset | hf.co/datasets/fenar/revenue_assurance |
+| Pipeline | 5-step KFP pipeline on project DSPA | [`pipeline/fraud_train_pipeline.py`](./pipeline/fraud_train_pipeline.py), [`pipeline/import_and_run.py`](./pipeline/import_and_run.py) |
+| Registry | named, versioned model | `revassurance-fraud-brf` v1 |
+| Staging | registry → object store bridge | [`serving/stage_model.py`](./serving/stage_model.py) |
+| Serving | KServe + MLServer, V2 protocol | [`deploy/ocp/rome/serving.yaml`](./deploy/ocp/rome/serving.yaml), isvc `fraud-detector` |
+| Decision agent | LangGraph state machine, model-as-a-tool | [`agent/triage_agent.py`](./agent/triage_agent.py) |
+| Human gate | `interrupt()` + APPROVE_TOKEN / APPROVER | [`deploy/ocp/rome/job-triage.yaml`](./deploy/ocp/rome/job-triage.yaml) |
+| Audit | every case a run | MLflow experiment `revassurance-fraud` |
+
 ## Prerequisites (verify before you start)
 
 1. Everything from the 101 manual's prerequisites, plus project `agent-school` with `llm-credentials` and `mlflow-tracking` (101 Steps 1 and 2) and the SA-group MLflow binding (`mlflow-workspace-rbac.yaml`, 101 Step 4; the stage Job runs as the `default` SA and relies on it).
