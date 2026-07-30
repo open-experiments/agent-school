@@ -1,0 +1,51 @@
+# Guardrails for the shared agent-school namespace on Venice (SNO).
+#
+# NOTE: a ResourceQuota is namespace-wide — it counts the course's own
+# workloads (agents, backends, scorers, the Kimi ISVC) as well as
+# student experiments. The numbers below are sized to leave the course
+# stack comfortable headroom; tune to your node before applying
+# (`oc describe node | grep -A6 Allocatable`).
+#
+# GPU: capped at 1 — exactly what the course's Kimi ISVC already
+# consumes on Venice. Result: students cannot request a(nother) GPU;
+# a student pod asking for nvidia.com/gpu is denied once Kimi holds it.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: agent-school-guardrail
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  hard:
+    pods: "60"
+    requests.cpu: "16"
+    requests.memory: 48Gi
+    limits.cpu: "32"
+    limits.memory: 96Gi
+    requests.nvidia.com/gpu: "1"
+    persistentvolumeclaims: "20"
+    requests.storage: 200Gi
+---
+# Once a quota sets cpu/memory, every new container must declare
+# requests/limits or admission rejects it. These defaults keep the
+# course manifests and casual student pods working without edits.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: agent-school-defaults
+  namespace: agent-school
+  labels:
+    app.kubernetes.io/part-of: agent-school
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 256Mi
+      default:
+        cpu: "1"
+        memory: 2Gi
+      max:
+        cpu: "8"
+        memory: 16Gi

@@ -1,4 +1,34 @@
-# Venice Replication — Progress & Resume Point (updated July 28, 2026, evening)
+# Venice Replication — Progress & Resume Point (updated July 30, 2026)
+
+## July 30 session — student accounts, UWM, EA2 metrics-page finding
+
+### Student accounts (durable)
+Provisioned via `students/provision-students.sh` (see `students/README.md`):
+htpasswd IdP `agent-school-students`, users student1..5, group-bound `edit`
+scoped to agent-school, ResourceQuota + LimitRange guardrails (GPU pinned
+to Kimi's 1), read-only extras: model-registry roles, Kueue read (Workload
+metrics page), and `view` on telco-aix so students can watch Kimi run but
+cannot stop it. Inverse: `students/cleanup-students.sh`.
+
+### User Workload Monitoring enabled (durable)
+`cluster-monitoring-config` CM created in openshift-monitoring with
+`enableUserWorkload: true` (correct key — `enableUserWorkloadMonitoring`
+is rejected by the monitoring admission webhook). prometheus-user-workload
++ thanos-ruler Running within ~30s. Footprint ~1-2Gi.
+
+### EA2 finding: per-model metrics page 404s for ALL users
+`AI hub → Models → Deployments → kimi-linear-48b-a3b` (route
+`/ai-hub/models/deployments/telco-aix/metrics/…`) shows "We can't find
+that page" for kube:admin and students alike. Ruled out: RBAC (identical
+for admin), UWM (enabled, pods green), dashboard config
+(odh-dashboard-config has no disableKServeMetrics/performance flags to
+flip). Conclusion: route not wired in 3.5.0-ea.2 dashboard, likely also
+related to the hand-rolled `custom-vllm-tp1` runtime showing as "Unknown
+Serving Runtime". Workaround: PromQL via console Observe → Metrics (e.g.
+`vllm:num_requests_running`). Re-check after next EA/GA dashboard bump.
+
+---
+Previous resume point (July 28, 2026, evening):
 
 Read with shared/manifests/rome/README.md + install-report.md. Work is done via Chrome on
 console-openshift-console.apps.venice.narlabs.io (kube:admin), using in-page fetch helpers
