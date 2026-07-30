@@ -56,10 +56,18 @@ def _make_client():
         api_key=os.environ.get("LLM_API_KEY", "none"),
     )
     wire_path = os.environ.get("LLM_WIRE_LOG")
-    if not wire_path:
+    # Optional: trust a private CA (e.g. self-signed OpenShift router cert)
+    # without touching the system trust store. Point LLM_CA_BUNDLE at a PEM
+    # file holding the endpoint's cert chain.
+    ca_bundle = os.environ.get("LLM_CA_BUNDLE")
+    if not wire_path and not ca_bundle:
         return OpenAI(**base)
 
     import httpx
+
+    verify = ca_bundle if ca_bundle else True
+    if not wire_path:
+        return OpenAI(http_client=httpx.Client(verify=verify), **base)
 
     wire = open(wire_path, "a", encoding="utf-8")
 
@@ -96,7 +104,7 @@ def _make_client():
         wire.flush()
 
     http_client = httpx.Client(
-        event_hooks={"request": [on_request], "response": [on_response]}
+        verify=verify, event_hooks={"request": [on_request], "response": [on_response]}
     )
     return OpenAI(http_client=http_client, **base)
 
