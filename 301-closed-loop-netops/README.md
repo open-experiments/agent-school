@@ -20,9 +20,9 @@ Figure-1.
 
 ## Walkthrough video
 
-A narrated walkthrough (7:22) — the problem, then the step-by-step agentic
-solution over the live RHOAI portal and OpenShift console on our DevOps
-cluster called Rome, including the Kuadrant-governed actuation boundary.
+A narrated walkthrough (8:56) — the problem, then the step-by-step agentic
+solution over the live RHOAI portal and OpenShift console on our reference
+cluster called Venice, including the Kuadrant-governed actuation boundary.
 Click the poster to play or download:
 
 [![301 · Closed-Loop NetOps — narrated walkthrough](./images/walkthrough-poster.png)](./images/301-closed-loop-netops.mp4)

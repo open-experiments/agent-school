@@ -19,8 +19,8 @@ planned (product harness over the same MCP skills).
 
 ## Walkthrough video
 
-A narrated walkthrough (4:20) — the problem, then the step-by-step agentic
-solution over the live RHOAI portal on our DevOps cluster called Rome.
+A narrated walkthrough (4:36) — the problem, then the step-by-step agentic
+solution over the live RHOAI portal on our reference cluster called Venice.
 Click the poster to play or download:
 
 [![201 · RCA Investigator — narrated walkthrough](./images/walkthrough-poster.png)](./images/201-rca-investigator.mp4)

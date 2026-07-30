@@ -21,8 +21,8 @@ human-approval pattern.
 
 ## Walkthrough video
 
-A narrated walkthrough (5:12) — the problem, then the step-by-step agentic
-solution over the live RHOAI portal on our DevOps cluster called Rome.
+A narrated walkthrough (5:52) — the problem, then the step-by-step agentic
+solution over the live RHOAI portal on our reference cluster called Venice.
 Click the poster to play or download:
 
 [![202 · Fraud Triage — narrated walkthrough](./images/walkthrough-poster.png)](./images/202-fraud-triage.mp4)

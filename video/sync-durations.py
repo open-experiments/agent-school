@@ -4,6 +4,7 @@
 Reads each course mp4 with ffprobe and rewrites:
   - docs/index.html      COURSES[].len values (card badge + walkthrough button)
   - docs/tests/site.test.js   expected-duration map
+  - <course>/README.md   the "A narrated walkthrough (M:SS)" line
 
 Run from the repo root after `python3 video/produce.py video/specs/<c>.json`:
   python3 video/sync-durations.py          # apply
@@ -55,8 +56,20 @@ def main():
         if not check: s = pat.sub(r'\g<1>%s\g<3>' % durs['301'], s)
     if not check: open(p, 'w').write(s)
 
-    if check and drift: sys.exit('DRIFT: site/tests out of sync with mp4 durations')
-    print('check OK: site and tests match mp4 durations' if check else 'synced.')
+    for c, d in DIRS.items():
+        p = f'{d}/README.md'; s = open(p).read()
+        pat = re.compile(r'(A narrated walkthrough \()([0-9]+:[0-9]{2})(\))')
+        m = pat.search(s)
+        if not m: sys.exit(f'FATAL: walkthrough duration not found in {p}')
+        if m.group(2) != durs[c]:
+            drift = True
+            print(f'{p}: {m.group(2)} -> {durs[c]}')
+            if not check:
+                s = pat.sub(r'\g<1>%s\g<3>' % durs[c], s, count=1)
+                open(p, 'w').write(s)
+
+    if check and drift: sys.exit('DRIFT: site/tests/READMEs out of sync with mp4 durations')
+    print('check OK: site, tests, and READMEs match mp4 durations' if check else 'synced.')
 
 if __name__ == '__main__':
     main()

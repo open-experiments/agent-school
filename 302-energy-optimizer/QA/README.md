@@ -1,9 +1,15 @@
-# 302 · QA Evidence Pack (pending)
+# 302 · QA Evidence Pack (in progress)
 
-This course is planned; the QA pack fills as it is built. The matrix follows
-the 101 pattern, and every live run must include wire-level evidence.
+The course is working and runs live on the Rome and Venice reference
+clusters — current evidence lives outside this folder: the narrated
+walkthrough ([../images/](../images/)), the RHOAI dashboard captures
+([../images/rhoai/](../images/rhoai/)), and the time-snapshotted Venice
+lab tape ([docs/portal/tapes/302-venice.json](../../docs/portal/tapes/302-venice.json)).
+This pack collects the wire-level evidence to bring 302 to the 101/201
+QA-passed bar; the matrix follows the 101 pattern, and every live run
+added here must include wire-level evidence.
 
-## Planned test matrix
+## Test matrix
 
 | # | Test | Evidence | Status |
 |---|------|----------|--------|

@@ -19,8 +19,8 @@ A single agent that answers NOC questions about a 5G core: it inspects telemetry
 
 ## Walkthrough video
 
-A narrated walkthrough (5:39) — the problem, then the step-by-step agentic
-solution over the live RHOAI portal on our DevOps cluster called Rome.
+A narrated walkthrough (6:27) — the problem, then the step-by-step agentic
+solution over the live RHOAI portal on our reference cluster called Venice.
 Click the poster to play or download:
 
 [![101 · NOC Assistant — narrated walkthrough](./images/walkthrough-poster.png)](./images/101-noc-assistant.mp4)
