@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Agent School · Applied Agentic AI for Telco</title>
 <meta name="description" content="Open-source, governed agentic AI examples for telco, built to run cloud-native on Kubernetes. Five courses, each a proven Telco-AIX experiment rebuilt as a governed agent workload."/>
+<link rel="icon" type="image/png" href="favicon.png"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Agent School"/>
+<meta property="og:title" content="Agent School · Applied Agentic AI for Telco"/>
+<meta property="og:description" content="Five hands-on courses. Each takes a proven Telco-AIX experiment and rebuilds it as a governed, cloud-native agent workload — with narrated walkthroughs and self-service interactive labs."/>
+<meta property="og:url" content="https://open-experiments.github.io/agent-school/"/>
+<meta property="og:image" content="https://open-experiments.github.io/agent-school/og-card.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Agent School · Applied Agentic AI for Telco"/>
+<meta name="twitter:description" content="Five hands-on courses. Each takes a proven Telco-AIX experiment and rebuilds it as a governed, cloud-native agent workload — with narrated walkthroughs and self-service interactive labs."/>
+<meta name="twitter:image" content="https://open-experiments.github.io/agent-school/og-card.png"/>
 <style>
   :root{
     --bg:#ffffff; --bg-alt:#f6f7f9; --ink:#151515; --muted:#5a6069;
@@ -71,6 +84,7 @@
     padding:22px;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;
     display:flex;flex-direction:column}
   .card:hover{transform:translateY(-3px);box-shadow:0 4px 10px rgba(20,20,20,.1),0 16px 40px rgba(20,20,20,.1)}
+  .card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:700;
     font-size:12px;color:#fff;background:var(--chip);border-radius:999px;padding:4px 11px;align-self:flex-start}
   .badge.flag{background:var(--accent)}
@@ -232,9 +246,9 @@ const COURSES=[
   solution:"A disposable, CPU-only agent pod carries only the reasoning loop, two MCP skill servers, and the runbooks. Everything stateful lives behind platform services it consumes: live network state from a Feast online store, reasoning from vLLM, traces in MLflow. The classic pipeline that keeps those services truthful (feature engineering in Feast, training as an Experiment, a versioned IsolationForest in the registry, traced inference) is the platform's job rather than a notebook cell."},
  {id:"201",dir:"201-rca-investigator",title:"RCA Investigator",len:"4:36",flag:false,
   desc:"A research agent that turns an anomaly into an evidenced root-cause report. It retrieves correlated logs and metrics from a RAG backend, then reasons, while an LLM judge scores its evidence grounding.",
-  tags:["Two-phase loop","RAG backend","A2A","MLflow judge","vLLM"],
+  tags:["Two-phase loop","RAG backend","Model routing","MLflow judge","vLLM"],
   problem:"Detecting an anomaly is the easy half. The expensive half is the war-room: hours of senior-engineer time arguing about root cause while Mean-Time-To-Repair (MTTR) runs and SLA credits accrue. Closing it takes a defensible root-cause explanation grounded in the actual evidence, not a plausible-sounding guess.",
-  solution:"A two-phase agent retrieves correlated evidence from a pattern-2 RAG skill backend (a real service, not an in-process shim), reasons over it, and emits a cited RCA report. An LLM-as-judge then scores how well the conclusion is grounded in the retrieved evidence. This is the first appearance of the evaluate-the-reasoning discipline that 302 turns into a full suite, and it adds no new data infrastructure, amortizing 101's platform investment."},
+  solution:"A two-phase agent retrieves correlated evidence from a <a href='https://developers.redhat.com/articles/2026/07/20/architect-open-blueprint-cloud-native-ai-agents' target='_blank' rel='noopener'>pattern-2</a> RAG skill backend (a skill served as its own service, not an in-process shim), reasons over it, and emits a cited RCA report. An LLM-as-judge then scores how well the conclusion is grounded in the retrieved evidence. This is the first appearance of the evaluate-the-reasoning discipline that 302 turns into a full suite, and it adds no new data infrastructure, amortizing 101's platform investment."},
  {id:"202",dir:"202-fraud-triage",title:"Fraud Triage",len:"5:52",flag:false,
   desc:"A decision agent that consumes a trained fraud model as a tool, gathers evidence, and routes to a human-approval gate. Classic ML and an agent, each doing what it does best.",
   tags:["LangGraph","ML Pipelines","KServe","Human-in-the-loop","Model Registry"],
@@ -280,7 +294,7 @@ const PUBS=[
 ];
 
 function courseCard(c){
-  return `<div class="card" onclick="openCourse('${c.id}')">
+  return `<div class="card" role="button" tabindex="0" aria-label="Open course ${c.id} · ${c.title}" onclick="openCourse('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCourse('${c.id}')}">
     <span class="badge ${c.flag?'flag':''}">${c.id}${c.flag?' · flagship':''}</span>
     <h3>${c.title}</h3>
     <p class="desc">${c.desc}</p>
@@ -301,7 +315,7 @@ function openCourse(id){
       </div>
       <p class="lede">${c.desc}</p>
       <div class="videowrap">
-        <video controls preload="metadata" poster="${RAW}/${c.dir}/images/walkthrough-poster.png">
+        <video controls preload="metadata" poster="posters/${c.id}.png">
           <source src="${vid}" type="video/mp4"/>
           Your browser can't play this video. <a href="${vid}">Download it</a>.
         </video>

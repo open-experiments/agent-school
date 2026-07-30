@@ -17,6 +17,13 @@ for t in site portal-core portal-copy portal-kinds portal-101-regen; do
   node "docs/tests/${t}.test.js"
 done
 
+echo "=== duration sync (site / tests / READMEs vs mp4s)"
+if command -v ffprobe >/dev/null 2>&1; then
+  python3 video/sync-durations.py --check
+else
+  echo "SKIP | ffprobe not installed — duration drift not checked"
+fi
+
 echo "=== tape regeneration stability"
 TMP=$(mktemp -d)
 for c in 101 201 202 301 302; do
