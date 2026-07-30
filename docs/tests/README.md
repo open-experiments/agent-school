@@ -23,4 +23,6 @@ and `PORT` to serve on something other than 8777.
 | `portal-copy.test.js` | Traces-not-runs guide copy (F2), footnotes (F10), post-edit E2E regressions |
 | `portal-kinds.test.js` | Kind rendering in Projects course-objects (F13) across all tapes |
 | `portal-101-regen.test.js` | Full 7-step 101 E2E on the generator-produced tape (F12) |
+| `extended.test.js` | Round-2 sweep: full E2E of all 5 tapes + every nav page, per-course detail integrity, keyboard a11y, noopener, portal edge cases, tape-param XSS probe, mobile notice, 404 content |
+| `run.sh` (duration stage) | `video/sync-durations.py --check` — site/tests/READMEs vs mp4 durations |
 | `run.sh` (final stage) | All five tapes regenerate byte-identical from `shared/tapes/venice-tape-raw.json.gz` |

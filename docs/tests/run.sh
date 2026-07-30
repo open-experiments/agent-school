@@ -12,7 +12,7 @@ SRV=$!
 trap 'kill $SRV 2>/dev/null' EXIT
 sleep 1
 
-for t in site portal-core portal-copy portal-kinds portal-101-regen; do
+for t in site portal-core portal-copy portal-kinds portal-101-regen extended; do
   echo "=== docs/tests/${t}.test.js"
   node "docs/tests/${t}.test.js"
 done
