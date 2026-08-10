@@ -141,5 +141,6 @@ keeping lives outside the session.
    have to write.
 3. Tool governance carries over: put an MCP gateway in front of these two
    servers and OpenClaw's calls get claims-checked like everyone else's.
-4. Going further, NVIDIA's NemoClaw runs this exact harness inside an
-   OpenShell sandbox; that is the 301 track.
+4. Going further, NVIDIA's NemoClaw can run this exact harness inside an
+   OpenShell sandbox; that is the planned 301 product-harness track, not
+   something the repo ships today.
