@@ -3,7 +3,10 @@
 Composes a narrated MP4 from an ordered list of scenes. Each scene is
 either a title card or a live RHOAI portal tab capture, framed 1080p with
 a course banner, a step/tab chip, and a wrapped caption band that mirrors
-the voice-over. Narration is neural TTS (Piper); assembly is ffmpeg.
+the voice-over. Narration is neural TTS (Kokoro); assembly is ffmpeg.
+
+A tab scene can list cuts. The narration is spoken once, and the
+screenshot changes when the voice reaches each cut's phrase.
 
 Usage: python3 produce.py <course_spec.json>
 The spec drives everything so all five courses share one pipeline.
@@ -20,9 +23,12 @@ import soundfile as sf
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1920, 1080
-FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-FONT_B = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-FONT_M = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
+FONT = "/Users/mdeneve/Library/Fonts/DejaVuSans.ttf"
+FONT_B = "/Users/mdeneve/Library/Fonts/DejaVuSans-Bold.ttf"
+FONT_M = "/Users/mdeneve/Library/Fonts/DejaVuSansMono.ttf"
+# FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+# FONT_B = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+# FONT_M = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
 
 # Narration: Kokoro (offline neural), calm female voice by default.
 KOKORO_VOICE = os.environ.get("KOKORO_VOICE", "af_sarah")
@@ -163,18 +169,92 @@ def frame_tab(scene, course, idx, total, tab_total=None):
     return img
 
 
+def synthesize(text):
+    """Narration audio, the spoken text, and (char_index, seconds) marks.
+
+    Spoken text is the narration after pronunciation markup is removed.
+    Chunks are joined by the same short breath synth() has always used.
+    """
+    gap = np.zeros(int(SR * 0.18), dtype=np.float32)
+    pieces = []
+    spoken = []
+    marks = []
+    cursor_t = 0.0
+    cursor_c = 0
+    for result in _pipe()(text, voice=KOKORO_VOICE):
+        audio = result.audio
+        a = audio.numpy() if hasattr(audio, "numpy") else np.asarray(audio)
+        a = np.asarray(a, dtype=np.float32)
+        tokens = list(result.tokens or [])
+        parts = [(t.text or "") + (t.whitespace or "") for t in tokens]
+        chunk_dur = len(a) / SR
+        timed = [t.start_ts is not None or not p for t, p in zip(tokens, parts)]
+        if parts and all(timed):
+            for t, p in zip(tokens, parts):
+                marks.append((cursor_c, cursor_t + float(t.start_ts or 0.0)))
+                cursor_c += len(p)
+                spoken.append(p)
+        else:
+            total = sum(len(p) for p in parts) or 1
+            acc = 0
+            for p in parts:
+                marks.append((cursor_c, cursor_t + chunk_dur * acc / total))
+                cursor_c += len(p)
+                acc += len(p)
+                spoken.append(p)
+        pieces.append(a)
+        cursor_t += chunk_dur
+        pieces.append(gap)
+        cursor_t += len(gap) / SR
+    if not pieces:
+        raise RuntimeError("kokoro produced no audio")
+    return np.concatenate(pieces), "".join(spoken), marks
+
+
 def synth(text, out_wav):
     """Neural TTS with a short breath between sentence chunks for a calm,
     natural cadence."""
-    gap = np.zeros(int(SR * 0.18), dtype=np.float32)
-    parts = []
-    for _, _, audio in _pipe()(text, voice=KOKORO_VOICE):
-        a = audio.numpy() if hasattr(audio, "numpy") else np.asarray(audio)
-        parts.append(a.astype(np.float32))
-        parts.append(gap)
-    if not parts:
-        raise RuntimeError("kokoro produced no audio")
-    sf.write(out_wav, np.concatenate(parts), SR)
+    audio, _, _ = synthesize(text)
+    sf.write(out_wav, audio, SR)
+
+
+def cue_time(spoken, marks, phrase):
+    """Seconds at which phrase begins in the spoken narration."""
+    idx = spoken.find(phrase)
+    if idx < 0:
+        raise RuntimeError(
+            "cut phrase not found in the spoken narration: %r. "
+            "Copy it from say, and leave out [word](/phonemes/) markup."
+            % phrase)
+    time = 0.0
+    for c, t in marks:
+        if c <= idx:
+            time = t
+        else:
+            break
+    return time
+
+
+def image_spans(scene, spoken, marks, audio_len):
+    """(start_sec, image) for the opening screenshot and each cut."""
+    spans = [(0.0, scene["image"])]
+    for cut in scene.get("cuts") or []:
+        if "at" not in cut or "image" not in cut:
+            raise RuntimeError('each cut needs "at" and "image"')
+        spans.append((cue_time(spoken, marks, cut["at"]), cut["image"]))
+    spans.sort(key=lambda s: s[0])
+    cleaned = []
+    for start, image in spans:
+        if start >= audio_len:
+            continue
+        start = max(0.0, start)
+        if cleaned and abs(start - cleaned[-1][0]) < 1 / 25:
+            cleaned[-1] = (cleaned[-1][0], image)
+            continue
+        cleaned.append((start, image))
+    if not cleaned:
+        cleaned = [(0.0, scene["image"])]
+    return cleaned
 
 
 def dur(wav):
@@ -195,6 +275,43 @@ def clip(png, wav, out_mp4, pad=0.6):
         check=True, capture_output=True)
 
 
+def clip_spans(spans, wav, out_mp4, pad=0.6):
+    """One narration, several stills. spans is (start_sec, png).
+
+    The last still holds through the same tail pad clip() adds. There is
+    no pad between stills, so the voice does not pause when the picture changes.
+    """
+    end_frame = max(1, int(round((dur(wav) + pad) * 25)))
+    bounds = []
+    for n, (start, png) in enumerate(spans):
+        frame = 0 if n == 0 else min(end_frame - 1, int(round(start * 25)))
+        if bounds and frame <= bounds[-1][0]:
+            bounds[-1] = (bounds[-1][0], png)
+            continue
+        bounds.append((frame, png))
+    lines = []
+    stem = Path(out_mp4).stem
+    for n, (frame, png) in enumerate(bounds):
+        nxt = bounds[n + 1][0] if n + 1 < len(bounds) else end_frame
+        nframes = nxt - frame
+        if nframes <= 0:
+            continue
+        seg = str(BUILD / ("seg-%s-%02d.mp4" % (stem, n)))
+        subprocess.run([
+            "ffmpeg", "-y", "-loop", "1", "-framerate", "25", "-i", png,
+            "-frames:v", str(nframes), "-r", "25", "-vf", "scale=1920:1080",
+            "-c:v", "libx264", "-tune", "stillimage", "-pix_fmt", "yuv420p",
+            "-an", seg], check=True, capture_output=True)
+        lines.append("file '%s'\n" % seg)
+    listf = BUILD / ("vlist-%s.txt" % stem)
+    listf.write_text("".join(lines))
+    subprocess.run([
+        "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listf),
+        "-i", wav, "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-af", "apad",
+        "-t", "%.3f" % (end_frame / 25), out_mp4],
+        check=True, capture_output=True)
+
+
 def main(spec_path):
     spec = json.load(open(spec_path))
     course = spec["course"]
@@ -207,11 +324,27 @@ def main(spec_path):
         wav = str(BUILD / ("a%02d.wav" % i))
         mp4 = str(BUILD / ("c%02d.mp4" % i))
         tab_total = sum(1 for x in scenes if x["type"] != "title")
-        fr = frame_title(sc, course, i, total) if sc["type"] == "title" \
-            else frame_tab(sc, course, i, total, tab_total)
-        fr.save(png)
-        synth(sc["say"], wav)
-        clip(png, wav, mp4)
+        if sc["type"] == "title" or not sc.get("cuts"):
+            fr = frame_title(sc, course, i, total) if sc["type"] == "title" \
+                else frame_tab(sc, course, i, total, tab_total)
+            fr.save(png)
+            synth(sc["say"], wav)
+            clip(png, wav, mp4)
+        else:
+            audio, spoken, marks = synthesize(sc["say"])
+            sf.write(wav, audio, SR)
+            spans = image_spans(sc, spoken, marks, dur(wav))
+            framed = []
+            for n, (start, image) in enumerate(spans):
+                shot = dict(sc)
+                shot["image"] = image
+                fp = str(BUILD / ("f%02d-%02d.png" % (i, n)))
+                frame_tab(shot, course, i, total, tab_total).save(fp)
+                framed.append((start, fp))
+                if n:
+                    print("  cut %5.1fs  %s" % (start, Path(image).name),
+                          flush=True)
+            clip_spans(framed, wav, mp4)
         clips.append(mp4)
         print("scene %d/%d  %.1fs  %s" % (i, total, dur(wav),
               sc.get("tab", sc.get("title", ""))[:50]), flush=True)

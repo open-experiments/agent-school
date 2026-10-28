@@ -1,0 +1,7 @@
+# Narrated course videos (video/produce.py). See README.md for the run steps.
+# Python 3.10, 3.11, or 3.12. kokoro 0.9.4 does not install on 3.13 or newer.
+# kokoro pulls torch, transformers, huggingface_hub, and misaki[en]. CPU torch is enough.
+kokoro>=0.9.4
+numpy>=1.26
+soundfile>=0.12
+Pillow>=10.0
