@@ -23,7 +23,15 @@
    "tab": "Solution shape · a classic-ML model as a governed agent tool",
    "image": "202-fraud-triage/images/architecture.png",
    "caption": "A LangGraph agent (score → context → decide) consumes the fraud model as a KServe tool, grounds the case with Feast features, reasons with vLLM, stops at a human-approval gate, and audits every case to MLflow.",
-   "say": "Here is the shape of the solution. At the center is the fraud-triage agent, a small Lang-Graph state machine running as a disposable pod. It does not contain the fraud model; instead it consumes the classic model as a tool, served on K-Serve. Its loop is score, then context, then decide: it scores the transaction with the model, grounds the case with billing features from the feature store, and reasons over both with the cluster's own language model. For anything consequential it stops at a human-approval gate, and every case is audited to M-L-flow. The classic model gives the number, the agent gives the judgment, and a human signs off. Let's walk the platform pieces that make it real."
+   "say": "Here is the shape of the solution. At the center is the fraud-triage agent, a small Lang-Graph state machine running as a disposable pod. It does not contain the fraud model; instead it consumes the classic model as a tool, served on K-Serve. Its loop is score, then context, then decide: it scores the transaction with the model, grounds the case with billing features from the feature store, and reasons over both with the cluster's own language model. For anything consequential it stops at a human-approval gate, and every case is audited to M-L-flow. The classic model gives the number, the agent gives the judgment, and a human signs off. Let's walk the platform pieces that make it real.",
+   "cuts": [
+    {"at": "At the center", "image": "202-fraud-triage/images/architecture-highlight-agent.png"},
+    {"at": "served on K-Serve", "image": "202-fraud-triage/images/architecture-highlight-kserve.png"},
+    {"at": "from the feature store", "image": "202-fraud-triage/images/architecture-highlight-feast.png"},
+    {"at": "with the cluster's own language model", "image": "202-fraud-triage/images/architecture-highlight-vllm.png"},
+    {"at": "human-approval gate", "image": "202-fraud-triage/images/architecture-highlight-human.png"},
+    {"at": "audited to M-L-flow", "image": "202-fraud-triage/images/architecture-highlight-mlflow.png"}
+   ]
   },
   {
    "type": "tab",
@@ -31,7 +39,14 @@
    "tab": "Data Science Pipelines · Run graph · the model factory",
    "image": "202-fraud-triage/images/rhoai/pipeline-run.png",
    "caption": "load-data → preprocess → train → evaluate → register, every stage green. What the notebooks did cell by cell now runs as a Data Science Pipeline (KFP v2) on our reference cluster, Venice.",
-   "say": "Here is the model factory, live on our reference cluster, Venice. What the original revenue-assurance notebooks did cell by cell now runs as a proper Data Science Pipeline: load a million billing records, preprocess them, train a Balanced Random Forest, evaluate it on a held-out split, and register the result. Every stage is a discrete, observable step, and the whole graph completed green in about two minutes. This is the difference between a model someone once trained and a model your platform can rebuild on demand, the same way, every time."
+   "say": "Here is the model factory, [live](/lˈIv/) on our reference cluster, Venice. What the original revenue-assurance notebooks did cell by cell now runs as a proper Data Science Pipeline: load a million billing records, preprocess them, train a Balanced Random Forest, evaluate it on a held-out split, and register the result. Every stage is a discrete, observable step, and the whole graph completed green in about two minutes. This is the difference between a model someone once trained and a model your platform can rebuild on demand, the same way, every time.",
+   "cuts": [
+    {"at": "load a million", "image": "202-fraud-triage/images/rhoai/pipeline-run-highlight-load-data.png"},
+    {"at": "preprocess", "image": "202-fraud-triage/images/rhoai/pipeline-run-highlight-preprocess.png"},
+    {"at": "train", "image": "202-fraud-triage/images/rhoai/pipeline-run-highlight-train.png"},
+    {"at": "evaluate", "image": "202-fraud-triage/images/rhoai/pipeline-run-highlight-evaluate.png"},
+    {"at": "and register", "image": "202-fraud-triage/images/rhoai/pipeline-run-highlight-register.png"}
+   ]
   },
   {
    "type": "tab",
@@ -39,7 +54,16 @@
    "tab": "Develop & train · Experiments · the registered training run",
    "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run.png",
    "caption": "The register stage lands in MLflow with full lineage · fraud-class F1 0.998, ROC-AUC ~1.0 on 300,000 held-out rows · and registers revassurance-fraud-brf v1, the version the agent will consume.",
-   "say": "And the pipeline's register stage lands the run in M L flow with complete lineage. Read the metrics: fraud-class F-one of nought-point-nine-nine-eight, and R O C-A-U-C essentially one, measured on three hundred thousand held-out rows. The parameters record exactly how it was made — a Balanced Random Forest, one hundred estimators, trained on the published revenue-assurance dataset, through data-science-pipelines on K F P version two. And on the right, it registers revassurance-fraud-b-r-f, version one — the exact version the agent's scoring node will consume. Lineage is not paperwork here; it is the contract between the factory and the agent."
+   "say": "And the pipeline's register stage lands the run in M L flow with complete lineage. Read the metrics: fraud-class F-one of nought-point-nine-nine-eight, and R O C-A-U-C essentially one, measured on three hundred thousand held-out rows. The parameters record exactly how it was made — a Balanced Random Forest, one hundred estimators, trained on the published revenue-assurance dataset, through data-science-pipelines on K F P version two. And on the right, it registers revassurance-fraud-b-r-f, version one — the exact version the agent's scoring node will consume. Lineage is not paperwork here; it is the contract between the factory and the agent.",
+   "cuts": [
+    {"at": "fraud-class", "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run-highlight-fraud-class.png"},
+    {"at": "R O C-A-U-C essentially", "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run-highlight-roc-auc.png"},
+    {"at": "three hundred thousand", "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run-highlight-test-rows.png"},
+    {"at": "Balanced Random Forest", "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run-highlight-algorithm.png"},
+    {"at": "one hundred estimators", "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run-highlight-estimators.png"},
+    {"at": "revenue-assurance dataset", "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run-highlight-dataset.png"},
+    {"at": "revassurance-fraud-b-r-f", "image": "202-fraud-triage/images/rhoai/pipeline-mlflow-run-highlight-model-name.png"}
+   ]
   },
   {
    "type": "tab",
@@ -63,7 +87,15 @@
    "tab": "The agent, live · the approval gate proven both ways",
    "image": "202-fraud-triage/images/rhoai/triage-case-detail.png",
    "caption": "A live triage case on Venice: the served model scored it 1.0, policy escalated it, the LangGraph gate checkpointed, and the audit run records decision, outcome, decided-by, approval-required, and the approver's identity · the whole decision reconstructable from platform data.",
-   "say": "And here is the agent itself, live on the cluster, with the proof that matters most. Each triage case is an audited run in the same experiment that trained the model. This one: the served model scored the case at probability one, the policy rail escalated it, and the Lang-Graph gate did something a prompt never could — it checkpointed the graph mid-case and stopped. We ran it both ways. Without a human approval, both escalations simply parked as awaiting-approval; nothing proceeded. With an approval, the graph resumed and the approver's identity landed in the audit record you see here: decision, outcome, who decided, and who approved — the entire decision reconstructable from platform data alone. The model scores, the agent reasons, and a human approves. That is the whole lesson of two-oh-two, running for real."
+   "say": "And here is the agent itself, [live](/lˈIv/) on the cluster, with the proof that matters most. Each triage case is an audited run in the same experiment that trained the model. This one: the served model scored the case at probability one, the policy rail escalated it, and the Lang-Graph gate did something a prompt never could — it checkpointed the graph mid-case and stopped. We ran it both ways. Without a human approval, both escalations simply parked as awaiting-approval; nothing proceeded. With an approval, the graph resumed and the approver's identity landed in the audit record you see here: decision, outcome, who decided, and who approved — the entire decision reconstructable from platform data alone. The model scores, the agent reasons, and a human approves. That is the whole lesson of two-oh-two, running for real.",
+   "cuts": [
+    {"at": "probability one", "image": "202-fraud-triage/images/rhoai/triage-case-detail-highlight-probability.png"},
+    {"at": "awaiting-approval", "image": "202-fraud-triage/images/rhoai/triage-case-detail-highlight-approval.png"},
+    {"at": "identity landed", "image": "202-fraud-triage/images/rhoai/triage-case-detail-highlight-identity.png"},
+    {"at": "decision, outcome", "image": "202-fraud-triage/images/rhoai/triage-case-detail-highlight-decision.png"},
+    {"at": "who decided", "image": "202-fraud-triage/images/rhoai/triage-case-detail-highlight-who-decided.png"},
+    {"at": "who approved", "image": "202-fraud-triage/images/rhoai/triage-case-detail-highlight-identity.png"}
+   ]
   },
   {
    "type": "title",

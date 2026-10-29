@@ -9,7 +9,7 @@
    "type": "title",
    "title": "The problem: a NOC drowning in KPIs while NPS bleeds",
    "subtitle": "The Network Operations Center team drowns in thousands of KPIs across PNFs, VNFs and CNFs — AMF, SMF, UPF and others. When a registration storm or resource exhaustion hits, the signal is buried, the runbook lives in another system, and every second of confusion makes Net Promoter Score plummet and drives customer churn. We want an assistant that behaves like a senior NOC engineer — on call, instantly.",
-   "say": "Let's start with the problem, and with what it costs. A network operations center team drowns in thousands of K P I s across physical, virtual and cloud-native network functions — the A M F, the S M F, the U P F, and dozens more. When a registration storm or resource exhaustion hits, the warning signal is buried in that flood, the relevant runbook lives in a different system, and every second of confusion drags the Net Promoter Score down and drives customer churn. What we want is an assistant that behaves like a senior network operations engineer: it inspects the live network state, detects the anomaly, consults the correct runbook, and answers — instantly, and on call. This is course one-oh-one, and this is how we build it on Red Hat OpenShift A I."
+   "say": "Let's start with the problem, and with what it costs. A network operations center team drowns in thousands of KPIs across physical, virtual and cloud-native network functions — the A M F, the S M F, the U P F, and dozens more. When a registration storm or resource exhaustion hits, the warning signal is buried in that flood, the relevant runbook lives in a different system, and every second of confusion drags the Net Promoter Score down and drives customer churn. What we want is an assistant that behaves like a senior network operations engineer: it inspects the live network state, detects the anomaly, consults the correct runbook, and answers — instantly, and on call. This is course one-oh-one, and this is how we build it on Red Hat OpenShift [A](/ˈA/) [I](/ˈI/)."
   },
   {
    "type": "title",
@@ -23,7 +23,7 @@
    "tab": "Solution shape — agent as a workload, platform as the backbone",
    "image": "101-noc-assistant/images/architecture.png",
    "caption": "The agent pod carries only the loop, its MCP skill servers, and runbooks. Everything stateful — features, the model, traces — lives behind platform services it consumes.",
-   "say": "Here is the shape of the solution. The agent itself is deliberately small — a disposable, C P U-only pod that carries just the reasoning loop, two skill servers exposed over M C P, and the runbooks. It is agent-as-a-workload. Everything that matters and must persist lives behind platform services the pod merely consumes: the live network state comes from a Feast feature store, the reasoning from a v L L M model endpoint, and every step is traced to M L flow. The classic data-science pipeline that keeps those services truthful — feature engineering, training, scoring — is not hidden in a notebook anymore. It is the platform's job, and the OpenShift A I dashboard shows every stage. Let's walk those stages, because the agent is only as good as the pipeline feeding it."
+   "say": "Here is the shape of the solution. The agent itself is deliberately small — a disposable, C P U-only pod that carries just the reasoning loop, two skill servers exposed over M C P, and the runbooks. It is agent-as-a-workload. Everything that matters and must persist  behind platform services the pod merely consumes: the live network state comes from a Feast feature store, the reasoning from a v L L M model endpoint, and every step is traced to M L flow. The classic data-science pipeline that keeps those services truthful — feature engineering, training, scoring — is not hidden in a notebook anymore. \n It is the platform's job, and the OpenShift [A](/ˈA/) [I](/ˈI/) dashboard shows every stage. Let's walk those stages, because the agent is only as good as the pipeline feeding it."
   },
   {
    "type": "tab",
@@ -31,7 +31,7 @@
    "tab": "Develop & train · Feature store (Feast) — feature views",
    "image": "101-noc-assistant/images/rhoai/feature-views.png",
    "caption": "One feature view per network function; one noc_telemetry feature service. The pipeline engineers 1-hour rolling mean/min/max per KPI and pushes the latest vector online.",
-   "say": "First, features. Our ingest job pulls the real five-G core dataset, engineers one-hour rolling mean, minimum and maximum for each K P I, lands the offline history as parquet, and pushes the latest vector per network function into the online store. On this Feature Store tab you can see the result on our reference cluster, Venice: one feature view per network function, gathered under a single noc-telemetry feature service. This is what gives the agent a truthful, low-latency view of the network — the same features used to train the model are the ones served at inference, so there is no training-serving skew by construction."
+   "say": "First, features. Our ingest job pulls the real five-G core dataset, engineers one-hour rolling mean, minimum and maximum for each KPI, lands the offline history as parquet, and pushes the latest vector per network function into the online store. On this Feature Store tab you can see the result on our reference cluster, Venice: one feature view per network function, gathered under a single noc-telemetry feature service. This is what gives the agent a truthful, low-latency view of the network — the same features used to train the model are the ones served at inference, so there is no training-serving skew by construction."
   },
   {
    "type": "tab",
@@ -71,7 +71,13 @@
    "tab": "Develop & train · Experiments — agent traces",
    "image": "101-noc-assistant/images/rhoai/model-traces.png",
    "caption": "Every agent run lands as a full MLflow trace — the question, every tool call, tokens, latency — in the 101-noc-assistant experiment.",
-   "say": "And traced reasoning. Every run of the assistant lands here as a full trace: the question it was asked, every tool call it made, the tokens it spent, and how long each step took. Three runs, three traces, each one openable turn by turn. This is the point most teams miss: the agent loop deserves the same observability as any production service. When the assistant says the A M F is anomalous, you open the trace and see exactly which feature read and which scoring call produced that verdict."
+   "say": "And traced reasoning. Every run of the assistant lands here as a full trace: the question it was asked, every tool call it made, the tokens it spent, and how long each step took. Three runs, three traces, each one openable turn by turn. This is the point most teams miss: the agent loop deserves the same observability as any production service. When the assistant says the A M F is anomalous, you open the trace and see exactly which feature read and which scoring call produced that verdict.",
+   "cuts": [
+    {"at": "the question it was asked", "image": "101-noc-assistant/images/rhoai/model-traces-highlight-request.png"},
+    {"at": "the tokens it spent", "image": "101-noc-assistant/images/rhoai/model-traces-highlight-tokens.png"},
+    {"at": "how long each step took", "image": "101-noc-assistant/images/rhoai/model-traces-highlight-time.png"},
+    {"at": "three traces, each one", "image": "101-noc-assistant/images/rhoai/model-traces-highlight-three-runs.png"}
+   ]
   },
   {
    "type": "tab",
@@ -84,8 +90,8 @@
   {
    "type": "title",
    "title": "101, solved: classic ML finds it, the agent reasons over it",
-   "subtitle": "Isolation Forest finds the anomaly, the alert feed scopes the incident, the language model reasons over both and answers — every step traced. The 'hello world' of agentic telco AI, already doing real work. Next: 201 turns this single assistant into a multi-step RCA investigator. Replay every step yourself in the self-service interactive lab — a time-snapshotted capture of this same cluster — linked from the course page.",
-   "say": "So that's one-oh-one, solved end to end on our reference cluster, Venice. The classic model finds the anomaly, the alert feed scopes the incident, and the language model reasons over both before it answers — with every step, classical and generative, traced in one place. It is the hello-world of agentic telco A I, but it already does real work, and every piece is a first-class platform citizen rather than a notebook cell. From here, course two-oh-one turns this single assistant into a multi-step root-cause investigator. Thanks for watching. And you do not have to take this video's word for any of it: the course page links a self-service interactive lab, a time-snapshotted replay of this very cluster, where you run every step and verify every value yourself."
+   "subtitle": "Isolation Forest finds the anomaly, the alert feed scopes the incident, the language model reasons over both and answers — every step traced. The 'hello world' of agentic telco AI, already doing real work. Next: 201 turns this single assistant into a multi-step RCA Investigator. Replay every step yourself in the self-service interactive lab — a time-snapshotted capture of this same cluster — linked from the course page.",
+   "say": "So that's one-oh-one, solved end to end on our reference cluster, Venice. The classic model finds the anomaly, the alert feed scopes the incident, and the language model reasons over both before it answers — with every step, classical and generative, traced in one place. It is the hello-world of agentic telco [A](/ˈA/) [I](/ˈI/), but it already does real work, and every piece is a first-class platform citizen rather than a notebook cell. From here, course two-oh-one turns this single assistant into a multi-step root-cause investigator. Thanks for watching. And you do not have to take this video's word for any of it: the course page links a self-service interactive lab, a time-snapshotted replay of this very cluster, where you run every step and verify every value yourself."
   }
  ]
 }

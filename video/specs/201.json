@@ -15,7 +15,7 @@
    "type": "title",
    "title": "Inside the machine: evidence, investigation, judgment",
    "subtitle": "Build the searchable truth: a real retrieval service, not an in-process shim. Use it: a two-phase agent — bounded investigation, then a report where every claim cites evidence ids. Grade it: a judge writes verdicts back onto the traces.",
-   "say": "Three loops again. First, the evidence backend: a real retrieval service builds its index at startup and serves it over H T T P — a skill the agent consumes, scaled and swapped independently. Second, the investigation: a two-phase agent runs a bounded tool-calling investigation, then writes the report, and every finding must cite evidence i-ds. Third, judgment: a judge job pulls the traces and writes pass-or-flag verdicts back onto them, turning reasoning quality into queryable platform data."
+   "say": "Three loops again. First, the evidence backend: a real retrieval service builds its index at startup and serves it over H T T P — a skill the agent consumes, scaled and swapped independently. Second, the investigation: a two-phase agent runs a bounded tool-calling investigation, then writes the report, and every finding must cite evidence IDs. Third, judgment: a judge job pulls the traces and writes pass-or-flag verdicts back onto them, turning reasoning quality into queryable platform data."
   },
   {
    "type": "tab",
@@ -23,7 +23,12 @@
    "tab": "Solution shape · a two-phase agent over a retrieval service",
    "image": "201-rca-investigator/images/architecture.png",
    "caption": "An ephemeral two-phase agent (investigate → write) over a separately-deployed RAG service. The same vLLM serves the agent and its judge; MLflow receives both the traces and the verdicts.",
-   "say": "Here is the shape of the solution. The agent is an ephemeral job with two phases. In the investigate phase it retrieves correlated logs and metrics; in the write phase it composes the analysis. Crucially, the search index it depends on does not live inside the agent — it is a separately deployed retrieval service, the R A G backend, so re-indexing or swapping retrievers never touches the agent. That is the pattern-two lesson. One more elegant detail: the very same v L L M endpoint that powers the agent's reasoning also powers the judge that grades it afterward, and M L flow receives both the agent's traces and the judge's verdicts. Quality is measured on the same platform, with the same model, no external grading service. Now let's watch it work."
+   "say": "Here is the shape of the solution. The agent is an ephemeral job with two phases. In the investigate phase it retrieves correlated logs and metrics; in the write phase it composes the analysis. Crucially, the search index it depends on does not live inside the agent — it is a separately deployed retrieval service, the R A G backend, so re-indexing or swapping retrievers never touches the agent. That is the pattern-two lesson. One more elegant detail: the very same v L L M endpoint that powers the agent's reasoning also powers the judge that grades it afterward, and M L flow receives both the agent's traces and the judge's verdicts. Quality is measured on the same platform, with the same model, no external grading service. Now let's watch it work.",
+   "cuts": [
+    {"at": "the R A G backend", "image": "201-rca-investigator/images/architecture-highlight-rag.png"},
+    {"at": "the very same", "image": "201-rca-investigator/images/architecture-highlight-vllm.png"},
+    {"at": "M L flow", "image": "201-rca-investigator/images/architecture-highlight-mlflow.png"}
+   ]
   },
   {
    "type": "tab",
@@ -31,7 +36,13 @@
    "tab": "GenAI · Observability overview · traces, latency, tokens",
    "image": "201-rca-investigator/images/rhoai/genai-overview.png",
    "caption": "No bespoke telemetry code: mlflow.openai.autolog() plus the workspace shim turns every LLM call into a trace · 17 traces, 2.32s latency, zero errors, full token accounting.",
-   "say": "The agent needs almost no observability code of its own. One line — m l flow's OpenAI autolog — plus the workspace shim, and every single language-model call becomes a trace. This is the GenAI overview for the investigator on our reference cluster, Venice: four traces from the reference run, an average latency of two point three seconds, a zero-percent error rate, and full token accounting — nearly forty-seven thousand tokens across the run. This is what it means to treat an agent as a first-class, observable workload: you get the operational picture for free."
+   "say": "The agent needs almost no observability code of its own. One line — m l flow's OpenAI autolog — plus the workspace shim, and every single language-model call becomes a trace. This is the GenAI overview for the investigator on our reference cluster, Venice: four traces from the reference run, an average latency of two point three seconds, a zero-percent error rate, and full token accounting — nearly forty-seven thousand tokens across the run. This is what it means to treat an agent as a first-class, observable workload: you get the operational picture for free.",
+   "cuts": [
+    {"at": "four traces from", "image": "201-rca-investigator/images/rhoai/genai-overview-highlight-traces.png"},
+    {"at": "average latency of two", "image": "201-rca-investigator/images/rhoai/genai-overview-highlight-latency.png"},
+    {"at": "zero-percent error", "image": "201-rca-investigator/images/rhoai/genai-overview-highlight-error.png"},
+    {"at": "nearly forty-seven thousand", "image": "201-rca-investigator/images/rhoai/genai-overview.png"}
+   ]
   },
   {
    "type": "tab",
@@ -39,7 +50,14 @@
    "tab": "GenAI · Traces · the two-phase economics, visible",
    "image": "201-rca-investigator/images/rhoai/traces-list.png",
    "caption": "The trace list shows the cost-aware routing directly: many small investigate calls (297, 1144, 2224 tokens) and one large, cited write-up (3760 tokens).",
-   "say": "And the trace list shows the economics of the design directly. Read the token counts down the right side. There are many small investigate calls — two hundred, a thousand, two thousand tokens — as the agent gathers evidence cheaply. And then there is one large call, thirty-seven hundred tokens, that produces the finished, cited root-cause analysis. That is cost-aware model routing inside a single agent task: spend little to investigate, spend more only to write the one thing that matters. You are seeing the agent's strategy, not just its output."
+   "say": "And the trace list shows the economics of the design directly. Read the token counts down the right side. There are many small investigate calls — two hundred, a thousand, six thousand tokens — as the agent gathers evidence cheaply. And then there is one large call, seventy-one hundred tokens, that produces the finished, cited root-cause analysis. That is cost-aware model routing inside a single agent task: spend little to investigate, spend more only to write the one thing that matters. You are seeing the agent's strategy, not just its output.",
+   "cuts": [
+    {"at": "token counts down", "image": "201-rca-investigator/images/rhoai/traces-list-highlight-count.png"},
+    {"at": "two hundred", "image": "201-rca-investigator/images/rhoai/traces-list-highlight-count-200.png"},
+    {"at": "a thousand", "image": "201-rca-investigator/images/rhoai/traces-list-highlight-count-1000.png"},
+    {"at": "six thousand", "image": "201-rca-investigator/images/rhoai/traces-list-highlight-count-6000.png"},
+    {"at": "seventy-one hundred", "image": "201-rca-investigator/images/rhoai/traces-list-highlight-count-7100.png"}
+   ]
   },
   {
    "type": "tab",
@@ -47,7 +65,12 @@
    "tab": "GenAI · Trace detail · the evidence-grounding judge verdict",
    "image": "201-rca-investigator/images/rhoai/trace-assessments.png",
    "caption": "The write-up trace carries its judge verdict as an assessment. The system prompt forces citations; the 'evidence-grounding' judge (on the cluster's own Kimi) scores whether it obeyed.",
-   "say": "Now open that write-up trace, and here is the heart of course two-oh-one. On the left, the system prompt is uncompromising: use only the evidence records provided, and every factual claim must cite a record id in brackets. On the right, in the Assessments panel, is the verdict — the evidence-grounding judge, running on the cluster's own Kimi model, has scored this report. A cited report scores yes; a tool-loop trace with no report scores no. Evidence discipline is not a hope pinned to a prompt; it is measured, on the trace, by the platform. Ungrounded sentences become visible bugs — exactly what a network operations team needs before it trusts a machine's root-cause."
+   "say": "Now open that write-up trace, and here is the heart of course two-oh-one. On the left, the system prompt is uncompromising: use only the evidence records provided, and every factual claim must cite a record id in brackets. On the right, in the Assessments panel, is the verdict — the evidence-grounding judge, running on the cluster's own Kimi model, has scored this report. A cited report scores yes; a tool-loop trace with no report scores no. Evidence discipline is not a hope pinned to a prompt; it is measured, on the trace, by the platform. Ungrounded sentences become visible bugs — exactly what a network operations team needs before it trusts a machine's root-cause.",
+   "cuts": [
+    {"at": "On the left", "image": "201-rca-investigator/images/rhoai/trace-assessments-highlight-prompt.png"},
+    {"at": "On the right", "image": "201-rca-investigator/images/rhoai/trace-assessments-highlight-evidence-grounding.png"},
+    {"at": "is not a hope", "image": "201-rca-investigator/images/rhoai/trace-assessments.png"}
+   ]
   },
   {
    "type": "title",
