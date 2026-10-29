@@ -23,7 +23,13 @@
    "tab": "Solution shape · a four-agent loop with one governed actuation path",
    "image": "301-closed-loop-netops/images/architecture.png",
    "caption": "Diagnose → plan → gate → execute → validate. Four specialist agents over A2A; intelligence in the middle, deterministic safety at the ends; a single, governed path to the network.",
-   "say": "Here is the shape. Four specialist agents talk to each other over the agent-to-agent protocol. A diagnostic agent detects the incident. A planning agent proposes a remediation, consulting a think-tank tool over M C P. A human-approval gate stands between planning and doing. An execution agent actuates. And a validation agent checks the result, and can trigger a rollback. Notice the design principle: intelligence lives in the middle — diagnosis and planning — while both safety-critical ends, execution and validation, are deterministic code, not creativity. And critically, there is exactly one governed path from the agents to the network. And before any plan takes that path, its risk and approval are now grounded in a quant-plus-qual co-decision, which we will look at next."
+   "say": "Here is the shape. Four specialist agents talk to each other over the agent-to-agent protocol. A diagnostic agent detects the incident. A planning agent proposes a remediation, consulting a think-tank tool over M C P. A human-approval gate stands between planning and doing. An execution agent actuates. And a validation agent checks the result, and can trigger a rollback. Notice the design principle: intelligence lives in the middle — diagnosis and planning — while both safety-critical ends, execution and validation, are deterministic code, not creativity. And critically, there is exactly one governed path from the agents to the network. And before any plan takes that path, its risk and approval are now grounded in a quant-plus-qual co-decision, which we will look at next.",
+   "cuts": [
+    {"at": "Four specialist agents", "image": "301-closed-loop-netops/images/architecture-highlight-agent.png"},
+    {"at": "consulting a think-tank tool", "image": "301-closed-loop-netops/images/architecture-highlight-think-tank.png"},
+    {"at": "execution agent", "image": "301-closed-loop-netops/images/architecture-highlight-execution-agent.png"},
+    {"at": "Notice the design principle", "image": "301-closed-loop-netops/images/architecture.png"}
+   ]
   },
   {
    "type": "tab",
@@ -31,7 +37,14 @@
    "tab": "Develop & train · Experiments · the closed loop, run after run",
    "image": "301-closed-loop-netops/images/rhoai/loop-runs.png",
    "caption": "Every decision is a tracked run on our reference cluster, Venice: a live diagnostic → planning episode, two governance drills of a registration-storm incident — each planning run paired with the plan-judge run that scored it — and the training run of the remediation-risk model the scorer serves.",
-   "say": "And here is the loop actually running on our reference cluster, Venice. Read the run names down the list: a diagnostic run and the planning run it fed, from a live episode. Above them, two more planning episodes — governance drills of the same registration-storm scenario the course dataset carries — and next to each, a plan-judge run: the judge's verdict is itself a tracked, first-class run. And at the bottom, the training run of the remediation-risk model that scores every plan. This is the loop captured decision by decision. An autonomous system that touches the network must be auditable after the fact, and here every decision the agents took is a permanent, inspectable record."
+   "say": "And here is the loop actually running on our reference cluster, Venice. Read the run names down the list: a diagnostic run and the planning run it fed, from a live episode. Above them, two more planning episodes — governance drills of the same registration-storm scenario the course dataset carries — and next to each, a plan-judge run: the judge's verdict is itself a tracked, first-class run. And at the bottom, the training run of the remediation-risk model that scores every plan. This is the loop captured decision by decision. An autonomous system that touches the network must be auditable after the fact, and here every decision the agents took is a permanent, inspectable record.",
+   "cuts": [
+    {"at": "Read the run", "image": "301-closed-loop-netops/images/rhoai/loop-runs-highlight-run-names.png"},
+    {"at": "diagnostic run", "image": "301-closed-loop-netops/images/rhoai/loop-runs-highlight-diagnostic-run.png"},
+    {"at": "two more planning episodes", "image": "301-closed-loop-netops/images/rhoai/loop-runs-highlight-planning-run.png"},
+    {"at": "plan-judge run", "image": "301-closed-loop-netops/images/rhoai/loop-runs-highlight-plan-judge-run.png"},
+    {"at": "remediation-risk model", "image": "301-closed-loop-netops/images/rhoai/loop-runs-highlight-risk-model.png"}
+   ]
   },
   {
    "type": "tab",
@@ -39,7 +52,14 @@
    "tab": "Planning run · the plan and its approval gate",
    "image": "301-closed-loop-netops/images/rhoai/planning-run.png",
    "caption": "The planning agent's output for the registration storm: a 2-step remediation (scale AMF, then restart SMF) with risk=high and approval_required=True, and max_step_risk 0.816 logged as a metric. The gate is a value in the plan, enforced in code · not a hope pinned to a prompt.",
-   "say": "Open a planning run and you see the discipline directly. For the registration storm, the planning agent produced a two-step remediation — scale the A M F to absorb the load, then restart the S M F to clear the leaked sessions — tagged the plan's risk as high, and set approval-required to true, with the maximum step risk, nought-point-eight-one-six, logged as a metric on the run. That approval flag is not advice to a language model — it is a value in the plan that the execution agent enforces in code. If a plan needs approval and the request does not carry it, the agent records awaiting-approval and refuses to act. The gate is real, and it lives in the deterministic part of the system."
+   "say": "Open a planning run and you see the discipline directly. For the registration storm, the planning agent produced a two-step remediation — scale the A M F to absorb the load, then restart the S M F to clear the leaked sessions — tagged the plan's risk as high, and set approval-required to true, with the maximum step risk, nought-point-eight-one-six, logged as a metric on the run. That approval flag is not advice to a language model — it is a value in the plan that the execution agent enforces in code. If a plan needs approval and the request does not carry it, the agent records awaiting-approval and refuses to act. The gate is real, and it lives in the deterministic part of the system.",
+   "cuts": [
+    {"at": "two-step remediation", "image": "301-closed-loop-netops/images/rhoai/planning-run-highlight-two-step-remediation.png"},
+    {"at": "tagged the plan's risk", "image": "301-closed-loop-netops/images/rhoai/planning-run-highlight-risk.png"},
+    {"at": "approval-required", "image": "301-closed-loop-netops/images/rhoai/planning-run-highlight-approval.png"},
+    {"at": "maximum step risk", "image": "301-closed-loop-netops/images/rhoai/planning-run-highlight-step-risk.png"},
+    {"at": "plan needs approval", "image": "301-closed-loop-netops/images/rhoai/planning-run-highlight-approval.png"}
+   ]
   },
   {
    "type": "tab",
@@ -47,7 +67,13 @@
    "tab": "Planning's quant + qual co-decision · grounding the plan",
    "image": "301-closed-loop-netops/images/architecture.png",
    "caption": "Before a plan is published, Planning grounds its risk and approval on two signals: a calibrated remediation-risk model reached through the governed /plan-score gateway, and a GenAI judge that grounds on the same score. An arbiter combines them, with one hard rail no signal can override.",
-   "say": "But a plan approved on a language model's fluent say-so is not enough, so course three-oh-one now grounds the decision itself. Before the planning agent publishes a plan, two signals co-decide. The first is quantitative: a calibrated remediation-risk model, three-oh-one's own trained model served on K-Serve, that scores how risky each proposed action is, reached only through the same Kuadrant gateway on a governed score route. The second is qualitative: a GenAI judge that grounds itself on that very same score, then returns a verdict, accept, revise, or reject, catching context a single number misses, like an ordering hazard or an already-degraded neighbour. A code arbiter combines them: the judge is a full co-decider, but one hard risk rail is non-negotiable. A very high-risk step forces human approval no matter what either signal says, and every disagreement between the model and the judge is audited. The calibrated number and the reasoning agent fail in opposite ways, so here they decide together."
+   "say": "But a plan approved on a language model's fluent say-so is not enough, so course three-oh-one now grounds the decision itself. Before the planning agent publishes a plan, two signals co-decide. The first is quantitative: a calibrated remediation-risk model, three-oh-one's own trained model served on K-Serve, that scores how risky each proposed action is, reached only through the same [Kuadrant](/kwˈɑdɹᵊnt/) gateway on a governed score route. The second is qualitative: a GenAI judge that grounds itself on that very same score, then returns a verdict, accept, revise, or reject, catching context a single number misses, like an ordering hazard or an already-degraded neighbour. A code arbiter combines them: the judge is a full co-decider, but one hard risk rail is non-negotiable. A very high-risk step forces human approval no matter what either signal says, and every disagreement between the model and the judge is audited. The calibrated number and the reasoning agent fail in opposite ways, so here they decide together.",
+   "cuts": [
+    {"at": "two signals co-decide", "image": "301-closed-loop-netops/images/architecture-highlight-two-signals.png"},
+    {"at": "a calibrated remediation-risk model", "image": "301-closed-loop-netops/images/architecture-highlight-risk-model.png"},
+    {"at": "GenAI judge", "image": "301-closed-loop-netops/images/architecture-highlight-judge.png"},
+    {"at": "A very high-risk", "image": "301-closed-loop-netops/images/architecture.png"}
+   ]
   },
   {
    "type": "tab",
@@ -55,7 +81,17 @@
    "tab": "Co-decision, live · the audited episode record",
    "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail.png",
    "caption": "One incident, two drills, side by side: standard rail → the scorer prices restart_smf at 0.816, over the 0.66 ceiling — quant holds, judge independently rules revise, override False. Loosened rail → quant would now clear it, the judge still holds → override True, recorded as an audited disagreement. Every column is queryable platform data.",
-   "say": "And here is that co-decision actually happening on our reference cluster, Venice — not a diagram, an audited record, twice over. We drove the same registration-storm incident through the loop two times. First with the standard rail: the served risk model, reached only through the governed gateway, priced the S M F restart at nought-point-eight-one-six — over the ceiling — so the quantitative gate held the plan; and the GenAI judge, grounding itself on that very same number, independently ruled revise, at seventy-five percent confidence. Two kinds of intelligence agreeing to hold a risky plan. Then we deliberately loosened the quant ceiling and drove the incident again: this time the gate would have cleared the plan — but the judge still held it, and the arbiter recorded exactly that as an audited override: judge held for approval what the quant gate would have cleared. Read the two rows: the same risk score, opposite quant verdicts, and the override flag flipping to true. Every element of the co-decision lands as platform data — a decision you can replay, inspect, and defend."
+   "say": "And here is that co-decision actually happening on our reference cluster, Venice — not a diagram, an audited record, twice over. We drove the same registration-storm incident through the loop two times. First with the standard rail: the served risk model, reached only through the governed gateway, priced the S M F restart at nought-point-eight-one-six — over the ceiling — so the quantitative gate held the plan; and the GenAI judge, grounding itself on that very same number, independently ruled revise, at seventy-five percent confidence. Two kinds of intelligence agreeing to hold a risky plan. Then we deliberately loosened the quant ceiling and drove the incident again: this time the gate would have cleared the plan — but the judge still held it, and the arbiter recorded exactly that as an audited override: judge held for approval what the quant gate would have cleared. Read the two rows: the same risk score, opposite quant verdicts, and the override flag flipping to true. Every element of the co-decision lands as platform data — a decision you can replay, inspect, and defend.",
+   "cuts": [
+    {"at": "First with the standard rail", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail-highlight-run-one.png"},
+    {"at": "drove the incident again", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail-highlight-run-two.png"},
+    {"at": "gate would have cleared the plan", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail-highlight-clear-plan.png"},
+    {"at": "judge still held it", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail-highlight-judge-hold.png"},
+    {"at": "audited override", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail-highlight-override.png"},
+    {"at": "same risk score", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail-highlight-same-score.png"},
+    {"at": "opposite quant verdicts", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail-highlight-opposite.png"},
+    {"at": "Every element of", "image": "301-closed-loop-netops/images/rhoai/codecision-run-detail.png"}
+   ]
   },
   {
    "type": "tab",
@@ -63,7 +99,16 @@
    "tab": "Planning trace · the reasoning and the co-decision, explicit",
    "image": "301-closed-loop-netops/images/rhoai/planning-trace.png",
    "caption": "The planning trace of the very episode we just watched: the determination (an AMF registration storm cascading into SMF session failures), the 2-step plan, and the full codecision record — reasoning, plan and governance verdict as structured, inspectable outputs.",
-   "say": "The intelligence in the middle is fully observable too, and here is the proof at full resolution: the planning trace from the very episode we just watched being co-decided. At the top, the input — nothing but a loop I D — and the language-model call that turned the diagnosed findings into a plan. Below it, everything the agent concluded, as structured data. The determination, naming the incident in plain language: the A M F overwhelmed by a registration storm, cascading into S M F session failures. The plan itself: scale first, restart second. And the full co-decision record — the scored steps, the quant risks, the judge's verdict, the arbiter's thresholds. Nothing is a black box: the reasoning, the plan, and the governance verdict are all first-class, inspectable platform data."
+   "say": "The intelligence in the middle is fully observable too, and here is the proof at full resolution: the planning trace from the very episode we just watched being co-decided. At the top, the input — nothing but a loop I D — and the language-model call that turned the diagnosed findings into a plan. Below it, everything the agent concluded, as structured data. The determination, naming the incident in plain language: the A M F overwhelmed by a registration storm, cascading into S M F session failures. The plan itself: scale first, restart second. And the full co-decision record — the scored steps, the quant risks, the judge's verdict, the arbiter's thresholds. Nothing is a black box: the reasoning, the plan, and the governance verdict are all first-class, inspectable platform data.",
+   "cuts": [
+    {"at": "nothing but a", "image": "301-closed-loop-netops/images/rhoai/planning-trace-highlight-loopid.png"},
+    {"at": "the language-model call", "image": "301-closed-loop-netops/images/rhoai/planning-trace-highlight-language-model.png"},
+    {"at": "everything the agent concluded", "image": "301-closed-loop-netops/images/rhoai/planning-trace-highlight-structured-data.png"},
+    {"at": "The determination", "image": "301-closed-loop-netops/images/rhoai/planning-trace-highlight-determination.png"},
+    {"at": "The plan itself", "image": "301-closed-loop-netops/images/rhoai/planning-trace-highlight-plan.png"},
+    {"at": "the full co-decision record", "image": "301-closed-loop-netops/images/rhoai/planning-trace-highlight-co-decision.png"},
+    {"at": "the reasoning, the plan", "image": "301-closed-loop-netops/images/rhoai/planning-trace-highlight-structured-data.png"}
+   ]
   },
   {
    "type": "tab",
@@ -79,13 +124,18 @@
    "tab": "Kuadrant AuthPolicies · Enforced · the governed tool boundary",
    "image": "301-closed-loop-netops/images/rhoai/plan-scorer-authpolicies.png",
    "caption": "The execution agent no longer holds the keys to the core. It must ask through a Kuadrant-governed MCP gateway · AuthPolicy Accepted & Enforced: only the right identity may actuate, and only so often.",
-   "say": "This is the heart of course three-oh-one. The execution agent does not hold the credentials to the five-G core anymore. Instead, actuation runs through a single M C P gateway, governed by Kuadrant — and here are the policies, all three Accepted and Enforced on our reference cluster, Venice: one guarding the playbook gateway that actuation flows through, and two guarding the scoring route the co-decision depends on. The auth policy proves who is calling: only the execution agent's own identity may actuate; a compromised or wrong-identity request is rejected at the gateway before it ever reaches the network. A companion rate-limit policy caps how often actuation can happen, so a looping agent cannot hammer the core. Moving this check to the gateway means compromising the agent grants the ability to ask — through the gate — not the ability to act. That is the whole game."
+   "say": "This is the heart of course three-oh-one. The execution agent does not hold the credentials to the five-G core anymore. Instead, actuation runs through a single M C P gateway, governed by [Kuadrant](/kwˈɑdɹᵊnt/) — and here are the policies, all three Accepted and Enforced on our reference cluster, Venice: one guarding the playbook gateway that actuation flows through, and two guarding the scoring route the co-decision depends on. The auth policy proves who is calling: only the execution agent's own identity may actuate; a compromised or wrong-identity request is rejected at the gateway before it ever reaches the network. A companion rate-limit policy caps how often actuation can happen, so a looping agent cannot hammer the core. Moving this check to the gateway means compromising the agent grants the ability to ask — through the gate — not the ability to act. That is the whole game.",
+   "cuts": [
+    {"at": "one guarding the playbook", "image": "301-closed-loop-netops/images/rhoai/plan-scorer-authpolicies-highlight-playbook-gateway.png"},
+    {"at": "two guarding the scoring", "image": "301-closed-loop-netops/images/rhoai/plan-scorer-authpolicies-highlight-scoring-route.png"},
+    {"at": "A companion rate-limit", "image": "301-closed-loop-netops/images/rhoai/plan-scorer-authpolicies.png"}
+   ]
   },
   {
    "type": "title",
    "title": "301, solved: the loop is closed, and the act is governed",
    "subtitle": "Diagnose, plan, gate, execute, validate · four agents, one governed actuation path. Kuadrant proves identity and caps rate at the boundary; the execution agent holds no direct access; every stage is audited; the safety arm can roll back. Autonomy that a network team could actually trust. Next: 302 complements a classic-ML model with a GenAI judge · quality co-decided and measured. Replay every step yourself in the self-service interactive lab — a time-snapshotted capture of this same cluster — linked from the course page.",
-   "say": "So that's three-oh-one, solved. The loop is genuinely closed — diagnose, plan, gate, execute, validate — with four cooperating agents and exactly one path to the network. Kuadrant proves identity and caps the rate right at that boundary; the execution agent holds no direct access to the core; every stage is audited; and the validation arm can roll a bad change back. This is autonomy a network operations team could actually trust, because the dangerous capability lives behind a gate the agent must pass, not inside the agent. And the plan itself is now co-decided, by a calibrated risk model and a GenAI judge grounded on the same number, with one hard rail neither can override. From here, course three-oh-two takes that same quant-plus-qual idea back to the model, and adds one more thing: it measures the judge. Thanks for watching. And you do not have to take this video's word for any of it: the course page links a self-service interactive lab, a time-snapshotted replay of this very cluster, where you run every step and verify every value yourself."
+   "say": "So that's three-oh-one, solved. The loop is genuinely closed — diagnose, plan, gate, execute, validate — with four cooperating agents and exactly one path to the network. [Kuadrant](/kwˈɑdɹᵊnt/) proves identity and caps the rate right at that boundary; the execution agent holds no direct access to the core; every stage is audited; and the validation arm can roll a bad change back. This is autonomy a network operations team could actually trust, because the dangerous capability lives behind a gate the agent must pass, not inside the agent. And the plan itself is now co-decided, by a calibrated risk model and a GenAI judge grounded on the same number, with one hard rail neither can override. From here, course three-oh-two takes that same quant-plus-qual idea back to the model, and adds one more thing: it measures the judge. Thanks for watching. And you do not have to take this video's word for any of it: the course page links a self-service interactive lab, a time-snapshotted replay of this very cluster, where you run every step and verify every value yourself."
   }
  ]
 }

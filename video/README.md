@@ -85,9 +85,11 @@ The five specs:
 | `video/specs/301.json` | `301-closed-loop-netops/images/301-closed-loop-netops.mp4` |
 | `video/specs/302.json` | `302-energy-optimizer/images/302-energy-optimizer.mp4` |
 
-Each scene prints its index, narration length, and title. The last line is `DONE` plus the output path and total duration. Intermediate PNGs, WAVs, and scene clips go to `/tmp/vidbuild` and can be deleted after a successful run.
+The script checks the spec before it synthesizes anything. The file has to be valid JSON, each scene needs the fields that scene type uses, every `cuts` phrase has to occur in that scene's `say`, and every screenshot path has to be a readable image. Paths are relative to the current directory, so run it from the repository root. A problem prints every finding and exits without writing a video. When the spec is fine it prints `spec ok` and then builds.
 
-Screenshot paths inside a spec (for example `101-noc-assistant/images/rhoai/feature-views.png`) must already exist. A missing image fails that scene.
+Each scene is cached under `$BUILD_DIR/cache`. A later run re-speaks only the scenes whose narration, screenshots, caption, or step label changed, then stitches every scene into the final mp4. The log marks a reused scene with `cached`. Replacing a PNG at the same path counts as a change. Adding or removing a scene changes the `n / total` on the title cards and the step chip on every tab, so those cards are rendered again. `PRODUCE_REBUILD=1` ignores the cache. Deleting the cache directory does the same.
+
+Each scene prints its index, narration length, and title. The last line is `DONE` plus the output path and total duration. Intermediate PNGs, WAVs, and scene clips go to `/tmp/vidbuild` and can be deleted after a successful run.
 
 ### Several screenshots in one scene
 
@@ -111,7 +113,8 @@ Keep it as one scene and add `cuts`. `image` is the screenshot at the start. Eac
 | Variable | Default | Effect |
 |----------|---------|--------|
 | `KOKORO_VOICE` | `af_sarah` | Kokoro voice id. It must be an American English voice (`af_*` or `am_*`) because the pipeline is fixed to `lang_code="a"`. |
-| `BUILD_DIR` | `/tmp/vidbuild` | Directory for per-scene frames, audio, and clips. |
+| `BUILD_DIR` | `/tmp/vidbuild` | Directory for per-scene frames, audio, clips, and the scene cache. |
+| `PRODUCE_REBUILD` | unset | Set to `1` to re-speak every scene instead of reusing cached clips. |
 
 Example:
 
