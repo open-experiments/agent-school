@@ -23,9 +23,9 @@ import soundfile as sf
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1920, 1080
-FONT = "/Users/mdeneve/Library/Fonts/DejaVuSans.ttf"
-FONT_B = "/Users/mdeneve/Library/Fonts/DejaVuSans-Bold.ttf"
-FONT_M = "/Users/mdeneve/Library/Fonts/DejaVuSansMono.ttf"
+FONT = "~/Library/Fonts/DejaVuSans.ttf"
+FONT_B = "~/Library/Fonts/DejaVuSans-Bold.ttf"
+FONT_M = "~/Library/Fonts/DejaVuSansMono.ttf"
 # FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 # FONT_B = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 # FONT_M = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
