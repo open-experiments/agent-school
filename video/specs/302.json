@@ -23,7 +23,14 @@
    "tab": "Solution shape · quant + qual co-decision, governed and measured",
    "image": "302-energy-optimizer/images/architecture.png",
    "caption": "An optimizer proposes; a Kueue-run simulation tests; the classic scorer gives the quant signal; a GenAI judge gives the qual verdict · grounded on the same governed scorer · and an arbiter co-decides with one hard safety rail.",
-   "say": "Here is the shape. A Llama-Stack optimizer proposes cell-sleep windows. A simulation, run as a queued job, tests them. Then two signals meet. The quantitative signal is the classic sustainability model, a calibrated regressor, reached only through a governed gateway. The qualitative signal is a GenAI judge agent that grounds itself on that very same scorer, then renders a verdict — accept, revise, or reject — with a cited rationale. An arbiter combines them: the judge is a full co-decider, its decision stands, except for one non-negotiable rail — a proposal that would breach a hard quality-of-service floor is rejected no matter what either signal says. Co-decide never means cause an outage."
+   "say": "Here is the shape. A Llama-Stack optimizer proposes cell-sleep windows. A simulation, run as a queued job, tests them. Then two signals meet. The quantitative signal is the classic sustainability model, a calibrated regressor, reached only through a governed gateway. The qualitative signal is a GenAI judge agent that grounds itself on that very same scorer, then renders a verdict — accept, revise, or reject — with a cited rationale. An arbiter combines them: the judge is a full co-decider, its decision stands, except for one non-negotiable rail — a proposal that would breach a hard quality-of-service floor is rejected no matter what either signal says. Co-decide never means cause an outage.",
+   "cuts": [
+    {"at": "A Llama-Stack optimizer", "image": "302-energy-optimizer/images/architecture-highlight-optimizer.png"},
+    {"at": "A simulation, run", "image": "302-energy-optimizer/images/architecture-highlight-simulation.png"},
+    {"at": "quantitative signal", "image": "302-energy-optimizer/images/architecture-highlight-quant-signal.png"},
+    {"at": "qualitative signal", "image": "302-energy-optimizer/images/architecture-highlight-qual-signal.png"},
+    {"at": "arbiter", "image": "302-energy-optimizer/images/architecture.png"}
+   ]
   },
   {
    "type": "tab",
@@ -47,7 +54,7 @@
    "tab": "Governance for evaluation, too · the governed /score gateway",
    "image": "302-energy-optimizer/images/architecture.png",
    "caption": "The scorer is reached only through the Kuadrant /score gateway (AuthPolicy: energy-optimizer + judge, plus a rate cap) · the same East-West governance 301 puts on actuation, now applied to evaluation.",
-   "say": "And here is an elegant reuse of the pattern from course three-oh-one. The judge and the optimizer do not call the scoring model directly. As the architecture shows, they reach it only through a Kuadrant-governed gateway, on a dedicated score route. Only the optimizer and the judge identities may score, and the rate is capped by a rate-limit policy. Governance is not only for actions that change the network; here it wraps evaluation itself, who is allowed to ask the model a question, and how often."
+   "say": "And here is an elegant reuse of the pattern from course three-oh-one. The judge and the optimizer do not call the scoring model directly. As the architecture shows, they reach it only through a [Kuadrant](/kwˈɑdɹᵊnt/)-governed gateway, on a dedicated score route. Only the optimizer and the judge identities may score, and the rate is capped by a rate-limit policy. Governance is not only for actions that change the network; here it wraps evaluation itself, who is allowed to ask the model a question, and how often."
   },
   {
    "type": "tab",
@@ -55,7 +62,13 @@
    "tab": "GenAI · Datasets · measuring the judge, not just running it",
    "image": "302-energy-optimizer/images/rhoai/genai-eval-datasets.jpg",
    "caption": "A curated evaluation dataset of eight cases · consensus accepts, consensus rejects, an override replica, QoS breaches, outage territory · with the decisions a grounded judge could defensibly reach.",
-   "say": "Now, if a GenAI judge has real decision authority, it is itself a model that must be evaluated. So we built it an evaluation dataset, shown here on the datasets tab: eight carefully chosen cases spanning easy consensus accepts, clear rejects, an outage-territory proposal, and — importantly — a replica of that earlier override, where accepting the plan requires an ungrounded claim. Each case carries the set of decisions a competent, grounded judge could defensibly reach. This is how you turn a one-time anecdote about a hallucinating judge into a repeatable test."
+   "say": "Now, if a GenAI judge has real decision authority, it is itself a model that must be evaluated. So we built it an evaluation dataset, shown here on the datasets tab: eight carefully chosen cases spanning easy consensus accepts, clear rejects, an outage-territory proposal, and — importantly — a replica of that earlier override, where accepting the plan requires an ungrounded claim. Each case carries the set of decisions a competent, grounded judge could defensibly reach. This is how you turn a one-time anecdote about a hallucinating judge into a repeatable test.",
+   "cuts": [
+    {"at": "eight carefully chosen", "image": "302-energy-optimizer/images/rhoai/genai-eval-datasets-highlight-cases.jpg"},
+    {"at": "consensus accepts", "image": "302-energy-optimizer/images/rhoai/genai-eval-datasets-highlight-accept.jpg"},
+    {"at": "clear rejects", "image": "302-energy-optimizer/images/rhoai/genai-eval-datasets-highlight-reject.jpg"},
+    {"at": "Each case carries", "image": "302-energy-optimizer/images/rhoai/genai-eval-datasets.jpg"}
+   ]
   },
   {
    "type": "tab",
@@ -63,7 +76,11 @@
    "tab": "GenAI · Judges · an LLM-as-judge on the cluster's own model",
    "image": "302-energy-optimizer/images/rhoai/genai-judges.jpg",
    "caption": "verdict-groundedness: an LLM-as-a-judge registered to the experiment, backed by the cluster's own Kimi endpoint · no external grading service.",
-   "say": "And here is the judge of the judge, registered right on the experiment: verdict-groundedness, an L-L-M-as-a-judge whose only job is to check whether the optimizer judge's numeric claims are actually consistent with the numbers it was given. It runs on the cluster's own Kimi model — the same endpoint that powers the agents themselves. No external grading A P I, no data leaving the platform. The system evaluates its own reasoning, on its own infrastructure."
+   "say": "And here is the judge of the judge, registered right on the experiment: verdict-groundedness, an L-L-M-as-a-judge whose only job is to check whether the optimizer judge's numeric claims are actually consistent with the numbers it was given. It runs on the cluster's own Kimi model — the same endpoint that powers the agents themselves. No external grading A P I, no data leaving the platform. The system evaluates its own reasoning, on its own infrastructure.",
+   "cuts": [
+    {"at": "whose only job", "image": "302-energy-optimizer/images/rhoai/genai-judges-highlight-instructions.jpg"},
+    {"at": "runs on the cluster's", "image": "302-energy-optimizer/images/rhoai/genai-judges-highlight-model.jpg"}
+   ]
   },
   {
    "type": "tab",
@@ -71,7 +88,15 @@
    "tab": "GenAI · Evaluation run · the judge, scored",
    "image": "302-energy-optimizer/images/rhoai/genai-eval-run.jpg",
    "caption": "decision-correctness 0.75, groundedness 0.875, qos-safety 0.875 · the two failures are exactly the defects worth catching: the ungrounded override and an unsafe QoS acceptance. Honest provenance on the run itself: mode manual-fallback (EA-13), and the stricter LLM auditor's dissent (llm_groundedness 0.125) kept as data.",
-   "say": "And here is the payoff — the evaluation run, with the judge scored. Decision-correctness nought-point-seven-five, groundedness nought-point-eight-seven-five, quality-of-service safety nought-point-eight-seven-five. But the numbers matter less than what the two failures were. The suite automatically caught the override case, where the judge accepted a proposal on a factually false claim, and it caught an outage-territory acceptance that the hard safety rail was there to stop. In other words, the evaluation found the exact two failure modes the design predicted — on its first real run. Two honest notes, straight off the run's own parameters. The mode reads manual-fallback: this early-access server does not yet accept the native trace-based harness, so the run executes the very same scorers by hand and logs them as a normal run — same measurements, honest provenance. And the strict L-L-M auditor agreed with the numeric groundedness check on only one case in eight — a disagreement that is itself preserved as data, not hidden. That is what it means to complement a classic model with GenAI responsibly: co-decide, audit every disagreement, keep a hard safety rail, and measure the judge continuously."
+   "say": "And here is the payoff — the evaluation run, with the judge scored. Decision-correctness nought-point-seven-five, groundedness nought-point-eight-seven-five, quality-of-service safety nought-point-eight-seven-five. But the numbers matter less than what the two failures were. The suite automatically caught the override case, where the judge accepted a proposal on a factually false claim, and it caught an outage-territory acceptance that the hard safety rail was there to stop. In other words, the evaluation found the exact two failure modes the design predicted — on its first real run. Two honest notes, straight off the run's own parameters. The mode reads manual-fallback: this early-access server does not yet accept the native trace-based harness, so the run executes the very same scorers by hand and logs them as a normal run — same measurements, honest provenance. And the strict L-L-M auditor agreed with the numeric groundedness check on only one case in eight — a disagreement that is itself preserved as data, not hidden. That is what it means to complement a classic model with GenAI responsibly: co-decide, audit every disagreement, keep a hard safety rail, and measure the judge continuously.",
+   "cuts": [
+    {"at": "Decision-correctness", "image": "302-energy-optimizer/images/rhoai/genai-eval-run-highlight-correctness.jpg"},
+    {"at": "groundedness", "image": "302-energy-optimizer/images/rhoai/genai-eval-run-highlight-groundedness.jpg"},
+    {"at": "In other words", "image": "302-energy-optimizer/images/rhoai/genai-eval-run.jpg"},
+    {"at": "quality-of-service safety", "image": "302-energy-optimizer/images/rhoai/genai-eval-run-highlight-qos-safety.jpg"},
+    {"at": "The mode reads", "image": "302-energy-optimizer/images/rhoai/genai-eval-run-highlight-mode.jpg"},
+    {"at": "And the strict L-L-M auditor", "image": "302-energy-optimizer/images/rhoai/genai-eval-run-highlight-llm-auditor.jpg"}
+   ]
   },
   {
    "type": "title",
