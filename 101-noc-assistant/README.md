@@ -19,7 +19,7 @@ A single agent that answers NOC questions about a 5G core: it inspects telemetry
 
 ## Walkthrough video
 
-A narrated walkthrough (6:27) — the problem, then the step-by-step agentic
+A narrated walkthrough (6:29) — the problem, then the step-by-step agentic
 solution over the live RHOAI portal on our reference cluster called Venice.
 Click the poster to play or download:
 
