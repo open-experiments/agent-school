@@ -54,6 +54,38 @@ const BASE = process.env.BASE_URL || 'http://localhost:8777';
   const pubs = await page.$$eval('#publist .pub', els => els.length);
   check('regression publications render', pubs === 8, `count=${pubs}`);
 
+  // R1-R6: roadmap view (November 2026)
+  await page.evaluate(() => window.show('roadmap'));
+  await page.waitForTimeout(300);
+  const rmActive = await page.evaluate(() => document.getElementById('roadmap').classList.contains('active') && document.getElementById('nav-roadmap').classList.contains('active') && !document.getElementById('courses').classList.contains('active'));
+  check('R1 roadmap view and nav active', rmActive);
+  const rIds = await page.$$eval('#rgrid .rcard .badge', els => els.map(e => e.textContent.trim()));
+  check('R2 three proposed 4xx cards', rIds.join(',') === '401 · proposed,402 · proposed,403 · proposed', rIds.join(','));
+  const rLinks = await page.$$eval('#rgrid .rcard a.foot', els => els.map(e => e.href));
+  check('R2 cards link to RoadMap.md sections', rLinks.length === 3 && rLinks.every(h => h.startsWith('https://github.com/open-experiments/agent-school/blob/main/docs/RoadMap.md#40')), rLinks.join(' ~ '));
+  const steps = await page.$$eval('#steps .step', els => els.length);
+  check('R3 five gated steps', steps === 5, `count=${steps}`);
+  const v0 = await page.evaluate(() => ({ src: document.getElementById('slideimg').getAttribute('src'), cnt: document.getElementById('slidecnt').textContent }));
+  await page.click('#viewer button[aria-label="Next slide"]');
+  const v1 = await page.evaluate(() => ({ src: document.getElementById('slideimg').getAttribute('src'), cnt: document.getElementById('slidecnt').textContent }));
+  await page.click('#viewer button[aria-label="Previous slide"]');
+  await page.click('#viewer button[aria-label="Previous slide"]');
+  const v2 = await page.evaluate(() => ({ src: document.getElementById('slideimg').getAttribute('src'), cnt: document.getElementById('slidecnt').textContent }));
+  check('R4 slide viewer starts at 1 of 9', v0.src === 'roadmap/web/slide-01.jpg' && v0.cnt === '1 / 9', JSON.stringify(v0));
+  check('R4 slide viewer next/prev wraps', v1.src === 'roadmap/web/slide-02.jpg' && v1.cnt === '2 / 9' && v2.src === 'roadmap/web/slide-09.jpg' && v2.cnt === '9 / 9', JSON.stringify([v1, v2]));
+  const assets = await page.evaluate(async () => {
+    const urls = ['roadmap/agent-school-roadmap-wg-kickoff-2026-11.pdf', 'roadmap/agent-school-roadmap-wg-kickoff-2026-11.pptx'];
+    for (let i = 1; i <= 9; i++) urls.push(`roadmap/web/slide-${String(i).padStart(2, '0')}.jpg`);
+    const out = [];
+    for (const u of urls) { const r = await fetch(u, { method: 'HEAD' }); out.push(`${u}:${r.status}`); }
+    return out;
+  });
+  check('R5 deck PDF, PPTX and 9 slide images served', assets.every(a => a.endsWith(':200')), assets.filter(a => !a.endsWith(':200')).join(' ') || `${assets.length} ok`);
+  const later = await page.$$eval('#later li', els => els.length);
+  check('R6 unscheduled candidates listed', later === 6, `count=${later}`);
+  const strip = await page.evaluate(() => { window.show('courses'); return document.getElementById('nextitems').textContent.includes('401') && document.getElementById('courselist').style.display !== 'none'; });
+  check('R6 courses view restored with next-strip', strip);
+
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   check('no page errors', errors.length === 0, errors.join('; '));

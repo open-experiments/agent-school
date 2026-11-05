@@ -71,7 +71,7 @@
 
   section.pad{padding:52px 0}
   #coursedetail{scroll-margin-top:86px}
-  .view{display:none}
+  .view{display:none;scroll-margin-top:80px}
   .view.active{display:block}
   .sec-head{margin:0 0 6px;font-size:13px;font-family:var(--mono);letter-spacing:.08em;
     text-transform:uppercase;color:var(--accent);font-weight:700}
@@ -124,6 +124,42 @@
   .pub p{margin:0 0 10px;color:var(--muted);font-size:15px}
   .pub .read{font-weight:700;font-size:14px}
 
+  /* roadmap */
+  .badge.prop{background:var(--muted)}
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+  .rcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .rcard h3{margin:14px 0 8px;font-size:20px;letter-spacing:-.01em}
+  .rcard p.desc{margin:0 0 16px;color:var(--muted);font-size:15px;flex:1}
+  .rcard .rows{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:14px}
+  .rcard .foot{font-size:14px;font-weight:700}
+  .steps{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+  .step{flex:1 1 190px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;box-shadow:var(--shadow)}
+  .step .n{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+  .step b{display:block;margin:6px 0 4px;font-size:16px;letter-spacing:-.01em}
+  .step span.s{color:var(--muted);font-size:14px}
+  .viewer{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#151515;
+    box-shadow:var(--shadow);max-width:960px}
+  .viewer:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .viewer img{width:100%;aspect-ratio:16/9;display:block;background:#fbfbf9;cursor:pointer}
+  .viewer .bar{display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff}
+  .viewer .bar button{background:#2a2a2e;color:#fff;border:0;border-radius:8px;padding:8px 14px;
+    font:inherit;font-weight:700;cursor:pointer}
+  .viewer .bar button:hover{background:#3a3a3f}
+  .viewer .bar .ttl{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:6px}
+  .viewer .bar .cnt{font-family:var(--mono);font-size:13px;color:#cfd3d8;margin-left:auto;white-space:nowrap}
+  .later{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px 28px}
+  .later li{display:flex;gap:12px;align-items:baseline;font-size:15px;color:var(--muted)}
+  .later li .badge{min-width:46px;justify-content:center}
+  .nextstrip{margin-top:22px;border:1px dashed var(--line);border-radius:var(--radius);padding:14px 18px;
+    display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:var(--bg-alt)}
+  .nextstrip .k{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--accent);font-weight:700}
+  .nextstrip .items{display:flex;gap:10px;flex-wrap:wrap;font-size:14px;font-weight:600}
+  .nextstrip .items .sep{color:var(--muted);font-weight:400}
+  .nextstrip a.go{margin-left:auto;font-weight:700}
+
   footer{border-top:1px solid var(--line);background:var(--bg-alt);padding:40px 0;margin-top:20px}
   footer .row{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
   footer .muted{color:var(--muted);font-size:14px}
@@ -133,6 +169,9 @@
     .cols{grid-template-columns:1fr}
     .metrics{gap:24px}
     .nav{gap:12px}
+    .brand span,.ghbtn{display:none}   /* phone header: logo plus the three views */
+    .navlink{font-size:15px;padding:8px 2px}
+    .nextstrip a.go{margin-left:0}
   }
 </style>
 </head>
@@ -146,6 +185,7 @@
     <div class="spacer"></div>
     <button class="navlink active" id="nav-courses" onclick="show('courses')">Courses</button>
     <button class="navlink" id="nav-pubs" onclick="show('pubs')">Publications</button>
+    <button class="navlink" id="nav-roadmap" onclick="show('roadmap')">Roadmap</button>
     <a class="ghbtn" href="https://github.com/open-experiments/agent-school" target="_blank" rel="noopener">GitHub ↗</a>
   </div>
 </header>
@@ -181,6 +221,11 @@
         The harness grows, the platform does the heavy lifting. Click a course for the problem, the
         walkthrough video, the architecture &amp; code, and hands-on experience in the interactive lab.</p>
       <div class="grid" id="cardgrid"></div>
+      <div class="nextstrip" id="nextstrip">
+        <span class="k">Next · 4xx platform layer</span>
+        <span class="items" id="nextitems"></span>
+        <a class="go" href="#" onclick="show('roadmap');return false;">See the roadmap →</a>
+      </div>
     </div>
   </section>
 
@@ -205,6 +250,80 @@
   </section>
 </main>
 
+<!-- ============================ ROADMAP ============================ -->
+<main id="roadmap" class="view">
+  <div class="hero">
+    <div class="wrap">
+      <p class="kicker">Roadmap · November 2026</p>
+      <h1>What comes next, and why.</h1>
+      <p class="lede">The five shipped courses each build one agent workload. The next grade, 4xx, builds the
+        platform layer they share: the skill and capability catalogs with their governance, the knowledge
+        service, and the telecom model track. Each 4xx course proves its component on the shipped courses
+        without modifying them.</p>
+      <div class="cta">
+        <a class="btn primary" id="deck-pdf" href="roadmap/agent-school-roadmap-wg-kickoff-2026-11.pdf" target="_blank" rel="noopener">Kickoff deck (PDF)</a>
+        <a class="btn ghost" id="deck-pptx" href="roadmap/agent-school-roadmap-wg-kickoff-2026-11.pptx" download>Kickoff deck (PPTX)</a>
+        <a class="btn ghost" href="https://github.com/open-experiments/agent-school/blob/main/docs/RoadMap.md" target="_blank" rel="noopener">RoadMap.md, the ledger ↗</a>
+      </div>
+      <div class="metrics" id="scoreline">
+        <div class="metric"><b>6</b><span>of 13 blueprint rows covered</span></div>
+        <div class="metric"><b>1</b><span>covered, strong</span></div>
+        <div class="metric"><b>3</b><span>partial</span></div>
+        <div class="metric"><b>3</b><span>skipped</span></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="pad">
+    <div class="wrap">
+      <p class="sec-head">Proposed courses · 4xx</p>
+      <h2 class="big">One platform component per course, proven on the shipped five</h2>
+      <p class="sub">A skill is procedural knowledge bound to a role. A capability is what an agent reaches
+        outside its own process through MCP. The 4xx courses build the layer that catalogs, governs and feeds
+        both, and each course is reviewed before the next starts.</p>
+      <div class="rgrid" id="rgrid"></div>
+    </div>
+  </section>
+
+  <section class="pad" style="padding-top:0">
+    <div class="wrap">
+      <p class="sec-head">Sequence</p>
+      <h2 class="big">Five gated steps</h2>
+      <p class="sub">401 goes first because 402 retrieves over its inventory and 403's tuning data comes from its catalogs.</p>
+      <div class="steps" id="steps"></div>
+    </div>
+  </section>
+
+  <section class="pad" style="padding-top:0" id="deck">
+    <div class="wrap">
+      <p class="sec-head">Working-group kickoff deck</p>
+      <h2 class="big">The plan in nine slides</h2>
+      <p class="sub">Presented to the working group (Red Hat, AT&amp;T, Microsoft Azure, AMD) in November 2026.
+        Partner lanes, owners and dates are candidates for the group to confirm.
+        <a href="https://github.com/open-experiments/agent-school/tree/main/docs/roadmap" target="_blank" rel="noopener">Sources and build ↗</a></p>
+      <div class="viewer" id="viewer" tabindex="0" aria-label="Kickoff deck slide viewer. Use the arrow keys to move between slides.">
+        <img id="slideimg" src="roadmap/web/slide-01.jpg" alt="Slide 1" loading="lazy" width="1280" height="720" onclick="slideTo(1)"/>
+        <div class="bar">
+          <button type="button" onclick="slideTo(-1)" aria-label="Previous slide">‹ Prev</button>
+          <button type="button" onclick="slideTo(1)" aria-label="Next slide">Next ›</button>
+          <span class="ttl" id="slidettl"></span>
+          <span class="cnt" id="slidecnt"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pad" style="padding-top:0">
+    <div class="wrap">
+      <p class="sec-head">Also on the roadmap, unscheduled</p>
+      <h2 class="big">Candidates in the shipped grades</h2>
+      <p class="sub">Proposed in the <a href="https://github.com/open-experiments/agent-school/discussions" target="_blank" rel="noopener">discussions</a>
+        and scoped in RoadMap.md; none of them is in this cycle.</p>
+      <ul class="later" id="later"></ul>
+    </div>
+  </section>
+</main>
+
 <!-- ========================== DISCLAIMER ========================== -->
 <section class="pad" id="disclaimer" style="padding:34px 0;border-top:1px solid var(--line);background:var(--bg-alt)">
   <div class="wrap">
@@ -226,6 +345,7 @@
     <div>
       <a href="https://github.com/open-experiments/agent-school" target="_blank" rel="noopener">GitHub</a> ·
       <a href="https://github.com/open-experiments/Telco-AIX" target="_blank" rel="noopener">Telco-AIX</a> ·
+      <a href="#" onclick="show('roadmap');return false;">Roadmap</a> ·
       <a href="https://www.linkedin.com/in/fenar/" target="_blank" rel="noopener">Team</a> ·
       <span class="muted">Cloud-native · Kubernetes</span>
     </div>
@@ -293,6 +413,66 @@ const PUBS=[
   s:"Why vLLM, an open source inference server that speeds up generative AI by making better use of GPU memory, is the reference serving path."},
 ];
 
+// Roadmap view. Hand-curated summary of docs/RoadMap.md, which stays the source of record;
+// the deck images under roadmap/web/ are produced by roadmap/deck/build.py.
+const ROADMAP={
+ courses:[
+  {id:"401",title:"Skills and capabilities",anchor:"401-skills-and-capabilities-proposed-4xx",
+   rows:"closes row 11 (skills), deepens 13, moves 1",
+   desc:"A skill catalog (one SKILL.md per role, governed as content) and a capability catalog (a manifest per MCP server, in three provider tiers: platform, telco application layer, course-local). A registry generator emits the inventory, the per-agent allow-lists and the Kuadrant policies from one source, CI-checked. Selection runs in two layers, procedure per problem class and capability per step, both recorded in the trace.",
+   tags:["Skill catalog","Capability catalog","Registry generator","Kuadrant policies","Onboarding contract"]},
+  {id:"402",title:"Knowledge",anchor:"402-knowledge-proposed-4xx",
+   rows:"closes row 11 (knowledge), touches 5",
+   desc:"The RAG placement rule as a platform service: retrieval holds what the domain owns (runbooks, specs, past RCAs, alarm dictionaries), structured state comes through tools, and a procedure the role owns is a skill. A knowledge service beside 201, retrieval over the 401 inventory, case memory over 301's episodes, and topology retrieval for blast-radius context.",
+   tags:["Knowledge service","Retrieval over inventory","Case memory","Topology"]},
+  {id:"403",title:"Domain model track",anchor:"403-domain-model-track-proposed-4xx",
+   rows:"rows 6 and 7; feeds 203",
+   desc:"AT&T's OTEL 2.0, an open telecom model, in the model slot every course already treats as a stateless endpoint. First measured on the tapes (tool calling, judge groundedness, closed-loop behavior, cost per resolved episode), then a tuning loop: SDG Hub turns the 401 catalogs and the tapes into telecom tool-calling data, and OSFT folds it in.",
+   tags:["OTEL 2.0","Evaluation on tapes","SDG Hub","OSFT"]},
+ ],
+ steps:[
+  {n:"Step 1",t:"Design note",s:"4xx definition, contracts, RAG rules, syllabus skeleton"},
+  {n:"Step 2",t:"401 Skills and capabilities",s:"catalogs by tier, registry, policies, onboarding contract"},
+  {n:"Step 3",t:"402 Knowledge",s:"knowledge service beside 201, case memory and topology beside 301"},
+  {n:"Step 4",t:"403 Domain model track",s:"OTEL 2.0 measured on the tapes, then SDG Hub and OSFT"},
+  {n:"Step 5",t:"Syllabus and modify labs",s:"matrix, guides, glossary, exercises with a checker"},
+ ],
+ later:[
+  {id:"102",t:"NOC Assistant, Sandboxed",s:"in build, unproven; row 3",anchor:"102--noc-assistant-sandboxed-in-build-1xx"},
+  {id:"103",t:"Telco-SME Assistant",s:"proposed; widens the domain surface",anchor:"103--telco-sme-assistant-proposed-1xx"},
+  {id:"104",t:"NOC Assistant, Served",s:"proposed; row 5",anchor:"104--noc-assistant-served-proposed-1xx"},
+  {id:"203",t:"Routing Done Right",s:"proposed; rows 7, 8, 9",anchor:"203--routing-done-right-proposed-2xx"},
+  {id:"303",t:"Constrained and Identified",s:"proposed; rows 3, 12, 13",anchor:"303--constrained--identified-proposed-3xx"},
+  {id:"304",t:"Agent SecOps",s:"proposed; adversarial evidence for 3, 12, 13",anchor:"304--agent-secops-proposed-3xx"},
+ ],
+ slides:["Agent School: what's coming","Where we are","Skill, capability, role: three things","401 Skills and capabilities",
+  "402 Knowledge: RAG placed by rule","403 Domain model track: OTEL 2.0","Syllabus upgrade: blueprint-wise and hands-on",
+  "Roadmap: gated steps, scope, partner lanes","Decisions for the working group"],
+};
+let slideN=1;
+function slideTo(d){slideN=((slideN-1+d+ROADMAP.slides.length)%ROADMAP.slides.length)+1;slideShow();}
+function slideShow(){
+  const n=ROADMAP.slides.length,img=document.getElementById('slideimg');
+  img.src=`roadmap/web/slide-${String(slideN).padStart(2,'0')}.jpg`;
+  img.alt=`Slide ${slideN} of ${n}: ${ROADMAP.slides[slideN-1]}`;
+  document.getElementById('slidettl').textContent=ROADMAP.slides[slideN-1];
+  document.getElementById('slidecnt').textContent=`${slideN} / ${n}`;
+  const next=new Image();next.src=`roadmap/web/slide-${String((slideN%n)+1).padStart(2,'0')}.jpg`;
+}
+document.getElementById('viewer').addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'){slideTo(1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'){slideTo(-1);e.preventDefault();}
+});
+function roadmapCard(c){
+  return `<div class="rcard" id="rc-${c.id}">
+    <span class="badge prop">${c.id} · proposed</span>
+    <h3>${c.title}</h3>
+    <p class="desc">${c.desc}</p>
+    <div class="tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+    <div class="rows">Blueprint Table 1: ${c.rows}</div>
+    <a class="foot" href="${BLOB}/docs/RoadMap.md#${c.anchor}" target="_blank" rel="noopener">Read the proposal ↗</a>
+  </div>`;
+}
 function courseCard(c){
   return `<div class="card" role="button" tabindex="0" aria-label="Open course ${c.id} · ${c.title}" onclick="openCourse('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCourse('${c.id}')}">
     <span class="badge ${c.flag?'flag':''}">${c.id}${c.flag?' · flagship':''}</span>
@@ -349,10 +529,17 @@ function show(view){
   document.getElementById(view).classList.add('active');
   document.getElementById('nav-courses').classList.toggle('active',view==='courses');
   document.getElementById('nav-pubs').classList.toggle('active',view==='pubs');
+  document.getElementById('nav-roadmap').classList.toggle('active',view==='roadmap');
   if(view==='courses'){closeCourse();}
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.getElementById('cardgrid').innerHTML=COURSES.map(courseCard).join('');
+document.getElementById('nextitems').innerHTML=ROADMAP.courses.map(c=>`<span>${c.id} ${c.title}</span>`).join('<span class="sep">·</span>');
+document.getElementById('rgrid').innerHTML=ROADMAP.courses.map(roadmapCard).join('');
+document.getElementById('steps').innerHTML=ROADMAP.steps.map(s=>`<div class="step"><span class="n">${s.n.toUpperCase()}</span><b>${s.t}</b><span class="s">${s.s}</span></div>`).join('');
+document.getElementById('later').innerHTML=ROADMAP.later.map(l=>`<li><span class="badge prop">${l.id}</span><span><a href="${BLOB}/docs/RoadMap.md#${l.anchor}" target="_blank" rel="noopener">${l.t}</a> · ${l.s}</span></li>`).join('');
+slideShow();
+if(location.hash==='#roadmap'){show('roadmap');}
 document.getElementById('publist').innerHTML=PUBS.map((p,i)=>{
   var host='';try{host=new URL(p.u).hostname.replace(/^www\./,'');}catch(e){}
   return `

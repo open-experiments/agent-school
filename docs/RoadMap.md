@@ -2,7 +2,7 @@
 
 This document maps Agent School against Table 1 of our article [*Architect an open blueprint for cloud-native AI agents*](https://developers.redhat.com/articles/2026/07/20/architect-open-blueprint-cloud-native-ai-agents) — the canonical taxonomy of solution components, roles, and implementation options — and lays out where the curriculum goes next. It is the honest ledger: what the courses already exercise, what they only gesture at, and what is not yet touched. No row is claimed as covered unless code in the repo exercises it.
 
-The working-group kickoff deck (November 2026) presents this plan: [PDF](roadmap/agent-school-roadmap-wg-kickoff-2026-11.pdf) · [PPTX](roadmap/agent-school-roadmap-wg-kickoff-2026-11.pptx) · [sources and build](roadmap/).
+The working-group kickoff deck (November 2026) presents this plan: [PDF](roadmap/agent-school-roadmap-wg-kickoff-2026-11.pdf) · [PPTX](roadmap/agent-school-roadmap-wg-kickoff-2026-11.pptx) · [sources and build](roadmap/) · [on the site](https://open-experiments.github.io/agent-school/#roadmap).
 
 ## Coverage against the article's Table 1
 

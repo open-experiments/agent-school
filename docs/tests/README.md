@@ -18,7 +18,7 @@ and `PORT` to serve on something other than 8777.
 
 | Suite | Covers |
 |---|---|
-| `site.test.js` | Course cards (durations, badges, links), detail pages, publications, scroll behavior |
+| `site.test.js` | Course cards (durations, badges, links), detail pages, publications, scroll behavior, the Roadmap view (4xx cards, gated steps, slide viewer, deck downloads, next-strip) |
 | `portal-core.test.js` | Lab player mechanics: Take-me-there tab switching (F4), spoiler gating (F5), course-LLM row (F8), full 201 E2E, bad-tape handling |
 | `portal-copy.test.js` | Traces-not-runs guide copy (F2), footnotes (F10), post-edit E2E regressions |
 | `portal-kinds.test.js` | Kind rendering in Projects course-objects (F13) across all tapes |

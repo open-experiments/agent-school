@@ -5,12 +5,13 @@ The slide sources are the Claude Slides format: one <section> per slide on a
 1920x1080 canvas with inline styles, plus <x-shape> / <x-connector> custom
 elements and an <aside> of speaker notes. This script turns them into a plain
 HTML page (custom elements rewritten as CSS and SVG), prints it with Chromium
-through Playwright (vector PDF with embedded fonts, one PNG per slide), and
-packs the PNGs with the speaker notes into a 16:9 PPTX with python-pptx.
+through Playwright (vector PDF with embedded fonts, one PNG per slide), packs
+the PNGs with the speaker notes into a 16:9 PPTX with python-pptx, and writes
+1280x720 JPEGs (web/) for the slide viewer on the site's Roadmap page.
 
 Usage (from this directory):
     npm i @fontsource/red-hat-display @fontsource/red-hat-text @fontsource/red-hat-mono
-    pip install python-pptx playwright && playwright install chromium   # once
+    pip install python-pptx playwright pillow && playwright install chromium   # once
     python3 build.py <source-dir> <out-dir> [basename]
 
 <source-dir> holds deck.json and slides/<id>.html.
@@ -124,6 +125,16 @@ def main():
     pdf = out / (base + ".pdf")
     subprocess.run(["node", str(HERE / "render.js"), str(render_html), str(pdf), str(out / "png")], check=True)
 
+    # Web-sized JPEGs for the site's slide viewer (docs/index.html, Roadmap view).
+    from PIL import Image
+
+    web = out / "web"
+    web.mkdir(exist_ok=True)
+    for i in range(1, len(notes) + 1):
+        im = Image.open(out / "png" / ("slide-%02d.png" % i)).convert("RGB")
+        im.resize((1280, 720), Image.LANCZOS).save(str(web / ("slide-%02d.jpg" % i)),
+                                                    "JPEG", quality=82, optimize=True, progressive=True)
+
     from pptx import Presentation
     from pptx.util import Inches
 
@@ -142,6 +153,7 @@ def main():
     print("PDF ", pdf)
     print("PPTX", pptx_path)
     print("PNG ", out / "png", "(%d slides)" % len(notes))
+    print("WEB ", out / "web", "(%d jpg)" % len(notes))
 
 
 if __name__ == "__main__":
