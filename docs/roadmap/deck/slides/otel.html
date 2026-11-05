@@ -1,0 +1,35 @@
+<section id="otel" data-transition="fade" style="background:#fbfbf9;color:#151515;font-family:'Red Hat Text', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:32px">
+<h2 style="font-family:'Red Hat Display', Arial, sans-serif;font-size:64px;font-weight:800;line-height:1.1;letter-spacing:-1px">403 Domain model track: OTEL 2.0</h2>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:32px">
+<div style="background:#ffffff;border:1px solid #dfe2e6;border-top:6px solid #151515;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-family:'Red Hat Display', Arial, sans-serif;font-size:36px;font-weight:700;line-height:1.15">The model</h3>
+<ul style="font-size:26px;line-height:1.35;color:#3f4650;display:flex;flex-direction:column;gap:10px">
+<li>Gemma 4 31B-IT, post-trained (OSFT) on about 440B telecom tokens: 3GPP, ETSI, ITU, GSMA, CAMARA, O-RAN, TM Forum, plus the Telco Corpus</li>
+<li>Apache-2.0; vLLM 0.19+ in bf16; TP=1 on 192 to 288 GB cards, TP=2 on 80 GB</li>
+<li>Top of the Open Telco AI leaderboard; released July 24, 2026</li>
+</ul>
+</div>
+<div style="background:#ffffff;border:1px solid #dfe2e6;border-top:6px solid #cc0000;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-family:'Red Hat Display', Arial, sans-serif;font-size:36px;font-weight:700;line-height:1.15">What its card says</h3>
+<ul style="font-size:26px;line-height:1.35;color:#3f4650;display:flex;flex-direction:column;gap:10px">
+<li>The training mix has no telecom-specific tool-calling, MCP or instruction-following data</li>
+<li>Not benchmarked for closed-loop network tasks; tool readiness unproven</li>
+<li>Recommends retrieval, source attribution and human review for high-impact use</li>
+</ul>
+</div>
+<div style="background:#ffffff;border:1px solid #dfe2e6;border-top:6px solid #0066cc;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-family:'Red Hat Display', Arial, sans-serif;font-size:36px;font-weight:700;line-height:1.15">What 403 measures, then tunes</h3>
+<ul style="font-size:26px;line-height:1.35;color:#3f4650;display:flex;flex-direction:column;gap:10px">
+<li>Tool-calling on the 101 and 201 tapes, with wire logs as evidence</li>
+<li>Judge groundedness with the 302 suite; closed-loop behavior in 301 (co-decision, gate, rollback)</li>
+<li>Cost per resolved episode as the small tier in 201 routing and course 203</li>
+<li>Then SDG Hub turns the 401 catalogs and the tapes into the telecom tool-calling and MCP data the card lacks, and OSFT folds it in without forgetting</li>
+</ul>
+</div>
+</div>
+<div style="background:#f1f2f4;border-radius:16px;padding:24px 32px;display:flex;flex-direction:column;gap:6px">
+<p style="font-family:'Red Hat Mono', 'Courier New', monospace;font-size:24px;letter-spacing:1px;color:#cc0000">SERVING HOME OPTIONS</p>
+<p style="font-size:26px;line-height:1.35;color:#3f4650">AMD MI300X or MI355X at TP=1 · Azure GPU · Venice’s 96 GB card at TP=1 with a short context · a MaaS endpoint. The courses swap models by config: the endpoint contract stays the same.</p>
+</div>
+<aside>OTEL 2.0 drops into the model slot every course already treats as a stateless endpoint. The model card is candid about what it does not cover, and those three gaps are exactly what the courses measure: tool-calling, groundedness, and closed-loop behavior. The card credits Red Hat for OSFT and SDG Hub, Microsoft Azure for data processing, AMD for MI300X and MI355X compute, and GSMA for the corpus.</aside>
+</section>

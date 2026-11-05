@@ -1,0 +1,92 @@
+# 102 · sandbox policy for the NOC Assistant running under NVIDIA OpenShell.
+#
+# Schema follows examples/sandbox-policy-quickstart/policy.yaml from
+# github.com/NVIDIA/OpenShell (Apache-2.0). Four layers, two lifetimes:
+# filesystem + process are locked at sandbox creation; network + inference
+# are hot-reloadable, which is why lab 3 can tighten egress on a running
+# agent and watch the next tool call fail.
+#
+# The point of this file: the NOC agent's blast radius is declared here, in
+# YAML, outside the agent — not asserted in a system prompt. Every "denied"
+# line in QA/ traces back to a specific stanza below.
+
+version: 1
+
+# --- Layer 1: filesystem (Landlock; locked at creation) --------------------
+# The agent reads its own dataset and runbooks and can write only scratch.
+# 101's skills read data/ and runbooks/ relative to the course root, so those
+# are mounted read-only under /sandbox/course and nothing else in the tree is
+# reachable. Lab 1 proves the negative: a read of ~/.ssh or /etc/shadow dies
+# here, not in the agent's conscience.
+filesystem_policy:
+  include_workdir: true
+  read_only:
+    - /usr
+    - /lib
+    - /proc
+    - /dev/urandom
+    - /app
+    - /etc
+    - /var/log
+    - /sandbox/course/data        # 5gprod KPI CSVs (the offline dataset)
+    - /sandbox/course/runbooks    # NOC runbooks the agent cites
+    - /sandbox/course/tools       # skill code: readable, never writable
+  read_write:
+    - /sandbox                    # scratch: reports, traces
+    - /tmp
+    - /dev/null
+
+landlock:
+  # RHEL CoreOS 9.8 ships kernel 5.14 with Landlock backported; the exact
+  # enforcement level under OpenShift is measured in QA/, not assumed here.
+  # best_effort degrades instead of refusing to start, and OpenShell reports
+  # what it actually got — that report is itself course evidence.
+  compatibility: best_effort
+
+# --- Layer 2: network (hot-reloadable) -------------------------------------
+# Default deny. The agent is a NOC assistant, not a web client: it needs the
+# model endpoint and the in-cluster feature store, and nothing else. Note the
+# model endpoint is NOT listed with a credential — see the inference layer.
+network_policies:
+  model_endpoint:
+    name: llm-openai-compatible
+    endpoints:
+      - host: kimi-linear-48b-a3b-telco-aix.apps.venice.narlabs.io
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        access: read-only
+
+  feature_store:
+    name: feast-online-store
+    endpoints:
+      - host: feast-fivegprod.agent-school.svc.cluster.local
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        access: read-only
+
+  # Deliberately absent: huggingface.co, pypi.org, the public internet.
+  # 101's ingest job pulls the dataset; the AGENT never does. Lab 2 proves
+  # egress to any host not named above is refused at the boundary.
+
+# --- Layer 3: process (locked at creation) ---------------------------------
+# Omitted so the active compute driver selects the identity, matching the
+# upstream quickstart. seccomp blocks privilege escalation and dangerous
+# syscalls by driver default; QA/ records which profile was actually applied
+# rather than restating the vendor's claim.
+
+# --- Layer 4: inference (hot-reloadable) -----------------------------------
+# The credential rule that makes this course worth building: NemoClaw's
+# gateway rewrites the Authorization header at egress, so LLM_API_KEY is
+# never present inside the sandbox. Every other course in this repo hands the
+# agent its own key via the llm-credentials Secret and envFrom. Here the
+# agent reasons with a model it cannot authenticate to on its own.
+#
+# Provider registration is a gateway-side operation, not a file the sandbox
+# can read:
+#   openshell provider create --type openai-compatible \
+#       --base-url $LLM_BASE_URL --api-key $LLM_API_KEY
+#
+# QA lab 4 greps the sandbox process environment and filesystem for the key
+# and must come back empty; that empty result is the evidence.

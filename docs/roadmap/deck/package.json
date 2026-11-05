@@ -1,0 +1,10 @@
+{
+  "name": "agent-school-roadmap-deck",
+  "private": true,
+  "description": "Fonts for rendering the roadmap deck sources (see build.py)",
+  "dependencies": {
+    "@fontsource/red-hat-display": "^5.3.0",
+    "@fontsource/red-hat-mono": "^5.3.0",
+    "@fontsource/red-hat-text": "^5.3.0"
+  }
+}

@@ -15,3 +15,6 @@ __pycache__/
 
 # session scratch (git-lock/tmp files parked here; safe to delete)
 _to_delete/
+
+# roadmap deck build (fonts pulled by npm; rendered outputs live one level up)
+docs/roadmap/deck/node_modules/

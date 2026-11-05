@@ -1,0 +1,30 @@
+<section id="rag" data-transition="fade" style="background:#fbfbf9;color:#151515;font-family:'Red Hat Text', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'Red Hat Display', Arial, sans-serif;font-size:64px;font-weight:800;line-height:1.1;letter-spacing:-1px">402 Knowledge: RAG placed by rule</h2>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<div style="background:#fdecec;border:1px solid #f1b8b8;border-radius:16px;padding:28px 32px;display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'Red Hat Mono', 'Courier New', monospace;font-size:24px;letter-spacing:1px;color:#cc0000">SKILL</p>
+<p style="font-size:28px;line-height:1.35">When the role owns the procedure. A runbook used as the NOC assistant’s own triage procedure is a skill.</p>
+</div>
+<div style="background:#e8f0fa;border:1px solid #b9d0ec;border-radius:16px;padding:28px 32px;display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'Red Hat Mono', 'Courier New', monospace;font-size:24px;letter-spacing:1px;color:#0066cc">CONTEXT THROUGH MCP (RAG)</p>
+<p style="font-size:28px;line-height:1.35">For reference knowledge the domain owns: vendor docs, specs, past RCAs, alarm dictionaries, change records. Large, citable, kept inside the trust boundary.</p>
+</div>
+<div style="background:#f1f2f4;border:1px solid #dfe2e6;border-radius:16px;padding:28px 32px;display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'Red Hat Mono', 'Courier New', monospace;font-size:24px;letter-spacing:1px;color:#3f4650">STRUCTURED TOOLS</p>
+<p style="font-size:28px;line-height:1.35">For state: KPIs, alerts, feature store, registry. Never a text index over telemetry rows.</p>
+</div>
+</div>
+<div style="flex:1.15;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-family:'Red Hat Display', Arial, sans-serif;font-size:36px;font-weight:700;line-height:1.15">What 402 builds beside the shipped courses</h3>
+<table style="font-size:26px;line-height:1.3;color:#151515;border:1px solid #dfe2e6">
+<tr style="background:#f1f2f4"><th style="width:26%;text-align:left;padding:14px 20px">Beside</th><th style="width:74%;text-align:left">Retrieval, placed by the rule</th></tr>
+<tr><td>201</td><td>A knowledge service (runbooks, past RCAs, alarm dictionary) stood up next to 201 and compared with its KPI-rows-as-text corpus; 201 stays as shipped</td></tr>
+<tr><td>401</td><td>Retrieval over the capability inventory, so selection scales past a flat tool list</td></tr>
+<tr><td>301</td><td>Case memory over past loop episodes and gate decisions (feeds issue #19); topology retrieval for the blast-radius context the judge lacks; 301 untouched</td></tr>
+<tr><td>Platform</td><td>Hand-rolled FastAPI + TF-IDF, or Llama Stack vector_io as the platform-provided candidate</td></tr>
+</table>
+</div>
+</div>
+<aside>201’s corpus is the wrong shape for retrieval: per-minute KPI rows under TF-IDF. The pattern-2 lesson, the citations and the judge all hold, and the placement rule was missing. Retrieval holds knowledge the domain owns, tools carry state, and a procedure the role owns is a skill. 402 makes that rule a platform service and proves it beside 201 and 301 without modifying either.</aside>
+</section>
